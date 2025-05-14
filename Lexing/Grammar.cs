@@ -99,16 +99,16 @@ public static partial class Grammar
     public static partial Regex MatchName { get; }
     
     /// <summary>
-    /// Matches both integer and floating point decimal and hex numbers, all valid in Lua. Captures:
-    /// 0: Hex identifier 0x or 0X if present. If empty, number is not hexadecimal.
-    /// 1 through 3: Empty if not hex.
-    /// 1: Hex significand.
-    /// 2: Hex fraction, if present, with leading period.
-    /// 3: Decimal exponent (power of 2), if present, with leading p or P and possibly a sign following it.
-    /// 4 through 6: Empty if hex.
-    /// 4: Decimal significand.
-    /// 5: Decimal fraction, if present, with leading period.
-    /// 6: Decimal exponent (power of 10), if present, with leading e or E and possibly a sign following it.
+    /// Matches both integer and floating point decimal and hex numbers, all valid in Lua. Groups:
+    /// 1: Hex identifier 0x or 0X if present. If empty, number is not hexadecimal.
+    /// 2 through 4: Empty if not hex.
+    /// 2: Hex significand.
+    /// 3: Hex fraction, if present, with leading period.
+    /// 4: Decimal exponent (power of 2), if present, with leading p or P and possibly a sign following it.
+    /// 5 through 7: Empty if hex.
+    /// 5: Decimal significand.
+    /// 6: Decimal fraction, if present, with leading period.
+    /// 7: Decimal exponent (power of 10), if present, with leading e or E and possibly a sign following it.
     /// </summary>
     [GeneratedRegex(@"(0[xX])([\da-fA-F]+)(\.[\da-fA-F]+)?([pP][+-]?\d+)?|(\d+)(\.\d+)?([eE][+-]?\d+)?")]
     public static partial Regex MatchNumber { get; }
@@ -159,7 +159,7 @@ public static partial class Grammar
     /// </summary>
     /// <param name="match">Match to check.</param>
     /// <returns>True if match is a hexadecimal number, false if not.</returns>
-    public static bool IsHexMatch(Match match) => match.Captures[0].Length != 0;
+    public static bool IsHexMatch(Match match) => match.Groups[1].Length != 0;
 
     /// <summary>
     /// For use with the MatchNumber regex. Checks if match represents a float or an integer.
@@ -168,8 +168,8 @@ public static partial class Grammar
     /// <returns></returns>
     public static bool IsFloatMatch(Match match)
         => IsHexMatch(match)
-            ? match.Captures[2].Length != 0 || match.Captures[3].Length != 0
-            : match.Captures[5].Length != 0 || match.Captures[6].Length != 0;
+            ? match.Groups[3].Length != 0 || match.Groups[4].Length != 0
+            : match.Groups[6].Length != 0 || match.Groups[7].Length != 0;
 
     /// <summary>
     /// For use with the MatchNumber regex. Gets the integer value of the match. 
@@ -198,7 +198,7 @@ public static partial class Grammar
     /// <param name="match">Match to parse.</param>
     /// <returns>64-bit integer value of matched number.</returns>
     private static long ParseDecimalInteger(Match match)
-        => Convert.ToInt64(match.Captures[4].Value, 10);
+        => Convert.ToInt64(match.Groups[5].Value, 10);
 
     /// <summary>
     /// For use with the MatchNumber regex. Parses a decimal floating point number from a match.
@@ -206,7 +206,7 @@ public static partial class Grammar
     /// <param name="match">Match to parse.</param>
     /// <returns>Double-precision floating point value of matched number.</returns>
     private static double ParseDecimalFloat(Match match)
-        => double.Parse(match.Captures[4].Value + match.Captures[5].Value + match.Captures[6].Value);
+        => double.Parse(match.Groups[5].Value + match.Groups[6].Value + match.Groups[7].Value);
 
     /// <summary>
     /// For use with the MatchNumber regex. Parses a hexadecimal integer number from a match.
@@ -214,49 +214,62 @@ public static partial class Grammar
     /// <param name="match">Match to parse.</param>
     /// <returns>64-bit integer value of matched number.</returns>
     private static long ParseHexInteger(Match match)
-        => Convert.ToInt64(match.Captures[1].Value, 16);
-
-    /// <summary>
-    /// Lookup dictionary for the value of a hex character as a double.
-    /// </summary>
-    private static readonly Dictionary<char, double> HexLookupDict = new()
-    {
-        { '0', 0.0 }, { '1', 1.0  }, { '2', 2.0  }, { '3', 3.0 }, { '4', 4.0 }, { '5', 5.0 }, { '6', 6.0 }, 
-        { '7', 7.0 }, { '8', 8.0 }, { '9', 9.0 }, { 'a', 10.0 }, { 'b', 11.0 }, { 'c', 12.0 }, { 'd', 13.0 }, 
-        { 'e', 14.0 }, { 'f', 15.0 }, { 'A', 10.0 }, { 'B', 11.0 }, { 'C', 12.0 }, { 'D', 13.0 }, { 'E', 14.0 },
-        { 'F', 15.0 }
-    };
-
-    // TODO: Add verification that number is representable?
+        => Convert.ToInt64(match.Groups[2].Value, 16);
+    
     /// <summary>
     /// For use with the MatchNumber regex. Parses a hexadecimal floating point number from a match. Does not verify
     /// that the given number can be represented as a double-precision floating point value.
     /// </summary>
     /// <param name="match">Match to parse.</param>
     /// <returns>Double-precision floating point value of matched number.</returns>
+    /// <remarks>
+    /// This function is not fully checked; some un-representable doubles may pass through (likely as +/-inf), others
+    /// will be caught and result in an exception.
+    /// </remarks>
     // Unfortunately, hexadecimal floats are uncommon enough that there aren't any C# standard library functions for
-    // parsing them, so this has to be bespoke. It is parsed as such:
-    // Significand: Convert to integer as usual.
-    // Fraction: In order 1/16th, 1/256th, 1/4096th, etc. Always representable exactly in a float with enough precision.
-    // Exponent: Power of 2 in decimal form, not hex.
-    // Add the fraction to the significand, then multiply by 2 to the power of the exponent.
+    // parsing them, so this has to be bespoke. Fortunately, the nature of the format means it's actually relatively
+    // easy to parse precisely. This relies heavily on how IEEE floating point numbers are represented as bits.
+    // 1: Take the fractional part, minus the leading period, and convert it to an integer.
+    // 1a: If this is >= 1 << 52, there is not enough precision to represent it.
+    // 2: Bitshift it left by (52 - 4 * fraction length) bits (this is to add 0s to the end of the fraction bits to fill
+    //     the significand).
+    // 3: Bitwise OR this with 0x3ff0000000000000 to set the exponent bits to make the exponent 0.
+    // 4: Bit-cast this to a double.
+    // 5: Convert the integer part to a double, subtract 1.0, and add it to the bit-casted double (this is because IEEE
+    //     floating point format already implicitly adds 1.0 to the significand of normalized numbers).
+    // 6: Multiply this by 2.0 to the power of the exponent part.
+    //
+    // It's difficult to describe *why* exactly this works, but it does. The best reference I can point to is simply
+    // to read up on how IEEE floating point binary format works.
+    //
+    // Additionally: If there is no fractional part, we don't need to bother with this mess, and can simply take the
+    // integer part as a double and multiply by 2 to the power of the exponent part.
     private static double ParseHexFloat(Match match)
     {
-        var significand = (double)Convert.ToInt64(match.Captures[1].Value, 16);
+        // Simple case: No fractional part.
+        if (match.Groups[3].Length == 0)
+            return Convert.ToInt64(match.Groups[2].Value, 16)
+                   * Math.Pow(2.0, match.Groups[4].Length != 0 
+                       ? Convert.ToInt64(match.Groups[4].Value[1..], 10)
+                       : 0.0);
+
+        // Step 1
+        var fractionString = match.Groups[3].Value[1..];
+        var fractionBits = Convert.ToInt64(fractionString, 16);
+        if (fractionBits >= 1L << 52)
+            throw new ArgumentException("Matched number has fraction too precise to represent as double.");
         
-        var fraction = 0.0;
-        var fractionString = match.Captures[2].Value;
-        var placeValue = 1.0 / 16.0;
-        for (var i = 1; i < fractionString.Length; i++)
-        {
-            fraction += HexLookupDict[fractionString[i]] * placeValue;
-            placeValue *= 1.0 / 16.0;
-        }
-
-        var exponent = match.Captures[3].Length != 0
-            ? Convert.ToDouble(match.Captures[3].Value[1..])
-            : 0.0;
-
-        return (significand + fraction) * Math.Pow(2.0, exponent);
+        // Step 2, 3, 4
+        var fraction 
+            = BitConverter.Int64BitsToDouble((fractionBits << 52 - 4 * fractionString.Length) | 0x3ff0000000000000);
+        
+        // Step 5
+        var value = fraction + double.Parse(match.Groups[2].Value) - 1.0;
+        
+        // Step 6
+        return value 
+               * Math.Pow(2.0, match.Groups[4].Length != 0 
+                   ? Convert.ToInt64(match.Groups[4].Value[1..], 10) 
+                   : 0.0);
     }
 }
