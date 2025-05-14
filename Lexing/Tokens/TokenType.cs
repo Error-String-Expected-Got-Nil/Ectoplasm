@@ -1,10 +1,10 @@
 ﻿namespace Ectoplasm.Lexing.Tokens;
 
+/// <summary>
+/// All types of code tokens present in Lua.
+/// </summary>
 public enum TokenType
 {
-    // Not a real token
-    Undefined,
-    
     // Keywords
     Do,
     End,
@@ -42,6 +42,7 @@ public enum TokenType
     CloseIndex, // Close bracket ]
     OpenTable, // Open curly bracket {
     CloseTable, // Close curly bracket }
+    Comment, // Double hyphen --
     
     // Operator symbols
     Add, // '+'
@@ -69,5 +70,6 @@ public enum TokenType
     // Value tokens
     Name, // Identifiers
     Numeral, // Numbers, both float and integer
-    String // String literals
+    String, // String literals
+    Whitespace // Whitespace
 }
