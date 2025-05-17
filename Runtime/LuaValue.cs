@@ -13,16 +13,26 @@ namespace Ectoplasm.Runtime;
 [StructLayout(LayoutKind.Explicit)]
 public struct LuaValue
 {
-    [FieldOffset(0)] private bool _boolean;
-    [FieldOffset(0)] private long _integer;
-    [FieldOffset(0)] private double _float;
-    [FieldOffset(0)] private byte[] _string = null!;
-    [FieldOffset(0)] private Func<LuaState, LuaState> _function = null!;
-    [FieldOffset(0)] private object _userdata = null!;
-    [FieldOffset(0)] private LuaThread _thread = null!;
-    [FieldOffset(0)] private LuaTable _table = null!;
+    [FieldOffset(0)] private readonly bool _boolean;
+    [FieldOffset(0)] private readonly long _integer;
+    [FieldOffset(0)] private readonly double _float;
+    [FieldOffset(0)] private readonly byte[] _string = null!;
+    [FieldOffset(0)] private readonly Func<LuaState, LuaState> _function = null!;
+    [FieldOffset(0)] private readonly object _userdata = null!;
+    [FieldOffset(0)] private readonly LuaThread _thread = null!;
+    [FieldOffset(0)] private readonly LuaTable _table = null!;
 
     [FieldOffset(8)] private LuaTable? _metatable;
+
+    public LuaTable Metatable
+    {
+        get
+        {
+            _metatable ??= new LuaTable();
+            return _metatable;
+        }
+        set => _metatable = value;
+    }
     
     /// <summary>
     /// The actual runtime type of this dynamically-typed Lua value.
@@ -262,111 +272,121 @@ public struct LuaValue
     #region Basic Constructors
     
     /// <summary>
-    /// Creates a new LuaValue with nil value and no metatable.
+    /// Creates a new LuaValue with nil value.
     /// </summary>
-    public LuaValue()
+    /// <param name="metatable">Metatable to apply to this LuaValue.</param>
+    public LuaValue(LuaTable? metatable = null)
     {
-        _metatable = null;
+        _metatable = metatable;
         Kind = LuaValueKind.Nil;
     }
 
     /// <summary>
-    /// Creates a new LuaValue with boolean value and no metatable.
+    /// Creates a new LuaValue with boolean value.
     /// </summary>
     /// <param name="value">Boolean value of the new LuaValue.</param>
-    public LuaValue(bool value)
+    /// <param name="metatable">Metatable to apply to this LuaValue.</param>
+    public LuaValue(bool value, LuaTable? metatable = null)
     {
         _boolean = value;
-        _metatable = null;
+        _metatable = metatable;
         Kind = LuaValueKind.Boolean;
     }
 
     /// <summary>
-    /// Creates a new LuaValue with integer value and no metatable.
+    /// Creates a new LuaValue with integer value.
     /// </summary>
     /// <param name="value">Integer value of the new LuaValue.</param>
-    public LuaValue(long value)
+    /// <param name="metatable">Metatable to apply to this LuaValue.</param>
+    public LuaValue(long value, LuaTable? metatable = null)
     {
         _integer = value;
-        _metatable = null;
+        _metatable = metatable;
         Kind = LuaValueKind.Integer;
     }
 
     /// <summary>
-    /// Creates a new LuaValue with float value and no metatable.
+    /// Creates a new LuaValue with float value.
     /// </summary>
     /// <param name="value">Float value of the new LuaValue.</param>
-    public LuaValue(double value)
+    /// <param name="metatable">Metatable to apply to this LuaValue.</param>
+    public LuaValue(double value, LuaTable? metatable = null)
     {
         _float = value;
-        _metatable = null;
+        _metatable = metatable;
         Kind = LuaValueKind.Float;
     }
 
     /// <summary>
-    /// Creates a new LuaValue with string value and no metatable.
+    /// Creates a new LuaValue with string value.
     /// </summary>
     /// <param name="value">String value of the new LuaValue.</param>
-    public LuaValue(byte[] value)
+    /// <param name="metatable">Metatable to apply to this LuaValue.</param>
+    public LuaValue(byte[] value, LuaTable? metatable = null)
     {
         _string = value;
-        _metatable = null;
+        _metatable = metatable;
         Kind = LuaValueKind.String;
     }
 
     /// <summary>
-    /// Creates a new LuaValue with string value and no metatable. Automatically converts the given string to a UTF-8
-    /// byte sequence to be stored in the value.
+    /// Creates a new LuaValue with string value. Automatically converts the given string to a UTF-8 byte sequence to
+    /// be stored in the value.
     /// </summary>
     /// <param name="value">String value of the new LuaValue.</param>
-    public LuaValue(string value)
+    /// <param name="metatable">Metatable to apply to this LuaValue.</param>
+    public LuaValue(string value, LuaTable? metatable = null)
     {
         _string = Encoding.UTF8.GetBytes(value);
-        _metatable = null;
+        _metatable = metatable;
         Kind = LuaValueKind.String;
     }
 
     /// <summary>
-    /// Creates a new LuaValue with function value and no metatable.
+    /// Creates a new LuaValue with function value.
     /// </summary>
     /// <param name="value">Function value of the new LuaValue.</param>
-    public LuaValue(Func<LuaState, LuaState> value)
+    /// <param name="metatable">Metatable to apply to this LuaValue.</param>
+    public LuaValue(Func<LuaState, LuaState> value, LuaTable? metatable = null)
     {
         _function = value;
-        _metatable = null;
+        _metatable = metatable;
         Kind = LuaValueKind.Function;
     }
     
     /// <summary>
-    /// Creates a new LuaValue with userdata value and no metatable.
+    /// Creates a new LuaValue with userdata value.
     /// </summary>
     /// <param name="value">Userdata value of the new LuaValue.</param>
-    public LuaValue(object value)
+    /// <param name="metatable">Metatable to apply to this LuaValue.</param>
+    public LuaValue(object value, LuaTable? metatable = null)
     {
         _userdata = value;
-        _metatable = null;
+        _metatable = metatable;
         Kind = LuaValueKind.Userdata;
     }
 
     /// <summary>
-    /// Creates a new LuaValue with Lua thread value and no metatable.
+    /// Creates a new LuaValue with Lua thread value.
     /// </summary>
     /// <param name="value">Lua thread value of the new LuaValue.</param>
-    public LuaValue(LuaThread value)
+    /// <param name="metatable">Metatable to apply to this LuaValue.</param>
+    public LuaValue(LuaThread value, LuaTable? metatable = null)
     {
         _thread = value;
-        _metatable = null;
+        _metatable = metatable;
         Kind = LuaValueKind.Thread;
     }
 
     /// <summary>
-    /// Creates a new LuaValue with Lua table value and no metatable.
+    /// Creates a new LuaValue with Lua table value.
     /// </summary>
     /// <param name="value">Lua table value of the new LuaValue.</param>
-    public LuaValue(LuaTable value)
+    /// <param name="metatable">Metatable to apply to this LuaValue.</param>
+    public LuaValue(LuaTable value, LuaTable? metatable = null)
     {
         _table = value;
-        _metatable = null;
+        _metatable = metatable;
         Kind = LuaValueKind.Table;
     }
     
@@ -411,5 +431,12 @@ public struct LuaValue
     public static explicit operator LuaThread(LuaValue value) => value.Thread;
     public static explicit operator LuaTable(LuaValue value) => value.Table;
     
+    #endregion
+    
+    #region Operator Overloads
+
+    public static bool operator true(LuaValue value) => value.IsTruthy;
+    public static bool operator false(LuaValue value) => !value.IsTruthy;
+
     #endregion
 }
