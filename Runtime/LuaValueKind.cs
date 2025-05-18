@@ -29,7 +29,7 @@ public enum LuaValueKind
     String,
     
     /// <summary>
-    /// Lua function type. Underlying C# type <see cref="Func{T, TResult}"/> of <see cref="LuaState"/> in and out.
+    /// Lua function type. Underlying C# type <see cref="LuaFunction"/>.
     /// </summary>
     Function,
     

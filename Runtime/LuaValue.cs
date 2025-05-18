@@ -17,7 +17,7 @@ public struct LuaValue
     [FieldOffset(0)] private readonly long _integer;
     [FieldOffset(0)] private readonly double _float;
     [FieldOffset(0)] private readonly byte[] _string = null!;
-    [FieldOffset(0)] private readonly Func<LuaState, LuaState> _function = null!;
+    [FieldOffset(0)] private readonly LuaFunction _function = null!;
     [FieldOffset(0)] private readonly object _userdata = null!;
     [FieldOffset(0)] private readonly LuaThread _thread = null!;
     [FieldOffset(0)] private readonly LuaTable _table = null!;
@@ -117,7 +117,7 @@ public struct LuaValue
     /// <exception cref="InvalidCastException">
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.Function"/>.
     /// </exception>
-    public Func<LuaState, LuaState> Function
+    public LuaFunction Function
         => Kind == LuaValueKind.Function
             ? _function
             : throw new InvalidCastException("LuaValue does not represent a function value.");
@@ -228,7 +228,7 @@ public struct LuaValue
     /// <exception cref="InvalidCastException">
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.Function"/> or <see cref="LuaValueKind.Nil"/>.
     /// </exception>
-    public Func<LuaState, LuaState>? NullableFunction
+    public LuaFunction? NullableFunction
         => Kind == LuaValueKind.Nil
             ? null
             : Function;
@@ -347,7 +347,7 @@ public struct LuaValue
     /// </summary>
     /// <param name="value">Function value of the new LuaValue.</param>
     /// <param name="metatable">Metatable to apply to this LuaValue.</param>
-    public LuaValue(Func<LuaState, LuaState> value, LuaTable? metatable = null)
+    public LuaValue(LuaFunction value, LuaTable? metatable = null)
     {
         _function = value;
         _metatable = metatable;
@@ -427,7 +427,7 @@ public struct LuaValue
     public static explicit operator double(LuaValue value) => value.Float;
     public static explicit operator ReadOnlySpan<byte>(LuaValue value) => value.String;
     public static explicit operator string(LuaValue value) => value.StringUtf16;
-    public static explicit operator Func<LuaState, LuaState>(LuaValue value) => value.Function;
+    public static explicit operator LuaFunction(LuaValue value) => value.Function;
     public static explicit operator LuaThread(LuaValue value) => value.Thread;
     public static explicit operator LuaTable(LuaValue value) => value.Table;
     
