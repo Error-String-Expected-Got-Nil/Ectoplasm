@@ -84,13 +84,11 @@ public static partial class Grammar
         { ".", IndexName },
         { ":", IndexMethod }
     };
-
+    
     /// <summary>
-    /// Maximum number of entries in the trie which start with the same character.
+    /// Maximum length of any symbol token.
     /// </summary>
-    // Somewhat naive way of computing this, but this doesn't need to be especially efficient; it's a static readonly
-    // that only runs once.
-    public static readonly int SymbolsMaxPrefix = Symbols.Keys.Max(key => Symbols.StartsWith([key[0]]).Count());
+    public static readonly int MaxSymbolLength = Symbols.Keys.Max(key => key.Length);
     
     /// <summary>
     /// Matches a Lua 'name', which can be used for labels, identifiers, keywords, table keys, etc.
@@ -114,13 +112,7 @@ public static partial class Grammar
     public static partial Regex MatchNumber { get; }
     
     /// <summary>
-    /// Matches any sequence of symbols used in Lua.
-    /// </summary>
-    [GeneratedRegex("[%-\\/:->{-~\\\"#\\[\\]]")]
-    public static partial Regex MatchSymbols { get; }
-    
-    /// <summary>
-    /// Matches any sequences of 'text' characters, that could make up a Name or number literal.
+    /// Matches any sequences of 'text' characters, that could make up a keyword, Name, or number literal.
     /// </summary>
     [GeneratedRegex(@"[\w][\w\.+-]*")]
     public static partial Regex MatchText { get; }
@@ -151,8 +143,6 @@ public static partial class Grammar
             or '#'
             or '['
             or ']';
-    
-    // TODO: Parse numbers matched by that horrific MatchNumber regex.
 
     /// <summary>
     /// For use with the MatchNumber regex. Checks if match is a hexadecimal number.
@@ -217,8 +207,7 @@ public static partial class Grammar
         => Convert.ToInt64(match.Groups[2].Value, 16);
     
     /// <summary>
-    /// For use with the MatchNumber regex. Parses a hexadecimal floating point number from a match. Does not verify
-    /// that the given number can be represented as a double-precision floating point value.
+    /// For use with the MatchNumber regex. Parses a hexadecimal floating point number from a match.
     /// </summary>
     /// <param name="match">Match to parse.</param>
     /// <returns>Double-precision floating point value of matched number.</returns>

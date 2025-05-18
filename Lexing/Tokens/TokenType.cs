@@ -5,6 +5,8 @@
 /// </summary>
 public enum TokenType
 {
+    None,
+    
     // Keywords
     Do,
     End,
