@@ -322,6 +322,7 @@ public struct LuaValue
     /// </summary>
     /// <param name="value">String value of the new LuaValue.</param>
     /// <param name="metatable">Metatable to apply to this LuaValue.</param>
+    // TODO: This should COPY the given array to ensure immutability
     public LuaValue(byte[] value, LuaTable? metatable = null)
     {
         _string = value;
