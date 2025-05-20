@@ -35,7 +35,7 @@ public enum LuaValueKind
     
     /// <summary>
     /// Userdata type, arbitrary data passed in by Lua's native runtime environment. Underlying C# type
-    /// <see cref="object"/>.
+    /// <see cref="LuaUserdata"/>.
     /// </summary>
     Userdata,
     

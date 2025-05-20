@@ -22,5 +22,7 @@ public static class Lexer
             buffer[offset] = source[position + offset];
             // TODO: Check Symbols trie prefixes
         }
+
+        return default;
     }
 }

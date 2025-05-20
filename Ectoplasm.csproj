@@ -11,4 +11,8 @@
       <PackageReference Include="KTrie" Version="2.6.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Runtime\Tables\" />
+    </ItemGroup>
+
 </Project>

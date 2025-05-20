@@ -7,8 +7,8 @@ namespace Ectoplasm.Runtime;
 /// Represents a dynamic value used in Lua.
 /// </summary>
 /// <remarks>
-/// Struct is sized and laid out assuming a 64-bit process. It will still work with a 32-bit process, but some space
-/// will be wasted. This is unfortunately unavoidable.
+/// To create a <see cref="LuaValue"/> with a <see cref="Kind"/> of <see cref="LuaValueKind.Nil"/>, use the 'default'
+/// keyword.
 /// </remarks>
 [StructLayout(LayoutKind.Explicit)]
 public struct LuaValue
@@ -18,26 +18,14 @@ public struct LuaValue
     [FieldOffset(0)] private readonly double _float;
     [FieldOffset(0)] private readonly byte[] _string = null!;
     [FieldOffset(0)] private readonly LuaFunction _function = null!;
-    [FieldOffset(0)] private readonly object _userdata = null!;
+    [FieldOffset(0)] private readonly LuaUserdata _userdata = null!;
     [FieldOffset(0)] private readonly LuaThread _thread = null!;
     [FieldOffset(0)] private readonly LuaTable _table = null!;
-
-    [FieldOffset(8)] private LuaTable? _metatable;
-
-    public LuaTable Metatable
-    {
-        get
-        {
-            _metatable ??= new LuaTable();
-            return _metatable;
-        }
-        set => _metatable = value;
-    }
     
     /// <summary>
     /// The actual runtime type of this dynamically-typed Lua value.
     /// </summary>
-    [FieldOffset(16)] public readonly LuaValueKind Kind;
+    [FieldOffset(8)] public readonly LuaValueKind Kind;
     
     /// <summary>
     /// Determines the truthiness of this LuaValue. Returns true if <see cref="Kind"/> is not
@@ -128,7 +116,7 @@ public struct LuaValue
     /// <exception cref="InvalidCastException">
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.Userdata"/>.
     /// </exception>
-    public object Userdata
+    public LuaUserdata Userdata
         => Kind == LuaValueKind.Userdata
             ? _userdata
             : throw new InvalidCastException("LuaValue does not represent a userdata value.");
@@ -239,7 +227,7 @@ public struct LuaValue
     /// <exception cref="InvalidCastException">
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.Userdata"/> or <see cref="LuaValueKind.Nil"/>.
     /// </exception>
-    public object? NullableUserdata
+    public LuaUserdata? NullableUserdata
         => Kind == LuaValueKind.Nil
             ? null
             : Userdata;
@@ -270,26 +258,14 @@ public struct LuaValue
     #endregion
 
     #region Basic Constructors
-    
-    /// <summary>
-    /// Creates a new LuaValue with nil value.
-    /// </summary>
-    /// <param name="metatable">Metatable to apply to this LuaValue.</param>
-    public LuaValue(LuaTable? metatable = null)
-    {
-        _metatable = metatable;
-        Kind = LuaValueKind.Nil;
-    }
 
     /// <summary>
     /// Creates a new LuaValue with boolean value.
     /// </summary>
     /// <param name="value">Boolean value of the new LuaValue.</param>
-    /// <param name="metatable">Metatable to apply to this LuaValue.</param>
-    public LuaValue(bool value, LuaTable? metatable = null)
+    public LuaValue(bool value)
     {
         _boolean = value;
-        _metatable = metatable;
         Kind = LuaValueKind.Boolean;
     }
 
@@ -297,11 +273,9 @@ public struct LuaValue
     /// Creates a new LuaValue with integer value.
     /// </summary>
     /// <param name="value">Integer value of the new LuaValue.</param>
-    /// <param name="metatable">Metatable to apply to this LuaValue.</param>
-    public LuaValue(long value, LuaTable? metatable = null)
+    public LuaValue(long value)
     {
         _integer = value;
-        _metatable = metatable;
         Kind = LuaValueKind.Integer;
     }
 
@@ -309,11 +283,9 @@ public struct LuaValue
     /// Creates a new LuaValue with float value.
     /// </summary>
     /// <param name="value">Float value of the new LuaValue.</param>
-    /// <param name="metatable">Metatable to apply to this LuaValue.</param>
-    public LuaValue(double value, LuaTable? metatable = null)
+    public LuaValue(double value)
     {
         _float = value;
-        _metatable = metatable;
         Kind = LuaValueKind.Float;
     }
 
@@ -321,13 +293,10 @@ public struct LuaValue
     /// Creates a new LuaValue with string value.
     /// </summary>
     /// <param name="value">String value of the new LuaValue.</param>
-    /// <param name="metatable">Metatable to apply to this LuaValue.</param>
-    // TODO: This should COPY the given array to ensure immutability
     // TODO: Also add extra string constructor for ReadOnlySpan<byte>
-    public LuaValue(byte[] value, LuaTable? metatable = null)
+    public LuaValue(byte[] value)
     {
         _string = value;
-        _metatable = metatable;
         Kind = LuaValueKind.String;
     }
 
@@ -336,11 +305,9 @@ public struct LuaValue
     /// be stored in the value.
     /// </summary>
     /// <param name="value">String value of the new LuaValue.</param>
-    /// <param name="metatable">Metatable to apply to this LuaValue.</param>
-    public LuaValue(string value, LuaTable? metatable = null)
+    public LuaValue(string value)
     {
         _string = Encoding.UTF8.GetBytes(value);
-        _metatable = metatable;
         Kind = LuaValueKind.String;
     }
 
@@ -348,11 +315,9 @@ public struct LuaValue
     /// Creates a new LuaValue with function value.
     /// </summary>
     /// <param name="value">Function value of the new LuaValue.</param>
-    /// <param name="metatable">Metatable to apply to this LuaValue.</param>
-    public LuaValue(LuaFunction value, LuaTable? metatable = null)
+    public LuaValue(LuaFunction value)
     {
         _function = value;
-        _metatable = metatable;
         Kind = LuaValueKind.Function;
     }
     
@@ -360,11 +325,9 @@ public struct LuaValue
     /// Creates a new LuaValue with userdata value.
     /// </summary>
     /// <param name="value">Userdata value of the new LuaValue.</param>
-    /// <param name="metatable">Metatable to apply to this LuaValue.</param>
-    public LuaValue(object value, LuaTable? metatable = null)
+    public LuaValue(LuaUserdata value)
     {
         _userdata = value;
-        _metatable = metatable;
         Kind = LuaValueKind.Userdata;
     }
 
@@ -372,11 +335,9 @@ public struct LuaValue
     /// Creates a new LuaValue with Lua thread value.
     /// </summary>
     /// <param name="value">Lua thread value of the new LuaValue.</param>
-    /// <param name="metatable">Metatable to apply to this LuaValue.</param>
-    public LuaValue(LuaThread value, LuaTable? metatable = null)
+    public LuaValue(LuaThread value)
     {
         _thread = value;
-        _metatable = metatable;
         Kind = LuaValueKind.Thread;
     }
 
@@ -384,11 +345,9 @@ public struct LuaValue
     /// Creates a new LuaValue with Lua table value.
     /// </summary>
     /// <param name="value">Lua table value of the new LuaValue.</param>
-    /// <param name="metatable">Metatable to apply to this LuaValue.</param>
-    public LuaValue(LuaTable value, LuaTable? metatable = null)
+    public LuaValue(LuaTable value)
     {
         _table = value;
-        _metatable = metatable;
         Kind = LuaValueKind.Table;
     }
     
@@ -409,7 +368,8 @@ public struct LuaValue
     public static implicit operator LuaValue(double value) => new(value);
     public static implicit operator LuaValue(byte[] value) => new(value);
     public static implicit operator LuaValue(string value) => new(value);
-    public static implicit operator LuaValue(Func<LuaState, LuaState> value) => new(value);
+    public static implicit operator LuaValue(LuaFunction value) => new(value);
+    public static implicit operator LuaValue(LuaUserdata value) => new(value);
     public static implicit operator LuaValue(LuaThread value) => new(value);
     public static implicit operator LuaValue(LuaTable value) => new(value);
 
@@ -430,6 +390,7 @@ public struct LuaValue
     public static explicit operator ReadOnlySpan<byte>(LuaValue value) => value.String;
     public static explicit operator string(LuaValue value) => value.StringUtf16;
     public static explicit operator LuaFunction(LuaValue value) => value.Function;
+    public static explicit operator LuaUserdata(LuaValue value) => value.Userdata;
     public static explicit operator LuaThread(LuaValue value) => value.Thread;
     public static explicit operator LuaTable(LuaValue value) => value.Table;
     
