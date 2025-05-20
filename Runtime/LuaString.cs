@@ -14,6 +14,8 @@ internal readonly struct LuaString
 
     public string DataUtf16 => Encoding.UTF8.GetString(_data);
 
+    public long Length => _data.Length;
+
     internal LuaString(byte[] data)
     {
         _data = data;
