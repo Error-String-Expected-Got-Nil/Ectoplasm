@@ -13,14 +13,14 @@ namespace Ectoplasm.Runtime;
 [StructLayout(LayoutKind.Explicit)]
 public struct LuaValue
 {
-    [FieldOffset(0)] private readonly bool _boolean;
-    [FieldOffset(0)] private readonly long _integer;
-    [FieldOffset(0)] private readonly double _float;
-    [FieldOffset(0)] private readonly LuaString _string;
-    [FieldOffset(0)] private readonly LuaFunction _function = null!;
-    [FieldOffset(0)] private readonly LuaUserdata _userdata = null!;
-    [FieldOffset(0)] private readonly LuaThread _thread = null!;
-    [FieldOffset(0)] private readonly LuaTable _table = null!;
+    [FieldOffset(0)] internal readonly bool _boolean;
+    [FieldOffset(0)] internal readonly long _integer;
+    [FieldOffset(0)] internal readonly double _float;
+    [FieldOffset(0)] internal readonly LuaString _string;
+    [FieldOffset(0)] internal readonly LuaFunction _function = null!;
+    [FieldOffset(0)] internal readonly LuaUserdata _userdata = null!;
+    [FieldOffset(0)] internal readonly LuaThread _thread = null!;
+    [FieldOffset(0)] internal readonly LuaTable _table = null!;
     
     /// <summary>
     /// The actual runtime type of this dynamically-typed Lua value.
