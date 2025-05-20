@@ -28,7 +28,7 @@ public abstract class TableImpl
     /// <param name="index">Index to set the value at.</param>
     /// <param name="value">Value to assign to the given index.</param>
     /// <returns>
-    /// True if assignment was successful, false if not. Upgrading the implementation should allow assignment. if false
+    /// True if assignment was successful, false if not. Upgrading the implementation should allow assignment, if false
     /// was returned.
     /// </returns>
     public abstract bool Set(LuaValue index, LuaValue value);
