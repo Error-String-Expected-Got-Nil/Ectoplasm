@@ -1,0 +1,41 @@
+﻿using System.Text;
+
+namespace Ectoplasm.Runtime;
+
+/// <summary>
+/// Value type representing a Lua string. Only a wrapper around an array of <see cref="byte"/>, marked as internal to
+/// prevent mutation or access by external users. All interaction should occur through <see cref="LuaValue"/>.
+/// </summary>
+internal readonly struct LuaString
+{
+    private readonly byte[] _data;
+
+    public ReadOnlySpan<byte> Data => _data;
+
+    public string DataUtf16 => Encoding.UTF8.GetString(_data);
+
+    internal LuaString(byte[] data)
+    {
+        _data = data;
+    }
+
+    public LuaString(LuaString data)
+    {
+        _data = data._data;
+    }
+
+    public LuaString(ReadOnlySpan<byte> data)
+    {
+        _data = data.ToArray();
+    }
+
+    public LuaString(string data)
+    {
+        _data = Encoding.UTF8.GetBytes(data);
+    }
+    
+    // Basic djb2 hash, for lack of any better ideas.
+    private const int HashSeed = 5381;
+    public override int GetHashCode() 
+        => _data.Aggregate(HashSeed, (hash, b) => (hash << 5) + hash + b);
+}

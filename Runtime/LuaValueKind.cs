@@ -23,8 +23,8 @@ public enum LuaValueKind
     Float,
     
     /// <summary>
-    /// Immutable byte sequence. Underlying C# type is an array of <see cref="byte"/>, though not accessible as such to
-    /// prevent mutation.
+    /// Immutable byte sequence. Underlying C# type is <see cref="LuaString"/>, though this type is marked as internal,
+    /// and it is only externally accessible through <see cref="LuaValue"/>.
     /// </summary>
     String,
     

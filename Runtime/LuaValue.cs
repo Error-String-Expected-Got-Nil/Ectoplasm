@@ -16,7 +16,7 @@ public struct LuaValue
     [FieldOffset(0)] private readonly bool _boolean;
     [FieldOffset(0)] private readonly long _integer;
     [FieldOffset(0)] private readonly double _float;
-    [FieldOffset(0)] private readonly byte[] _string = null!;
+    [FieldOffset(0)] private readonly LuaString _string;
     [FieldOffset(0)] private readonly LuaFunction _function = null!;
     [FieldOffset(0)] private readonly LuaUserdata _userdata = null!;
     [FieldOffset(0)] private readonly LuaThread _thread = null!;
@@ -77,7 +77,7 @@ public struct LuaValue
     /// </exception>
     public ReadOnlySpan<byte> String
         => Kind == LuaValueKind.String
-            ? _string
+            ? _string.Data
             : throw new InvalidCastException("LuaValue does not represent a Lua string value.");
     
     /// <summary>
@@ -95,7 +95,7 @@ public struct LuaValue
     /// </exception>
     public string StringUtf16 
         => Kind == LuaValueKind.String 
-            ? Encoding.UTF8.GetString(_string) 
+            ? _string.DataUtf16
             : throw new InvalidCastException("LuaValue does not represent a Lua string value.");
         
         
@@ -293,10 +293,9 @@ public struct LuaValue
     /// Creates a new LuaValue with string value.
     /// </summary>
     /// <param name="value">String value of the new LuaValue.</param>
-    // TODO: Also add extra string constructor for ReadOnlySpan<byte>
-    public LuaValue(byte[] value)
+    public LuaValue(ReadOnlySpan<byte> value)
     {
-        _string = value;
+        _string = new LuaString(value);
         Kind = LuaValueKind.String;
     }
 
@@ -307,7 +306,17 @@ public struct LuaValue
     /// <param name="value">String value of the new LuaValue.</param>
     public LuaValue(string value)
     {
-        _string = Encoding.UTF8.GetBytes(value);
+        _string = new LuaString(value);
+        Kind = LuaValueKind.String;
+    }
+
+    /// <summary>
+    /// For internal use, create a LuaValue directly from a <see cref="LuaString"/>.
+    /// </summary>
+    /// <param name="value">String value of the new LuaValue.</param>
+    internal LuaValue(LuaString value)
+    {
+        _string = value;
         Kind = LuaValueKind.String;
     }
 
