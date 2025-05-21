@@ -28,16 +28,8 @@ public abstract class TableImpl
     /// <param name="index">Index to set the value at.</param>
     /// <param name="value">Value to assign to the given index.</param>
     /// <returns>
-    /// True if assignment was successful, false if not. Upgrading the implementation should allow assignment, if false
-    /// was returned.
+    /// If the set was successful, the same TableImpl. If not, the implementation will be upgraded, the new
+    /// implementation will take the assignment, and the new implementation will be returned.
     /// </returns>
-    public abstract bool Set(LuaValue index, LuaValue value);
-
-    /// <summary>
-    /// Upgrade this table implementation so that it is able to assign the given value to the given index.
-    /// </summary>
-    /// <param name="index">Index to set the value at.</param>
-    /// <param name="value">Value to assign to the given index.</param>
-    /// <returns>The new implementation, which can handle the assignment, with the assignment performed.</returns>
-    public abstract TableImpl Upgrade(LuaValue index, LuaValue value);
+    public abstract TableImpl Set(LuaValue index, LuaValue value);
 }
