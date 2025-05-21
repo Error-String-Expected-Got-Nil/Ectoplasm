@@ -363,6 +363,32 @@ public readonly struct LuaValue
     #endregion
     
     #region Standard Operations
+
+    /// <summary>
+    /// Attempt to coerce this LuaValue to a long.
+    /// </summary>
+    /// <param name="value">The coerced value, or 0 if a value could not be coerced.</param>
+    /// <returns>
+    /// True if the LuaValue was an integer, or a float convertable to an integer without loss of fraction. False
+    /// otherwise.
+    /// </returns>
+    public bool TryCoerceInteger(out long value)
+    {
+        // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
+        switch (Kind)
+        {
+            case LuaValueKind.Integer:
+                value = _integer;
+                return true;
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
+            case LuaValueKind.Float when _float == (long)_float:
+                value = (long)_float;
+                return true;
+            default:
+                value = 0;
+                return false;
+        }
+    }
     
     // TODO: Arithmetic operations with metatables
     
