@@ -69,7 +69,12 @@ internal class TableImpl_Integers(Dictionary<long, LuaValue> dictPortion, List<L
         // Setting index may require growing list
         if (intIndex >= listPortion.Count)
         {
-            if (value.Kind == LuaValueKind.Nil) return this;
+            // Value is outside list and is nil, remove it from dictionary portion if and return
+            if (value.Kind == LuaValueKind.Nil)
+            {
+                dictPortion.Remove(coercedIndex + 1);
+                return this;
+            }
             
             // Appending directly onto the end will never increase the nil ratio
             if (intIndex == listPortion.Count)
