@@ -4,10 +4,8 @@
 /// Table implementation for tables containing only string keys.
 /// </summary>
 // ReSharper disable once InconsistentNaming
-internal class TableImpl_Strings : TableImpl
+internal class TableImpl_Strings(Dictionary<LuaString, LuaValue> values) : TableImpl
 {
-    private readonly Dictionary<LuaString, LuaValue> _values;
-    
     /// <inheritdoc/>
     // A TableImpl_Strings will never have integer keys and therefore always has length 0.
     public override long Length => 0;
@@ -16,7 +14,7 @@ internal class TableImpl_Strings : TableImpl
     public override LuaValue Get(LuaValue index)
     {
         if (index.Kind != LuaValueKind.String) return default;
-        _values.TryGetValue(index._string, out var value);
+        values.TryGetValue(index._string, out var value);
         return value;
     }
 
@@ -26,18 +24,26 @@ internal class TableImpl_Strings : TableImpl
         if (index.Kind != LuaValueKind.String)
         {
             if (value.Kind == LuaValueKind.Nil) return this;
-            
-            // TODO: Upgrade implementation
-            throw new NotImplementedException();
+
+            if (index.TryCoerceInteger(out var coercedInteger))
+                return coercedInteger switch
+                {
+                    1 => new TableImpl_Array([value], 0),
+                    2 => new TableImpl_Array([default, value], 1),
+                    _ => new TableImpl_Integers(new Dictionary<long, LuaValue> { { coercedInteger, value } },
+                        [], 0)
+                };
+
+            return TableImplUtil.UpgradeToCompleteImpl(index, value, values);
         }
 
         if (value.Kind == LuaValueKind.Nil)
         {
-            _values.Remove(index._string);
+            values.Remove(index._string);
             return this;
         }
 
-        _values[index._string] = value;
+        values[index._string] = value;
         return this;
     }
 }

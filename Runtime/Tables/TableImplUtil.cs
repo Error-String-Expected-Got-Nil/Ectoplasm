@@ -31,4 +31,39 @@ public static class TableImplUtil
         list.RemoveRange(index, list.Count - index);
         if (list.Capacity - list.Count >= MinCountForMemorySaving) list.TrimExcess();
     }
+    
+    // Horribly gangly utility function that produces a TableImpl_Complete given old data and a new index/value pair.
+    internal static TableImpl_Complete UpgradeToCompleteImpl(LuaValue index, LuaValue value,
+        Dictionary<LuaString, LuaValue>? stringsDict = null, Dictionary<long, LuaValue>? intsDict = null,
+        List<LuaValue>? list = null, int nilCount = 0)
+        // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
+        => index.Kind switch
+        {
+            LuaValueKind.Boolean => index._boolean
+                ? new TableImpl_Complete(value, default, [], [], stringsDict ?? [],
+                    intsDict ?? [], list ?? [], nilCount)
+                : new TableImpl_Complete(default, value, [], [], stringsDict ?? [],
+                    intsDict ?? [], list ?? [], nilCount),
+            LuaValueKind.Float => new TableImpl_Complete(default, default,
+                new Dictionary<double, LuaValue> { { index._float, value } }, [],
+                stringsDict ?? [], intsDict ?? [], list ?? [], nilCount),
+            LuaValueKind.String => new TableImpl_Complete(default, default, [],
+                [], new Dictionary<LuaString, LuaValue> { { index._string, value } }, intsDict ?? [],
+                list ?? [], nilCount),
+            LuaValueKind.Function => new TableImpl_Complete(default, default, [],
+                new Dictionary<object, LuaValue> { { index._function, value } }, stringsDict ?? [],
+                intsDict ?? [], list ?? [], nilCount),
+            LuaValueKind.Userdata => new TableImpl_Complete(default, default, [],
+                new Dictionary<object, LuaValue> { { index._userdata, value } }, stringsDict ?? [],
+                intsDict ?? [], list ?? [], nilCount),
+            LuaValueKind.Thread => new TableImpl_Complete(default, default, [],
+                new Dictionary<object, LuaValue> { { index._thread, value } }, stringsDict ?? [],
+                intsDict ?? [], list ?? [], nilCount),
+            LuaValueKind.Table => new TableImpl_Complete(default, default, [],
+                new Dictionary<object, LuaValue> { { index._table, value } }, stringsDict ?? [],
+                intsDict ?? [], list ?? [], nilCount),
+            _ => throw new ArgumentException($"Failed to find suitable upgrade path for index (Kind = {index.Kind})",
+                nameof(index))
+        };
+
 }

@@ -19,8 +19,19 @@ internal class TableImpl_Empty : TableImpl
     public override TableImpl Set(LuaValue index, LuaValue value)
     {
         if (value.Kind == LuaValueKind.Nil) return this;
+
+        if (index.Kind == LuaValueKind.String)
+            return new TableImpl_Strings(new Dictionary<LuaString, LuaValue> { { index._string, value } });
         
-        // TODO: Upgrade implementation
-        throw new NotImplementedException();
+        if (index.TryCoerceInteger(out var coercedInteger))
+            return coercedInteger switch
+            {
+                1 => new TableImpl_Array([value], 0),
+                2 => new TableImpl_Array([default, value], 1),
+                _ => new TableImpl_Integers(new Dictionary<long, LuaValue> { { coercedInteger, value } },
+                    [], 0)
+            };
+
+        return TableImplUtil.UpgradeToCompleteImpl(index, value);
     }
 }

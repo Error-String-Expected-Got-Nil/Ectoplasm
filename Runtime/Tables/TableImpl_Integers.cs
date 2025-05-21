@@ -43,8 +43,12 @@ internal class TableImpl_Integers(Dictionary<long, LuaValue> dictPortion, List<L
             // Nil assignment to key not contained in this table anyway; we don't have to do anything.
             if (value.Kind == LuaValueKind.Nil) return this;
             
-            // TODO: Upgrade to implementation able to handle it
-            throw new NotImplementedException();
+            if (index.Kind == LuaValueKind.String)
+                return new TableImpl_Multi(new Dictionary<LuaString, LuaValue> { { index._string, value } }, 
+                    dictPortion, listPortion, _listNilCount);
+            
+            return TableImplUtil.UpgradeToCompleteImpl(index, value, intsDict: dictPortion, list: listPortion, 
+                nilCount: _listNilCount);
         }
 
         // Decrement because Lua tables use 1-based indexing
