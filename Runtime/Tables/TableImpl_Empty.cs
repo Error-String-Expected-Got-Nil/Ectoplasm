@@ -21,7 +21,7 @@ internal class TableImpl_Empty : TableImpl
         if (value.Kind == LuaValueKind.Nil) return this;
 
         if (index.Kind == LuaValueKind.String)
-            return new TableImpl_Strings(new Dictionary<LuaString, LuaValue> { { index._string, value } });
+            return new TableImpl_Strings(new Dictionary<LuaString, LuaValue> { { (LuaString)index._ref, value } });
         
         if (index.TryCoerceInteger(out var coercedInteger))
             return coercedInteger switch

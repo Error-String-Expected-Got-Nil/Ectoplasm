@@ -44,7 +44,7 @@ internal class TableImpl_Integers(Dictionary<long, LuaValue> dictPortion, List<L
             if (value.Kind == LuaValueKind.Nil) return this;
             
             if (index.Kind == LuaValueKind.String)
-                return new TableImpl_Multi(new Dictionary<LuaString, LuaValue> { { index._string, value } }, 
+                return new TableImpl_Multi(new Dictionary<LuaString, LuaValue> { { (LuaString)index._ref, value } }, 
                     dictPortion, listPortion, _listNilCount);
             
             return TableImplUtil.UpgradeToCompleteImpl(index, value, intsDict: dictPortion, list: listPortion, 

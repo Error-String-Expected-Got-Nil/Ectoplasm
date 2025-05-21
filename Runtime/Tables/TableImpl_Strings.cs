@@ -14,7 +14,7 @@ internal class TableImpl_Strings(Dictionary<LuaString, LuaValue> values) : Table
     public override LuaValue Get(LuaValue index)
     {
         if (index.Kind != LuaValueKind.String) return default;
-        values.TryGetValue(index._string, out var value);
+        values.TryGetValue((LuaString)index._ref, out var value);
         return value;
     }
 
@@ -39,11 +39,11 @@ internal class TableImpl_Strings(Dictionary<LuaString, LuaValue> values) : Table
 
         if (value.Kind == LuaValueKind.Nil)
         {
-            values.Remove(index._string);
+            values.Remove((LuaString)index._ref);
             return this;
         }
 
-        values[index._string] = value;
+        values[(LuaString)index._ref] = value;
         return this;
     }
 }

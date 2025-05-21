@@ -16,16 +16,18 @@ public readonly struct LuaValue
     [FieldOffset(0)] internal readonly bool _boolean;
     [FieldOffset(0)] internal readonly long _integer;
     [FieldOffset(0)] internal readonly double _float;
-    [FieldOffset(0)] internal readonly LuaString _string;
-    [FieldOffset(0)] internal readonly LuaFunction _function = null!;
-    [FieldOffset(0)] internal readonly LuaUserdata _userdata = null!;
-    [FieldOffset(0)] internal readonly LuaThread _thread = null!;
-    [FieldOffset(0)] internal readonly LuaTable _table = null!;
+
+    // Unfortunately, you aren't allowed to have a reference type overlapping a non-reference type in an explicitly
+    // laid out struct, so we can't have a union of every possible type. Besides having this extra reference field, the
+    // only other practical solution seemed like having a *single* object-type field, but that would necessitate boxing
+    // and unboxing whenever a bool/long/double was accessed, which seemed worse than increasing the size of a LuaValue
+    // from 16 to 24 bytes.
+    [FieldOffset(8)] internal readonly object _ref = null!;
     
     /// <summary>
     /// The actual runtime type of this dynamically-typed Lua value.
     /// </summary>
-    [FieldOffset(8)] public readonly LuaValueKind Kind;
+    [FieldOffset(16)] public readonly LuaValueKind Kind;
     
     /// <summary>
     /// Determines the truthiness of this LuaValue. Returns true if <see cref="Kind"/> is not
@@ -77,7 +79,7 @@ public readonly struct LuaValue
     /// </exception>
     public ReadOnlySpan<byte> String
         => Kind == LuaValueKind.String
-            ? _string.Data
+            ? ((LuaString)_ref).Data
             : throw new InvalidCastException("LuaValue does not represent a Lua string value.");
     
     /// <summary>
@@ -95,7 +97,7 @@ public readonly struct LuaValue
     /// </exception>
     public string StringUtf16 
         => Kind == LuaValueKind.String 
-            ? _string.DataUtf16
+            ? ((LuaString)_ref).DataUtf16
             : throw new InvalidCastException("LuaValue does not represent a Lua string value.");
         
         
@@ -107,7 +109,7 @@ public readonly struct LuaValue
     /// </exception>
     public LuaFunction Function
         => Kind == LuaValueKind.Function
-            ? _function
+            ? (LuaFunction)_ref
             : throw new InvalidCastException("LuaValue does not represent a function value.");
     
     /// <summary>
@@ -118,7 +120,7 @@ public readonly struct LuaValue
     /// </exception>
     public LuaUserdata Userdata
         => Kind == LuaValueKind.Userdata
-            ? _userdata
+            ? (LuaUserdata)_ref
             : throw new InvalidCastException("LuaValue does not represent a userdata value.");
 
     /// <summary>
@@ -129,7 +131,7 @@ public readonly struct LuaValue
     /// </exception>
     public LuaThread Thread
         => Kind == LuaValueKind.Thread
-            ? _thread
+            ? (LuaThread)_ref
             : throw new InvalidCastException("LuaValue does not represent a Lua thread value.");
     
     /// <summary>
@@ -140,7 +142,7 @@ public readonly struct LuaValue
     /// </exception>
     public LuaTable Table
         => Kind == LuaValueKind.Table
-            ? _table
+            ? (LuaTable)_ref
             : throw new InvalidCastException("LuaValue does not represent a table value.");
     
     #endregion
@@ -295,7 +297,7 @@ public readonly struct LuaValue
     /// <param name="value">String value of the new LuaValue.</param>
     public LuaValue(ReadOnlySpan<byte> value)
     {
-        _string = new LuaString(value);
+        _ref = new LuaString(value);
         Kind = LuaValueKind.String;
     }
 
@@ -306,7 +308,7 @@ public readonly struct LuaValue
     /// <param name="value">String value of the new LuaValue.</param>
     public LuaValue(string value)
     {
-        _string = new LuaString(value);
+        _ref = new LuaString(value);
         Kind = LuaValueKind.String;
     }
 
@@ -316,7 +318,7 @@ public readonly struct LuaValue
     /// <param name="value">String value of the new LuaValue.</param>
     internal LuaValue(LuaString value)
     {
-        _string = value;
+        _ref = value;
         Kind = LuaValueKind.String;
     }
 
@@ -332,7 +334,7 @@ public readonly struct LuaValue
             return;
         }
         
-        _function = value;
+        _ref = value;
         Kind = LuaValueKind.Function;
     }
     
@@ -348,7 +350,7 @@ public readonly struct LuaValue
             return;
         }
         
-        _userdata = value;
+        _ref = value;
         Kind = LuaValueKind.Userdata;
     }
 
@@ -364,7 +366,7 @@ public readonly struct LuaValue
             return;
         }
         
-        _thread = value;
+        _ref = value;
         Kind = LuaValueKind.Thread;
     }
 
@@ -380,7 +382,7 @@ public readonly struct LuaValue
             return;
         }
         
-        _table = value;
+        _ref = value;
         Kind = LuaValueKind.Table;
     }
     
@@ -425,7 +427,7 @@ public readonly struct LuaValue
     public static implicit operator LuaValue(bool value) => new(value);
     public static implicit operator LuaValue(long value) => new(value);
     public static implicit operator LuaValue(double value) => new(value);
-    public static implicit operator LuaValue(byte[] value) => new(value);
+    public static implicit operator LuaValue(ReadOnlySpan<byte> value) => new(value);
     public static implicit operator LuaValue(string value) => new(value);
     public static implicit operator LuaValue(LuaFunction value) => new(value);
     public static implicit operator LuaValue(LuaUserdata value) => new(value);

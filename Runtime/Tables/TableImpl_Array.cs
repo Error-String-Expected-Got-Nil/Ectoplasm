@@ -32,7 +32,7 @@ internal class TableImpl_Array(List<LuaValue> values, int nilCount) : TableImpl
             if (value.Kind == LuaValueKind.Nil) return this;
 
             if (index.Kind == LuaValueKind.String)
-                return new TableImpl_Multi(new Dictionary<LuaString, LuaValue> { { index._string, value } }, 
+                return new TableImpl_Multi(new Dictionary<LuaString, LuaValue> { { (LuaString)index._ref, value } }, 
                     [], values, _nilCount);
             
             return TableImplUtil.UpgradeToCompleteImpl(index, value, list: values, nilCount: _nilCount);

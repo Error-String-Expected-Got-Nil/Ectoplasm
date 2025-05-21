@@ -26,11 +26,9 @@ internal class TableImpl_Complete(LuaValue trueValue, LuaValue falseValue,
             {
                 LuaValueKind.Boolean => index._boolean ? _trueValue : _falseValue,
                 LuaValueKind.Float => floatsDictPortion.GetValueOrDefault(index._float),
-                LuaValueKind.String => stringsDictPortion.GetValueOrDefault(index._string),
-                LuaValueKind.Function => refsDictPortion.GetValueOrDefault(index._function),
-                LuaValueKind.Userdata => refsDictPortion.GetValueOrDefault(index._userdata),
-                LuaValueKind.Thread => refsDictPortion.GetValueOrDefault(index._thread),
-                LuaValueKind.Table => refsDictPortion.GetValueOrDefault(index._table),
+                LuaValueKind.String => stringsDictPortion.GetValueOrDefault((LuaString)index._ref),
+                LuaValueKind.Function or LuaValueKind.Userdata or LuaValueKind.Thread or LuaValueKind.Table 
+                    => refsDictPortion.GetValueOrDefault(index._ref),
                 _ => default
             };
         
@@ -50,11 +48,9 @@ internal class TableImpl_Complete(LuaValue trueValue, LuaValue falseValue,
             {
                 LuaValueKind.Boolean => SetBoolean(index._boolean, value),
                 LuaValueKind.Float => SetFloat(index._float, value),
-                LuaValueKind.String => SetString(index._string, value),
-                LuaValueKind.Function => SetRef(index._function, value),
-                LuaValueKind.Userdata => SetRef(index._userdata, value),
-                LuaValueKind.Thread => SetRef(index._thread, value),
-                LuaValueKind.Table => SetRef(index._table, value),
+                LuaValueKind.String => SetString((LuaString)index._ref, value),
+                LuaValueKind.Function or LuaValueKind.Userdata or LuaValueKind.Thread or LuaValueKind.Table 
+                    => SetRef(index._ref, value),
                 _ => this
             };
         

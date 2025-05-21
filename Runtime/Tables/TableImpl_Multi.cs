@@ -19,7 +19,7 @@ internal class TableImpl_Multi(Dictionary<LuaString, LuaValue> stringsDictPortio
     {
         if (index.Kind == LuaValueKind.String)
         {
-            stringsDictPortion.TryGetValue(index._string, out var sValue);
+            stringsDictPortion.TryGetValue((LuaString)index._ref, out var sValue);
             return sValue;
         }
 
@@ -37,7 +37,7 @@ internal class TableImpl_Multi(Dictionary<LuaString, LuaValue> stringsDictPortio
     public override TableImpl Set(LuaValue index, LuaValue value)
     {
         if (index.Kind == LuaValueKind.String)
-            return SetString(index._string, value);
+            return SetString((LuaString)index._ref, value);
 
         if (index.TryCoerceInteger(out var coercedIndex))
             return SetInteger(coercedIndex, value);
