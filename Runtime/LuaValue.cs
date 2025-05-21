@@ -324,8 +324,14 @@ public readonly struct LuaValue
     /// Creates a new LuaValue with function value.
     /// </summary>
     /// <param name="value">Function value of the new LuaValue.</param>
-    public LuaValue(LuaFunction value)
+    public LuaValue(LuaFunction? value)
     {
+        if (value == null)
+        {
+            Kind = LuaValueKind.Nil;
+            return;
+        }
+        
         _function = value;
         Kind = LuaValueKind.Function;
     }
@@ -334,8 +340,14 @@ public readonly struct LuaValue
     /// Creates a new LuaValue with userdata value.
     /// </summary>
     /// <param name="value">Userdata value of the new LuaValue.</param>
-    public LuaValue(LuaUserdata value)
+    public LuaValue(LuaUserdata? value)
     {
+        if (value == null)
+        {
+            Kind = LuaValueKind.Nil;
+            return;
+        }
+        
         _userdata = value;
         Kind = LuaValueKind.Userdata;
     }
@@ -344,8 +356,14 @@ public readonly struct LuaValue
     /// Creates a new LuaValue with Lua thread value.
     /// </summary>
     /// <param name="value">Lua thread value of the new LuaValue.</param>
-    public LuaValue(LuaThread value)
+    public LuaValue(LuaThread? value)
     {
+        if (value == null)
+        {
+            Kind = LuaValueKind.Nil;
+            return;
+        }
+        
         _thread = value;
         Kind = LuaValueKind.Thread;
     }
@@ -354,8 +372,14 @@ public readonly struct LuaValue
     /// Creates a new LuaValue with Lua table value.
     /// </summary>
     /// <param name="value">Lua table value of the new LuaValue.</param>
-    public LuaValue(LuaTable value)
+    public LuaValue(LuaTable? value)
     {
+        if (value == null)
+        {
+            Kind = LuaValueKind.Nil;
+            return;
+        }
+        
         _table = value;
         Kind = LuaValueKind.Table;
     }
