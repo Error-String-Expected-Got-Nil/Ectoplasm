@@ -6,7 +6,7 @@
 /// is almost always the case for tables used like arrays in Lua.
 /// </summary>
 // ReSharper disable once InconsistentNaming
-public class TableImpl_Array : TableImpl
+internal class TableImpl_Array : TableImpl
 {
     private readonly List<LuaValue> _values = [];
     private int _nilCount;
@@ -19,7 +19,7 @@ public class TableImpl_Array : TableImpl
     {
         if (!index.TryCoerceInteger(out var coercedIndex)) return default;
         coercedIndex--;
-        if (coercedIndex is < 0 or > int.MaxValue || coercedIndex >= _values.Count) return default;
+        if (coercedIndex is < 0 or >= int.MaxValue || coercedIndex >= _values.Count) return default;
         return _values[(int)coercedIndex];
     }
 
@@ -36,26 +36,49 @@ public class TableImpl_Array : TableImpl
             throw new NotImplementedException();
         }
 
+        // Decrement because Lua tables use 1-based indexing
         coercedIndex--;
 
         // Index isn't ever containable in this table, may need upgrade
-        if (coercedIndex is < 0 or > int.MaxValue)
+        if (coercedIndex is < 0 or >= int.MaxValue)
         {
             if (value.Kind == LuaValueKind.Nil) return this;
-            
-            // TODO: Upgrade to implementation with Dictionary<long, LuaValue>
-            throw new NotImplementedException();
+
+            // coercedIndex is incremented to undo the earlier decrement
+            return new TableImpl_Integers(new Dictionary<long, LuaValue> { { coercedIndex + 1, value } }, 
+                _values, _nilCount);
         }
 
         var intIndex = (int)coercedIndex;
         
         // Setting index may require growing list, may also result in upgrade
-        if (intIndex > _values.Count)
+        if (intIndex >= _values.Count)
         {
             if (value.Kind == LuaValueKind.Nil) return this;
+
+            // Appending directly onto the end will never increase the nil ratio
+            if (intIndex == _values.Count)
+            {
+                _values.Add(value);
+                return this;
+            }
+
+            // Otherwise, we need to append a certain number of nils before the new value to make sure it goes to the
+            // correct index. To avoid wasting too much space, we only do this if it won't make more than half of the
+            // list nil.
+            var extraNils = _values.Count - intIndex;
+            if (_nilCount + extraNils > (intIndex + 1) / 2)
+                // Nil ratio will be over one half. Instead, we'll upgrade to TableImpl_Integers and add the new value
+                // into its dictionary portion. Note that coercedIndex is incremented to undo the earlier decrement.
+                return new TableImpl_Integers(new Dictionary<long, LuaValue> { { coercedIndex + 1, value } },
+                    _values, _nilCount);
             
-            // TODO: Possibly expand list, possibly upgrade to implementation with Dictionary<long, LuaValue>
-            throw new NotImplementedException();
+            // Nil ratio won't be over half, we can append normally
+            _nilCount += extraNils;
+            _values.EnsureCapacity(_values.Count + extraNils + 1);
+            for (var i = 0; i < extraNils; i++) _values.Add(default);
+            _values.Add(value);
+            return this;
         }
         
         // Failing any of that, the index is definitely inside the bounds of the current list.
@@ -72,9 +95,9 @@ public class TableImpl_Array : TableImpl
             
         // Make sure we're not wasting more than half the list's space on nils, if it's big enough to matter.
         if (_values.Count < TableImplUtil.MinCountForMemorySaving || _nilCount <= _values.Count / 2) return this;
-            
-        // TODO: Upgrade to implementation with Dictionary<long, LuaValue>, tell it to clean up its list
-        throw new NotImplementedException();
 
+        var newImpl = new TableImpl_Integers([], _values, _nilCount);
+        newImpl.CleanListPortion();
+        return newImpl;
     }
 }
