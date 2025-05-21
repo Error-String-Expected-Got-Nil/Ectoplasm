@@ -11,7 +11,7 @@ namespace Ectoplasm.Runtime;
 /// keyword.
 /// </remarks>
 [StructLayout(LayoutKind.Explicit)]
-public struct LuaValue
+public readonly struct LuaValue
 {
     [FieldOffset(0)] internal readonly bool _boolean;
     [FieldOffset(0)] internal readonly long _integer;
