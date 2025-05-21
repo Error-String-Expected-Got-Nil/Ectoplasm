@@ -1,5 +1,21 @@
 ﻿namespace Ectoplasm.Runtime;
 
+/// <summary>
+/// <para>
+/// Type representing a Lua table. Can be indexed using any <see cref="LuaValue"/> other than
+/// <see cref="LuaValueKind.Nil"/> or <see cref="double.NaN"/>, returning any <see cref="LuaValue"/>. A return of
+/// <see cref="LuaValueKind.Nil"/> on an index get means that index has no value; furthermore, setting an index to
+/// <see cref="LuaValueKind.Nil"/> means removing that index.
+/// </para>
+/// <para>
+/// Creating a table from a collection of only values, without keys, will automatically assign the elements sequential
+/// integer keys starting with 1, effectively a 1-base indexed array.
+/// </para>
+/// <para>
+/// When indexing, <see cref="LuaValueKind.Float"/> values which can be coerced to <see cref="LuaValueKind.Integer"/>
+/// values without any loss will index the same values as the equivalent integer. Ex.: <c>table[1] == table[1.0]</c>.
+/// </para>
+/// </summary>
 public class LuaTable
 {
     // TODO
