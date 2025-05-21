@@ -7,8 +7,8 @@
 internal abstract class TableImpl
 {
     /// <summary>
-    /// The default length operator for this table implementation. See <see cref="LuaTable.Length"/> for more details
-    /// as to how this should be computed.
+    /// The default length operator for this table implementation. See <see cref="LuaTable"/>
+    /// <see cref="LuaTable.Length"/> for more details as to how this should be computed.
     /// </summary>
     public abstract long Length { get; }
 
