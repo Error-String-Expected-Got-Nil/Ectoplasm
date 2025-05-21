@@ -1,4 +1,6 @@
-﻿namespace Ectoplasm.Runtime;
+﻿using Ectoplasm.Runtime.Tables;
+
+namespace Ectoplasm.Runtime;
 
 /// <summary>
 /// <para>
@@ -18,7 +20,7 @@
 /// </summary>
 public class LuaTable
 {
-    // TODO
+    private TableImpl _implementation = new TableImpl_Empty();
 
     /// <summary>
     /// The default length operation for this table, indicated by a unary <c>#</c> operator in Lua.
@@ -49,9 +51,34 @@ public class LuaTable
     /// </remarks>
     public long Length => throw new NotImplementedException();
     
+    /// <summary>
+    /// Creates a new, empty Lua table.
+    /// </summary>
+    public LuaTable() { }
+
+    /// <summary>
+    /// Creates a new Lua table with sequential integer key values starting at 1. 
+    /// </summary>
+    /// <param name="values">Enumeration of values to create the table out of.</param>
+    /// <remarks>
+    /// Ensure the number of items in the enumeration is less than <see cref="int"/> <see cref="int.MaxValue"/>.
+    /// </remarks>
+    public LuaTable(params IEnumerable<LuaValue> values)
+    {
+        var list = values.ToList();
+        _implementation = new TableImpl_Array(list, list.Count(val => val.Kind == LuaValueKind.Nil));
+    }
+    
+    // TODO: Constructor from IEnumerable<KeyValuePair<LuaValue, LuaValue>> amd from LuaState stack
+    
     public LuaValue this[LuaValue index]
     {
-        get => throw new NotImplementedException();
-        set => throw new NotImplementedException();
+        get => _implementation.Get(index);
+        set
+        {
+            if (index.Kind == LuaValueKind.Nil)
+                throw new LuaRuntimeException("Table index is nil");
+            _implementation = _implementation.Set(index, value);
+        }
     } 
 }

@@ -8,6 +8,11 @@ internal static class Program
 {
     public static void Main(string[] args)
     {
-        LuaValue test = default;
+        var table = new LuaTable
+        {
+            ["test"u8] = "value"u8
+        };
+        
+        Console.WriteLine(table["test"u8].StringUtf16);
     }
 }
