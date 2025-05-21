@@ -16,11 +16,11 @@ public class LuaTable
     /// </para>
     /// <para>
     /// In any other case, however, this property (and thereby the length operator) should be considered unreliable.
-    /// For tables which are exceptionally large, or which contain a very large gap of nil values between two keys,
-    /// a dramatically different number will be returned, and no guarantees can be made about it. For more details
-    /// as to why this is, see the Lua reference manual (version 5.4) section 3.4.7 - The Length Operator, as it goes
-    /// more in-depth as to the behavior of the length operator, and Ectoplasm obeys these constraints under normal
-    /// circumstances.
+    /// For tables which are exceptionally large, or which contain a very large gap of <see cref="LuaValueKind.Nil"/>
+    /// values between two keys, a dramatically different number will be returned, and no guarantees can be made about
+    /// it. For more details as to why this is, see the Lua reference manual (version 5.4) section 3.4.7 - The Length
+    /// Operator, as it goes more in-depth as to the behavior of the length operator, and Ectoplasm obeys these
+    /// constraints under normal circumstances.
     /// </para>
     /// <para>
     /// In Ectoplasm, the largest value that can be returned by this is the <see cref="int"/>
