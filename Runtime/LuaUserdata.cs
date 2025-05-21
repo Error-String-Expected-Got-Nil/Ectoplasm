@@ -2,6 +2,6 @@
 
 public class LuaUserdata(object userdata, LuaTable? metatable = null)
 {
-    public object Userdata = userdata;
+    public readonly object Userdata = userdata;
     public LuaTable? Metatable = metatable;
 }
