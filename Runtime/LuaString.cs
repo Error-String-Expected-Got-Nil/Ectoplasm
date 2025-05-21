@@ -6,7 +6,7 @@ namespace Ectoplasm.Runtime;
 /// Value type representing a Lua string. Only a wrapper around an array of <see cref="byte"/>, marked as internal to
 /// prevent mutation or access by external users. All interaction should occur through <see cref="LuaValue"/>.
 /// </summary>
-internal readonly struct LuaString
+internal readonly struct LuaString : IEquatable<LuaString>
 {
     private readonly byte[] _data;
 
@@ -35,7 +35,16 @@ internal readonly struct LuaString
     {
         _data = Encoding.UTF8.GetBytes(data);
     }
-    
+
+    public bool Equals(LuaString other)
+    {
+        if (_data == other._data) return true;
+        if (_data.Length != other._data.Length) return false;
+        
+        // Returns false if any indices in data arrays have non-matching values, true otherwise.
+        return !_data.Where((value, index) => value != other._data[index]).Any();
+    }
+
     // Basic djb2 hash, for lack of any better ideas.
     private const int HashSeed = 5381;
     public override int GetHashCode() 
