@@ -6,7 +6,7 @@
 // ReSharper disable once InconsistentNaming
 internal class TableImpl_Strings : TableImpl
 {
-    private Dictionary<LuaString, LuaValue> _values;
+    private readonly Dictionary<LuaString, LuaValue> _values;
     
     /// <inheritdoc/>
     // A TableImpl_Strings will never have integer keys and therefore always has length 0.
