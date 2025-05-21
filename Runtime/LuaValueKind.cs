@@ -3,7 +3,7 @@
 public enum LuaValueKind
 {
     /// <summary>
-    /// Nil, no value whatsoever. In boolean operations, is considered the same as false. No underlying C# type.
+    /// Nil, no value whatsoever. In boolean operations, this is considered the same as false. No underlying C# type.
     /// </summary>
     Nil,
     
