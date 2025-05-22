@@ -132,6 +132,39 @@ public static partial class Grammar
     public static partial Regex MatchNewline { get; }
 
     /// <summary>
+    /// String escape character.
+    /// </summary>
+    public const char Escape = '\\';
+
+    /// <summary>
+    /// Dictionary for simple escape sequences which correspond to only a single added character.
+    /// </summary>
+    public static readonly Dictionary<char, char> SimpleEscapes = new()
+    {
+        { 'a', '\a' },
+        { 'b', '\b' },
+        { 'f', '\f' },
+        { 'n', '\n' },
+        { 't', '\t' },
+        { 'v', '\v' },
+        { Escape, Escape },
+        { '\'', '\'' },
+        { '"', '"' }
+    };
+    
+    /// <summary>
+    /// Matches a sequence of up to 3 decimal digits, for matching decimal byte escapes in strings.
+    /// </summary>
+    [GeneratedRegex(@"\d{1,3}")]
+    public static partial Regex MatchDecByteEscape { get; }
+    
+    /// <summary>
+    /// Matches a sequence of up to 8 hexadecimal digits, for matching Unicode code point escapes in strings.
+    /// </summary>
+    [GeneratedRegex(@"\{([\da-fA-F]{1,8})\}")]
+    public static partial Regex MatchUnicodeEscape { get; }
+
+    /// <summary>
     /// Checks if a character is a valid character for starting a text sequence (a potential Name or number literal).
     /// </summary>
     /// <param name="c">The character to check.</param>
@@ -158,6 +191,44 @@ public static partial class Grammar
             or '['
             or ']';
 
+    /// <summary>
+    /// Checks if a character is a valid whitespace character in Lua syntax.
+    /// </summary>
+    /// <param name="c">The character to check.</param>
+    /// <returns>True if character is valid whitespace character in Lua syntax, false if not.</returns>
+    public static bool IsWhitespace(char c)
+        => c is ' ' or '\n' or '\t' or '\r' or '\v';
+
+    /// <summary>
+    /// Checks if a character is a digit from 0 to 9.
+    /// </summary>
+    /// <param name="c">The character to check.</param>
+    /// <returns>True if character is a digit from 0 to 9, false if not.</returns>
+    public static bool IsDigit(char c)
+        => c is >= '0' and <= '9';
+
+    /// <summary>
+    /// Checks if a character is a hexadecimal digit.
+    /// </summary>
+    /// <param name="c">The character to check.</param>
+    /// <returns>
+    /// True if character is a digit from 0 to 9, or a letter between A and F, uppercase or lowercase.
+    /// </returns>
+    public static bool IsHexDigit(char c)
+        => c is >= '0' and <= '9'
+            or >= 'a' and <= 'f'
+            or >= 'A' and <= 'A';
+
+    /// <summary>
+    /// Dictionary correlating hex digits to their values.
+    /// </summary>
+    public static readonly Dictionary<char, byte> HexDigitValue = new()
+    {
+        { '0', 0 }, { '1', 1 }, { '2', 2 }, { '3', 3 }, { '4', 4 }, { '5', 5 }, { '6', 6 }, { '7', 7 }, { '8', 8 },
+        { '9', 9 }, { 'a', 10 }, { 'b', 11 }, { 'c', 12 }, { 'd', 13 }, { 'e', 14 }, { 'f', 15 }, { 'A', 10 },
+        { 'B', 11 }, { 'C', 12 }, { 'D', 13 }, { 'E', 14 }, { 'F', 15 }
+    };
+    
     /// <summary>
     /// For use with the MatchNumber regex. Checks if match is a hexadecimal number.
     /// </summary>
