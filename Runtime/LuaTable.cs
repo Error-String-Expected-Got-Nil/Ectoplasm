@@ -69,7 +69,7 @@ public class LuaTable
         _implementation = new TableImpl_Array(list, list.Count(val => val.Kind == LuaValueKind.Nil));
     }
     
-    // TODO: Constructor from IEnumerable<KeyValuePair<LuaValue, LuaValue>> amd from LuaState stack
+    // TODO: Constructor from IEnumerable<KeyValuePair<LuaValue, LuaValue>> and from LuaState stack
     
     public LuaValue this[LuaValue index]
     {
@@ -81,4 +81,6 @@ public class LuaTable
             _implementation = _implementation.Set(index, value);
         }
     } 
+    
+    // TODO: Metatable
 }

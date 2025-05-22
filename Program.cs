@@ -13,6 +13,6 @@ internal static class Program
             ["test"u8] = "value"u8
         };
         
-        Console.WriteLine(table["test"u8].StringUtf16);
+        Console.WriteLine(table["test"].StringUtf16);
     }
 }
