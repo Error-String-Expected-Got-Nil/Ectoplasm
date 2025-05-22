@@ -282,4 +282,126 @@ public static class Lexer
 
         throw new LuaLexingException("Found end of source before completing string", line, col);
     }
+
+    private static LuaToken ReadLongString(string source, int position, ushort line, ushort col)
+    {
+        if (source[position] != '[')
+            throw new LuaLexingException("Failed to read long string literal", line, col);
+
+        char c;
+        var offset = 1;
+        var endLine = line;
+        var endCol = col;
+        var level = 0;
+        
+        // Read the opening long bracket and determine its level
+        while (true)
+        {
+            if (position + offset >= source.Length)
+                throw new LuaLexingException("Found end of source before completing long string", line, col);
+
+            c = source[position + offset];
+            
+            if (c == '=')
+            {
+                level++;
+            }
+            else if (c == '[')
+            {
+                offset++;
+                endCol++;
+                break;
+            }
+            else
+            {
+                // Special case: If there was no level, this is probably just not a long string, rather than an invalid
+                // long string. However, it's definitely an invalid long string if there was any level.
+                if (level == 0) return default;
+                throw new LuaLexingException($"Unexpected character '{c}' in opening long bracket of long string",
+                    endLine, endCol);
+            }
+
+            offset++;
+            endCol++;
+        }
+
+        var str = new StringBuilder();
+
+        // Attempt to consume a newline immediately after the opening bracket, and discard it if there was one.
+        var openingNewlineMatch = Grammar.MatchNewline.Match(source, position + offset);
+        if (openingNewlineMatch.Length != 0)
+        {
+            offset += openingNewlineMatch.Length;
+            endLine++;
+            endCol = 1;
+        }
+
+        while (true)
+        {
+            if (position + offset >= source.Length)
+                throw new LuaLexingException("Found end of source before completing long string", line, col);
+
+            c = source[position + offset];
+
+            // Match closing long bracket
+            if (c == ']')
+            {
+                str.Append(']');
+                offset++;
+                endCol++;
+                
+                var matchLevel = 0;
+                while (true)
+                {
+                    if (position + offset >= source.Length)
+                        throw new LuaLexingException("Found end of source before completing long string", line, col);
+
+                    c = source[position + offset];
+                    
+                    if (c == '=')
+                    {
+                        matchLevel++;
+                        str.Append('=');
+                        offset++;
+                        endCol++;
+                        continue;
+                    }
+
+                    if (c == ']')
+                    {
+                        // If this closing long bracket didn't have the same level as the opening long bracket, we can
+                        // just fall through to appending; it was a normal part of the string.
+                        if (matchLevel != level) break;
+                        
+                        // Otherwise, remove previous level + 1 characters (all part of closing long bracket) and return
+                        // the token, as the string is finished
+                        str.Remove(str.Length - level - 1, level + 1);
+                        offset++;
+                        endCol++;
+                        return new LuaToken(source.AsMemory(position, offset + 1),
+                            str.ToString(), TokenType.String, line, col, endLine, endCol);
+                    }
+                    
+                    // Character wasn't ] or =, not part of closing long bracket, fall through to append.
+                    break;
+                }
+            }
+            
+            // Truncate all newline sequences to just \n
+            if (c is '\n' or '\r')
+            {
+                var newlineMatch = Grammar.MatchNewline.Match(source, position + offset);
+                str.Append('\n');
+                offset += newlineMatch.Length;
+                endLine++;
+                endCol = 1;
+                continue;
+            }
+
+            // Otherwise, we append the literal character
+            str.Append(c);
+            offset++;
+            endCol++;
+        }
+    }
 }
