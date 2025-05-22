@@ -72,4 +72,21 @@ public static class Lexer
         return new LuaToken(source.AsMemory(position, match.Length), match.Value, TokenType.Name, line,
             col, line, (ushort)(col + match.Length));
     }
+
+    private static LuaToken ReadNumber(string source, int position, ushort line, ushort col)
+    {
+        var match = Grammar.MatchNumber.Match(source, position);
+        
+        if (match.Length == 0) 
+            throw new LuaLexingException("Failed to read number", line, col);
+
+        if (Grammar.IsFloatMatch(match))
+            return new LuaToken(source.AsMemory(position, match.Length),
+                Grammar.ParseFloatMatch(match), TokenType.Numeral, line, col, line, 
+                (ushort)(col + match.Length));
+
+        return new LuaToken(source.AsMemory(position, match.Length),
+            Grammar.ParseIntegerMatch(match), TokenType.Numeral, line, col, line, 
+            (ushort)(col + match.Length));
+    }
 }
