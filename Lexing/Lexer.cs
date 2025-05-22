@@ -57,4 +57,19 @@ public static class Lexer
 
         throw new LuaLexingException("Failed to read symbol", line, col);
     }
+
+    private static LuaToken ReadName(string source, int position, ushort line, ushort col)
+    {
+        var match = Grammar.MatchName.Match(source, position);
+
+        if (match.Length == 0) 
+            throw new LuaLexingException("Failed to read name", line, col);
+
+        if (Grammar.Keywords.TryGetValue(match.Value, out var keyword))
+            return new LuaToken(source.AsMemory(position, match.Length), null, keyword, line, col,
+                line, (ushort)(col + match.Length));
+
+        return new LuaToken(source.AsMemory(position, match.Length), match.Value, TokenType.Name, line,
+            col, line, (ushort)(col + match.Length));
+    }
 }
