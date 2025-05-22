@@ -35,7 +35,7 @@ public static class Lexer
                 // token we actually found. This length will always be equal to offset, as offset equals the current
                 // match length - 1.
                 if (offset == 0)
-                    throw new LexingException($"Unrecognized symbol '{source[position]}'", line, col);
+                    throw new LuaLexingException($"Unrecognized symbol '{source[position]}'", line, col);
                 
                 var matchedToken 
                     = PrevMatches.First(match => match.Key.Length == offset).Value;
@@ -55,6 +55,6 @@ public static class Lexer
             CurMatches.Clear();
         }
 
-        throw new LexingException("Failed to read symbol", line, col);
+        throw new LuaLexingException("Failed to read symbol", line, col);
     }
 }
