@@ -31,20 +31,23 @@ public static class Lexer
 
             if (CurMatches.Count == 0)
             {
-                // If we fail to match a sequence, that means the longest token from the previous match must be the
-                // token we actually found.
-                if (PrevMatches.Count == 0)
-                    throw new LexingException("Unrecognized symbol", line, col);
+                // If we fail to match a sequence, that means the shortest token from the previous match must be the
+                // token we actually found. This length will always be equal to offset, as offset equals the current
+                // match length - 1.
+                if (offset == 0)
+                    throw new LexingException($"Unrecognized symbol '{source[position]}'", line, col);
                 
-                var matchedToken = PrevMatches.MinBy(match => match.Key.Length).Value;
-                return new LuaToken(source.AsMemory(position, offset + 1), null, 
-                    matchedToken, line, col);
+                var matchedToken 
+                    = PrevMatches.First(match => match.Key.Length == offset).Value;
+                
+                return new LuaToken(source.AsMemory(position, offset), null, 
+                    matchedToken, line, col, line, (ushort)(col + offset));
             }
 
             if (CurMatches.Count == 1)
                 // If we match only a single token, that must be the correct token.
                 return new LuaToken(source.AsMemory(position, offset + 1), null,
-                    CurMatches[0].Value, line, col);
+                    CurMatches[0].Value, line, col, line, (ushort)(col + offset + 1));
             
             // Otherwise, move contents of CurMatches to PrevMatches, and continue with the next character.
             PrevMatches.Clear();
