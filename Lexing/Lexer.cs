@@ -89,4 +89,31 @@ public static class Lexer
             Grammar.ParseIntegerMatch(match), TokenType.Numeral, line, col, line, 
             (ushort)(col + match.Length));
     }
+
+    private static LuaToken ReadWhitespace(string source, int position, ushort line, ushort col)
+    {
+        var match = Grammar.MatchWhitespace.Match(source, position);
+
+        if (match.Length == 0)
+            throw new LuaLexingException("Failed to read whitespace", line, col);
+
+        // Only considers \n newlines as actual newlines. Also, note that lines and columns are 1-base indexed.
+        var endLine = line;
+        var endCol = col;
+        foreach (var c in match.Value)
+        {
+            if (c == '\n')
+            {
+                endLine++;
+                endCol = 1;
+            }
+            else
+            {
+                endCol++;
+            }
+        }
+
+        return new LuaToken(source.AsMemory(position, match.Length), null, TokenType.Whitespace,
+            line, col, endLine, endCol);
+    }
 }

@@ -118,10 +118,18 @@ public static partial class Grammar
     public static partial Regex MatchNumber { get; }
     
     /// <summary>
-    /// Matches any sequences of 'text' characters, that could make up a keyword, Name, or number literal.
+    /// Matches a sequence of one or more whitespace characters considered valid by Lua. This is not as permissive as
+    /// the <c>\s</c> escape in C# regex, so it's written out explicitly here.
     /// </summary>
-    [GeneratedRegex(@"[\w][\w\.+-]*")]
-    public static partial Regex MatchText { get; }
+    [GeneratedRegex(@"[ \f\n\r\t\v]+")]
+    public static partial Regex MatchWhitespace { get; }
+    
+    /// <summary>
+    /// Matches any end-of-line sequence: A newline and carriage return in any order, or a single newline, or single
+    /// carriage return. Used in parsing strings to convert these sequences to single newlines, where applicable.
+    /// </summary>
+    [GeneratedRegex(@"\r\n|\n\r|[\n\r]")]
+    public static partial Regex MatchNewline { get; }
 
     /// <summary>
     /// Checks if a character is a valid character for starting a text sequence (a potential Name or number literal).
