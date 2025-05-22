@@ -1,8 +1,7 @@
 ﻿using System.Text.RegularExpressions;
-using Ectoplasm.Lexing.Tokens;
 using KTrie;
 
-using static Ectoplasm.Lexing.Tokens.TokenType;
+using static Ectoplasm.Lexing.TokenType;
 
 namespace Ectoplasm.Lexing;
 

@@ -1,4 +1,4 @@
-﻿namespace Ectoplasm.Lexing.Tokens;
+﻿namespace Ectoplasm.Lexing;
 
 /// <summary>
 /// All types of code tokens present in Lua.

@@ -1,12 +1,11 @@
-﻿namespace Ectoplasm.Lexing.Tokens;
+﻿namespace Ectoplasm.Lexing;
 
 public readonly record struct LuaToken(
+    Memory<char> OriginalString = default,
+    object? Data = null,
     TokenType Type = TokenType.None,
     ushort StartLine = 0,
-    ushort StartCol = 0,
-    ushort EndLine = 0,
-    ushort EndCol = 0,
-    Memory<char> OriginalString = default
+    ushort StartCol = 0
 )
 {
     public override string ToString() => $"{Type} [{StartLine}, {StartCol}]";

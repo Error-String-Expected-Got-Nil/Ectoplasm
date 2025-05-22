@@ -1,6 +1,4 @@
-﻿using Ectoplasm.Lexing.Tokens;
-
-namespace Ectoplasm.Lexing;
+﻿namespace Ectoplasm.Lexing;
 
 public static class Lexer
 {
