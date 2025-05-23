@@ -6,12 +6,30 @@ public static class Lexer
 {
     public static IEnumerable<LuaToken> Lex(string source)
     {
+        // Do nothing for empty input
+        if (source.Length == 0) yield break;
+        
         var position = 0;
         ushort line = 1;
         ushort col = 1;
 
-        // TODO: First line should be skipped if it begins with '#'
-        //  This is to facilitate the shebang: #!/usr/local/bin/lua
+        // If very first line starts with a '#', skip it. This is to permit the shebang line for scripts on Linux.
+        if (source[0] == '#')
+        {
+            position++;
+            line = 2;
+            while (position < source.Length)
+            {
+                var c = source[position];
+                if (c is '\n' or '\r')
+                {
+                    var match = Grammar.MatchNewline.Match(source, position);
+                    position += match.Length;
+                    break;
+                }
+                position++;
+            }
+        }
         
         while (position < source.Length)
         {

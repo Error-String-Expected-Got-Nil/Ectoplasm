@@ -9,6 +9,8 @@ internal static class Program
     public static void Main()
     {
         var lua = """
+                  #!usr/local/bin/lua
+                  
                   local str = [[
                   multi-line
                   long string]]
