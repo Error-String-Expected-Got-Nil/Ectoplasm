@@ -41,24 +41,24 @@ public readonly partial struct LuaValue
     public static LuaValue SimpleAdd(LuaValue a, LuaValue b)
         => PrepareForSimpleArithmetic(ref a, ref b) switch
         {
-            LuaValueKind.Integer => new LuaValue(a._integer + b._integer),
-            LuaValueKind.Float => new LuaValue(a._float + b._float),
+            LuaValueKind.Integer => a._integer + b._integer,
+            LuaValueKind.Float => a._float + b._float,
             _ => throw new UnreachableException()
         };
     
     public static LuaValue SimpleSub(LuaValue a, LuaValue b)
         => PrepareForSimpleArithmetic(ref a, ref b) switch
         {
-            LuaValueKind.Integer => new LuaValue(a._integer - b._integer),
-            LuaValueKind.Float => new LuaValue(a._float - b._float),
+            LuaValueKind.Integer => a._integer - b._integer,
+            LuaValueKind.Float => a._float - b._float,
             _ => throw new UnreachableException()
         };
     
     public static LuaValue SimpleMul(LuaValue a, LuaValue b)
         => PrepareForSimpleArithmetic(ref a, ref b) switch
         {
-            LuaValueKind.Integer => new LuaValue(a._integer * b._integer),
-            LuaValueKind.Float => new LuaValue(a._float * b._float),
+            LuaValueKind.Integer => a._integer * b._integer,
+            LuaValueKind.Float => a._float * b._float,
             _ => throw new UnreachableException()
         };
     

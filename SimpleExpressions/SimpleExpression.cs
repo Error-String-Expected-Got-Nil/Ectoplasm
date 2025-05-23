@@ -16,7 +16,7 @@ public abstract class SimpleExpression
     /// </summary>
     /// <param name="env">Table containing variables for the expression.</param>
     /// <returns>Value of the expression after computation.</returns>
-    public abstract LuaValue Evaluate(LuaTable env);
+    public abstract LuaValue Evaluate(LuaTable? env);
     
     /// <summary>
     /// Initialize this expression using operands from a stack. If uninitialized operands are encountered, they will be

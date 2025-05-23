@@ -1,5 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using Ectoplasm.Lexing;
+using Ectoplasm.Runtime.Stdlib;
 
 namespace Ectoplasm.Runtime.Values;
 
@@ -98,6 +99,18 @@ public readonly partial struct LuaValue
     public string StringUtf16 
         => Kind == LuaValueKind.String 
             ? ((LuaString)_ref).DataUtf16
+            : throw new InvalidCastException("LuaValue does not represent a Lua string value.");
+
+    /// <summary>
+    /// Gets this LuaValue as a string. Returns a placeholder instead of an exception if the string is not a valid
+    /// UTF-8 Unicode string.
+    /// </summary>
+    /// <exception cref="InvalidCastException">
+    /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.String"/>.
+    /// </exception>
+    public string StringUtf16Safe
+        => Kind == LuaValueKind.String
+            ? ((LuaString)_ref).DataUtf16Safe
             : throw new InvalidCastException("LuaValue does not represent a Lua string value.");
         
         
@@ -402,6 +415,7 @@ public readonly partial struct LuaValue
         {
             Kind = LuaValueKind.Integer;
             _integer = value;
+            return;
         }
 
         Kind = LuaValueKind.Float;
@@ -437,7 +451,9 @@ public readonly partial struct LuaValue
                 return false;
         }
     }
-    
+
+    public override string ToString() => GlobalFunctions.LuaToString(this);
+
     #endregion
     
     #region Implicit Conversions

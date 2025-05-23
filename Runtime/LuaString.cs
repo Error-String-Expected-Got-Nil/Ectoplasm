@@ -15,6 +15,21 @@ internal readonly struct LuaString : IEquatable<LuaString>
 
     public string DataUtf16 => Encoding.UTF8.GetString(_data);
 
+    public string DataUtf16Safe
+    {
+        get
+        {
+            try
+            {
+                return Encoding.UTF8.GetString(_data);
+            }
+            catch (Exception)
+            {
+                return "<Unicode invalid string>";
+            }
+        }
+    }
+
     public long Length => _data.Length;
 
     internal LuaString(byte[] data)

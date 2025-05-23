@@ -112,8 +112,19 @@ public static class SimpleExpressionParser
                 output.Enqueue(GetExpressionForOperator(operatorStack.Pop()));
             }
             
+            operatorStack.Push(token);
+            
             // After parsing an operator, we expect the next token to be a value.
             expectingValue = true;
+        }
+
+        foreach (var token in operatorStack)
+        {
+            if (token.Type == TokenType.OpenExp)
+                throw new SimpleExpressionParsingException(
+                    $"Unbalanced opening parenthesis at line {token.StartLine}, col {token.StartCol}");
+            
+            output.Enqueue(GetExpressionForOperator(token));
         }
 
         if (output.Count == 0)
@@ -140,6 +151,10 @@ public static class SimpleExpressionParser
         => token.Type switch
         {
             TokenType.Add => new Simexp_OpAdd(),
+            TokenType.Sub => new Simexp_OpSub(),
+            TokenType.Mul => new Simexp_OpMul(),
+            TokenType.Div => new Simexp_OpDiv(),
+            TokenType.IntDiv => new Simexp_OpIntDiv(),
             _ => throw new SimpleExpressionParsingException(
                 $"Unexpected token {token.OriginalString} when trying to parse operator on line {token.StartLine}, " +
                 $"col {token.StartCol}")
