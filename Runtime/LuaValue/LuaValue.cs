@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using Ectoplasm.Lexing;
 
 namespace Ectoplasm.Runtime.LuaValue;
 
@@ -10,7 +11,7 @@ namespace Ectoplasm.Runtime.LuaValue;
 /// keyword.
 /// </remarks>
 [StructLayout(LayoutKind.Explicit)]
-public readonly struct LuaValue
+public readonly partial struct LuaValue
 {
     [FieldOffset(0)] internal readonly bool _boolean;
     [FieldOffset(0)] internal readonly long _integer;
@@ -384,10 +385,32 @@ public readonly struct LuaValue
         _ref = value;
         Kind = LuaValueKind.Table;
     }
+
+    /// <summary>
+    /// Creates a new LuaValue from a <see cref="TokenType.Numeral"/> <see cref="LuaToken"/>. 
+    /// </summary>
+    /// <param name="token">The <see cref="LuaToken"/> holding the value of the new LuaValue.</param>
+    /// <exception cref="ArgumentException">
+    /// Thrown if the <see cref="LuaToken"/> is not a <see cref="TokenType.Numeral"/>.
+    /// </exception>
+    public LuaValue(LuaToken token)
+    {
+        if (token.Type != TokenType.Numeral)
+            throw new ArgumentException("Attempt to create LuaValue from non-numeral LuaToken.", nameof(token));
+
+        if (token.Data is long value)
+        {
+            Kind = LuaValueKind.Integer;
+            _integer = value;
+        }
+
+        Kind = LuaValueKind.Float;
+        _float = (double)token.Data!;
+    }
     
     #endregion
     
-    #region Standard Operations
+    #region Utility Methods
 
     /// <summary>
     /// Attempt to coerce this LuaValue to a long.
@@ -414,8 +437,6 @@ public readonly struct LuaValue
                 return false;
         }
     }
-    
-    // TODO: Arithmetic operations with metatables
     
     #endregion
     

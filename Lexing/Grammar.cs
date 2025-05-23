@@ -88,7 +88,7 @@ public static partial class Grammar
     /// All binary operator tokens and their precedence, where higher precedence means an operator should be computer
     /// first. All except for <see cref="TokenType.Exp"/> are left-associative.
     /// </summary>
-    public static readonly Dictionary<TokenType, int> BinaryOperatorPrecedence = new()
+    public static readonly Dictionary<TokenType, int> OperatorPrecedence = new()
     {
         { Or, 0 },
         { And, 1 },
@@ -100,18 +100,16 @@ public static partial class Grammar
         { Concat, 7 },
         { Add, 8 }, { Sub, 8 },
         { Mul, 9 }, { Div, 9 }, { IntDiv, 9 }, { Mod, 9 },
+        { Not, 10 }, { Length, 10 }, { Neg, 10 }, { BitwiseNot, 10 }, // Unary operators
         { Exp, 11 } // Note that exponentiation is also right-associative, unlike other binary operators.
     };
 
     /// <summary>
-    /// All tokens which can be unary operators. All right-associative.
+    /// All directly lexable tokens which can be unary operators. All right-associative. Note that the actual unary
+    /// operator tokens <see cref="Neg"/> and <see cref="BitwiseNot"/> are not included, as the lexer will never produce
+    /// them directly.
     /// </summary>
     public static readonly HashSet<TokenType> UnaryOperators = [Not, Length, Sub, BitwiseXor];
-    
-    /// <summary>
-    /// Precedence for unary operators.
-    /// </summary>
-    public static readonly int UnaryOperatorPrecedence = 10;
 
     /// <summary>
     /// Maximum number of keys starting with the same starting character.
