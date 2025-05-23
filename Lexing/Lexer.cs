@@ -404,4 +404,40 @@ public static class Lexer
             endCol++;
         }
     }
+
+    private static LuaToken ReadComment(string source, int position, ushort line, ushort col)
+    {
+        if (position + 2 > source.Length || source[position] != '-' || source[position + 1] != '-')
+            throw new LuaLexingException("Failed to read comment", line, col);
+        
+        var match = Grammar.MatchOpenLongBracket.Match(source, position + 2);
+        if (match.Length != 0)
+        {
+            var token = ReadLongString(source, position + 2, line, (ushort)(col + 2));
+            return new LuaToken(source.AsMemory(position, token.OriginalString.Length + 2),
+                null, TokenType.Comment, line, col, token.EndLine, token.EndCol);
+        }
+
+        // TODO: Verify empty comment at end of source doesn't fail to lex
+        var offset = 2;
+        var endCol = col + 2;
+        while (position + offset < source.Length)
+        {
+            var c = source[position + offset];
+
+            if (c is '\n' or '\r')
+            {
+                var newlineMatch = Grammar.MatchNewline.Match(source, position + offset);
+                offset += newlineMatch.Length;
+                return new LuaToken(source.AsMemory(position, offset + 1), null,
+                    TokenType.Comment, line, col, (ushort)(line + 1), 1);
+            }
+
+            offset++;
+            endCol++;
+        }
+
+        return new LuaToken(source.AsMemory(position, offset + 1), null, TokenType.Comment,
+            line, col, line, (ushort)endCol);
+    }
 }

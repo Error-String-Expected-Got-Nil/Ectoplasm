@@ -130,6 +130,12 @@ public static partial class Grammar
     /// </summary>
     [GeneratedRegex(@"\r\n|\n\r|[\n\r]")]
     public static partial Regex MatchNewline { get; }
+    
+    /// <summary>
+    /// Matches an opening long bracket of any level. Used by ReadComment to check if it's a multi-line comment.
+    /// </summary>
+    [GeneratedRegex(@"\[=*\[")]
+    public static partial Regex MatchOpenLongBracket { get; }
 
     /// <summary>
     /// String escape character.
