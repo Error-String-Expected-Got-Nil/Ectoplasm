@@ -1,4 +1,5 @@
-﻿using Ectoplasm.Runtime.Tables;
+﻿using Ectoplasm.Runtime.LuaValue;
+using Ectoplasm.Runtime.Tables;
 
 namespace Ectoplasm.Runtime;
 
@@ -63,7 +64,7 @@ public class LuaTable
     /// <remarks>
     /// Ensure the number of items in the enumeration is less than <see cref="int"/> <see cref="int.MaxValue"/>.
     /// </remarks>
-    public LuaTable(params IEnumerable<LuaValue> values)
+    public LuaTable(params IEnumerable<LuaValue.LuaValue> values)
     {
         var list = values.ToList();
         _implementation = new TableImpl_Array(list, list.Count(val => val.Kind == LuaValueKind.Nil));
@@ -71,7 +72,7 @@ public class LuaTable
     
     // TODO: Constructor from IEnumerable<KeyValuePair<LuaValue, LuaValue>> and from LuaState stack
     
-    public LuaValue this[LuaValue index]
+    public LuaValue.LuaValue this[LuaValue.LuaValue index]
     {
         get => _implementation.Get(index);
         set

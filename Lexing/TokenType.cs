@@ -62,13 +62,19 @@ public enum TokenType
     ShiftLeft, // '<<'
     Concat, // '..'
     LessThan, // '<'
-    LessThanOrEq, // '<='
+    LessOrEq, // '<='
     GreaterThan, // '>'
-    GreaterThanOrEq, // '>='
+    GreaterOrEq, // '>='
     EqualTo, // '=='
     NotEqualTo, // '~='
     IndexName, // '.'
     IndexMethod, // ':'
+    Length, // '#'
+    
+    // Unary operators; these are not produced by the Lexer, but are used during expression parsing to distinguish 
+    // unary and binary operators once taken in context.
+    Neg, // Unary negation
+    BitwiseNot, // Unary bitwise not
     
     // Value tokens
     Name, // Identifiers

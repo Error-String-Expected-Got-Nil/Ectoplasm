@@ -3,9 +3,8 @@
 /// <summary>
 /// Table implementation for tables with both string and integer keys. Integer keys may be any integer, as well.
 /// </summary>
-// ReSharper disable once InconsistentNaming
-internal class TableImpl_Multi(Dictionary<LuaString, LuaValue> stringsDictPortion, 
-    Dictionary<long, LuaValue> dictPortion, List<LuaValue> listPortion, int listNilCount) : TableImpl
+internal class TableImpl_Multi(Dictionary<LuaString, LuaValue.LuaValue> stringsDictPortion, 
+    Dictionary<long, LuaValue.LuaValue> dictPortion, List<LuaValue.LuaValue> listPortion, int listNilCount) : TableImpl
 {
     private int _listNilCount = listNilCount;
 
@@ -15,7 +14,7 @@ internal class TableImpl_Multi(Dictionary<LuaString, LuaValue> stringsDictPortio
     // All of this is copied from TableImpl_Integers and TableImpl_Strings and glued together
     
     /// <inheritdoc/>
-    public override LuaValue Get(LuaValue index)
+    public override LuaValue.LuaValue Get(LuaValue.LuaValue index)
     {
         if (index.Kind == LuaValueKind.String)
         {
@@ -34,7 +33,7 @@ internal class TableImpl_Multi(Dictionary<LuaString, LuaValue> stringsDictPortio
     }
 
     /// <inheritdoc/>
-    public override TableImpl Set(LuaValue index, LuaValue value)
+    public override TableImpl Set(LuaValue.LuaValue index, LuaValue.LuaValue value)
     {
         if (index.Kind == LuaValueKind.String)
             return SetString((LuaString)index._ref, value);
@@ -48,7 +47,7 @@ internal class TableImpl_Multi(Dictionary<LuaString, LuaValue> stringsDictPortio
             _listNilCount);
     }
 
-    private TableImpl_Multi SetString(LuaString index, LuaValue value)
+    private TableImpl_Multi SetString(LuaString index, LuaValue.LuaValue value)
     {
         if (value.Kind == LuaValueKind.Nil)
         {
@@ -60,7 +59,7 @@ internal class TableImpl_Multi(Dictionary<LuaString, LuaValue> stringsDictPortio
         return this;
     }
 
-    private TableImpl_Multi SetInteger(long index, LuaValue value)
+    private TableImpl_Multi SetInteger(long index, LuaValue.LuaValue value)
     {
         // Decrement because Lua tables use 1-based indexing
         index--;

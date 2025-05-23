@@ -3,15 +3,14 @@
 /// <summary>
 /// Table implementation for tables containing only string keys.
 /// </summary>
-// ReSharper disable once InconsistentNaming
-internal class TableImpl_Strings(Dictionary<LuaString, LuaValue> values) : TableImpl
+internal class TableImpl_Strings(Dictionary<LuaString, LuaValue.LuaValue> values) : TableImpl
 {
     /// <inheritdoc/>
     // A TableImpl_Strings will never have integer keys and therefore always has length 0.
     public override long Length => 0;
     
     /// <inheritdoc/>
-    public override LuaValue Get(LuaValue index)
+    public override LuaValue.LuaValue Get(LuaValue.LuaValue index)
     {
         if (index.Kind != LuaValueKind.String) return default;
         values.TryGetValue((LuaString)index._ref, out var value);
@@ -19,7 +18,7 @@ internal class TableImpl_Strings(Dictionary<LuaString, LuaValue> values) : Table
     }
 
     /// <inheritdoc/>
-    public override TableImpl Set(LuaValue index, LuaValue value)
+    public override TableImpl Set(LuaValue.LuaValue index, LuaValue.LuaValue value)
     {
         if (index.Kind != LuaValueKind.String)
         {
@@ -30,7 +29,7 @@ internal class TableImpl_Strings(Dictionary<LuaString, LuaValue> values) : Table
                 {
                     1 => new TableImpl_Array([value], 0),
                     2 => new TableImpl_Array([default, value], 1),
-                    _ => new TableImpl_Integers(new Dictionary<long, LuaValue> { { coercedInteger, value } },
+                    _ => new TableImpl_Integers(new Dictionary<long, LuaValue.LuaValue> { { coercedInteger, value } },
                         [], 0)
                 };
 

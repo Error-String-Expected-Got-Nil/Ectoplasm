@@ -1,7 +1,6 @@
 ﻿using System.Runtime.InteropServices;
-using System.Text;
 
-namespace Ectoplasm.Runtime;
+namespace Ectoplasm.Runtime.LuaValue;
 
 /// <summary>
 /// Represents a dynamic value used in Lua.

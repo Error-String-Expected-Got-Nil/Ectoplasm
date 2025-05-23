@@ -5,8 +5,7 @@
 /// Also, when the list part of the table grows large enough and is at least half empty, it will break the list apart
 /// to reduce the wasted space. 
 /// </summary>
-// ReSharper disable once InconsistentNaming
-internal class TableImpl_Integers(Dictionary<long, LuaValue> dictPortion, List<LuaValue> listPortion, int listNilCount)
+internal class TableImpl_Integers(Dictionary<long, LuaValue.LuaValue> dictPortion, List<LuaValue.LuaValue> listPortion, int listNilCount)
     : TableImpl
 {
     private int _listNilCount = listNilCount;
@@ -15,7 +14,7 @@ internal class TableImpl_Integers(Dictionary<long, LuaValue> dictPortion, List<L
     public override long Length => listPortion.Count;
 
     /// <inheritdoc/>
-    public override LuaValue Get(LuaValue index)
+    public override LuaValue.LuaValue Get(LuaValue.LuaValue index)
     {
         if (!index.TryCoerceInteger(out var coercedIndex)) return default;
         
@@ -32,7 +31,7 @@ internal class TableImpl_Integers(Dictionary<long, LuaValue> dictPortion, List<L
     }
 
     /// <inheritdoc/>
-    public override TableImpl Set(LuaValue index, LuaValue value)
+    public override TableImpl Set(LuaValue.LuaValue index, LuaValue.LuaValue value)
     {
         // Copied from TableImpl_Array.Set(), except wherever it would upgrade to this implementation, we instead insert
         // into the dictionary portion of this implementation.
@@ -44,7 +43,7 @@ internal class TableImpl_Integers(Dictionary<long, LuaValue> dictPortion, List<L
             if (value.Kind == LuaValueKind.Nil) return this;
             
             if (index.Kind == LuaValueKind.String)
-                return new TableImpl_Multi(new Dictionary<LuaString, LuaValue> { { (LuaString)index._ref, value } }, 
+                return new TableImpl_Multi(new Dictionary<LuaString, LuaValue.LuaValue> { { (LuaString)index._ref, value } }, 
                     dictPortion, listPortion, _listNilCount);
             
             return TableImplUtil.UpgradeToCompleteImpl(index, value, intsDict: dictPortion, list: listPortion, 

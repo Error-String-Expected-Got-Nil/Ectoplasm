@@ -1,4 +1,6 @@
-﻿namespace Ectoplasm.Runtime;
+﻿using Ectoplasm.Runtime.LuaValue;
+
+namespace Ectoplasm.Runtime;
 
 public enum LuaValueKind
 {

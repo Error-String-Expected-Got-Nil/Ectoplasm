@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Ectoplasm.Runtime.LuaValue;
 
 namespace Ectoplasm.Runtime;
 
