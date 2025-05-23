@@ -263,6 +263,8 @@ public static partial class Grammar
     /// </summary>
     /// <param name="match">Match to parse.</param>
     /// <returns>Integer value of match. If match has floating-point components, they will be ignored.</returns>
+    // TODO: Per-spec, integer constants which overflow a long should be read as floats, unless they are hexadecimal.
+    //  Should that be implemented here as well?
     public static long ParseIntegerMatch(Match match) 
         => IsHexMatch(match) 
             ? ParseHexInteger(match) 

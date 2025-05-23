@@ -10,6 +10,9 @@ public static class Lexer
         ushort line = 1;
         ushort col = 1;
 
+        // TODO: First line should be skipped if it begins with '#'
+        //  This is to facilitate the shebang: #!/usr/local/bin/lua
+        
         while (position < source.Length)
         {
             var c = source[position];
@@ -48,7 +51,6 @@ public static class Lexer
     private static readonly List<KeyValuePair<string, TokenType>> PrevMatches = new(Grammar.MaxPrefixCount);
     private static readonly List<KeyValuePair<string, TokenType>> CurMatches = new(Grammar.MaxPrefixCount);
     
-    // TODO: There's almost certainly a better way to do this. This REALLY needs a rework.
     private static LuaToken ReadSymbol(string source, int position, ushort line, ushort col)
     {
         Span<char> buffer = stackalloc char[Grammar.MaxSymbolLength];
