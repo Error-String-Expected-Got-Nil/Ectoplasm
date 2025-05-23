@@ -58,9 +58,9 @@ public static partial class Grammar
         { "]", CloseIndex },
         { "{", OpenTable },
         { "}", CloseTable },
-        { "--", Comment },
         
         // Operator symbols
+        { "=", Assign },
         { "+", Add },
         { "-", Sub },
         { "*", Mul },
@@ -99,7 +99,7 @@ public static partial class Grammar
     /// <summary>
     /// Matches a Lua 'name', which can be used for labels, identifiers, keywords, table keys, etc.
     /// </summary>
-    [GeneratedRegex(@"[_a-zA-Z]\w*")]
+    [GeneratedRegex(@"\G[_a-zA-Z]\w*")]
     public static partial Regex MatchName { get; }
     
     /// <summary>
@@ -114,28 +114,34 @@ public static partial class Grammar
     /// 6: Decimal fraction, if present, with leading period.
     /// 7: Decimal exponent (power of 10), if present, with leading e or E and possibly a sign following it.
     /// </summary>
-    [GeneratedRegex(@"(0[xX])([\da-fA-F]+)(\.[\da-fA-F]+)?([pP][+-]?\d+)?|(\d+)(\.\d+)?([eE][+-]?\d+)?")]
+    [GeneratedRegex(@"\G(0[xX])([\da-fA-F]+)(\.[\da-fA-F]+)?([pP][+-]?\d+)?|\G(\d+)(\.\d+)?([eE][+-]?\d+)?")]
     public static partial Regex MatchNumber { get; }
     
     /// <summary>
     /// Matches a sequence of one or more whitespace characters considered valid by Lua. This is not as permissive as
     /// the <c>\s</c> escape in C# regex, so it's written out explicitly here.
     /// </summary>
-    [GeneratedRegex(@"[ \f\n\r\t\v]+")]
+    [GeneratedRegex(@"\G[ \f\n\r\t\v]+")]
     public static partial Regex MatchWhitespace { get; }
     
     /// <summary>
     /// Matches any end-of-line sequence: A newline and carriage return in any order, or a single newline, or single
     /// carriage return. Used in parsing strings to convert these sequences to single newlines, where applicable.
     /// </summary>
-    [GeneratedRegex(@"\r\n|\n\r|[\n\r]")]
+    [GeneratedRegex(@"\G(\r\n|\n\r|[\n\r])")]
     public static partial Regex MatchNewline { get; }
     
     /// <summary>
     /// Matches an opening long bracket of any level. Used by ReadComment to check if it's a multi-line comment.
     /// </summary>
-    [GeneratedRegex(@"\[=*\[")]
+    [GeneratedRegex(@"\G\[=*\[")]
     public static partial Regex MatchOpenLongBracket { get; }
+    
+    /// <summary>
+    /// Matches a comment mark. Using a regex for this is excessive, but it's the easiest way to fit it in.
+    /// </summary>
+    [GeneratedRegex(@"\G--")]
+    public static partial Regex MatchComment { get; }
 
     /// <summary>
     /// String escape character.
@@ -171,28 +177,28 @@ public static partial class Grammar
     public static partial Regex MatchUnicodeEscape { get; }
 
     /// <summary>
-    /// Checks if a character is a valid character for starting a text sequence (a potential Name or number literal).
+    /// Checks if a character is a valid character for starting a Name token.
     /// </summary>
     /// <param name="c">The character to check.</param>
-    /// <returns>True if it is a digit, letter, or underscore, false if not.</returns>
-    public static bool IsTextStart(char c) 
+    /// <returns>True if it is a letter or underscore, false if not.</returns>
+    public static bool IsNameStart(char c) 
         => c is >= 'a' and <= 'z' 
             or >= 'A' and <= 'Z' 
-            or >= '0' and <= '9'
             or '_';
     
     /// <summary>
-    /// Checks if a character is a symbol used in Lua.
+    /// Checks if a character is a symbol used in Lua, other than the quote marks.
     /// </summary>
     /// <param name="c">The character to check.</param>
-    /// <returns>True if it is a valid symbol used in Lua, false if not.</returns>
+    /// <returns>True if it is a valid symbol used in Lua, excluding quote marks, false if not.</returns>
     // Checks are ordered with the widest character ranges first, single characters last.
     // These are ASCII character ranges.
     public static bool IsSymbol(char c)
-        => c is >= '%' and <= '/'
+        => c is >= '(' and <= '/'
             or >= ':' and <= '>'
             or >= '{' and <= '~'
-            or '"'
+            or '%'
+            or '&'
             or '#'
             or '['
             or ']';

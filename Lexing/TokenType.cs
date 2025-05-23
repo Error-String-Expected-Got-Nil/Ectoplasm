@@ -47,6 +47,7 @@ public enum TokenType
     Comment, // Double hyphen --
     
     // Operator symbols
+    Assign, // '='
     Add, // '+'
     Sub, // '-' (Also unary minus)
     Mul, // '*'

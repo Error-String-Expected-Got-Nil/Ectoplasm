@@ -6,7 +6,38 @@ public static class Lexer
 {
     public static IEnumerable<LuaToken> Lex(string source)
     {
-        yield break;
+        var position = 0;
+        ushort line = 1;
+        ushort col = 1;
+
+        while (position < source.Length)
+        {
+            var c = source[position];
+
+            LuaToken token;
+            if (Grammar.IsWhitespace(c))
+                token = ReadWhitespace(source, position, line, col);
+            else if (Grammar.IsDigit(c))
+                token = ReadNumber(source, position, line, col);
+            else if (Grammar.IsNameStart(c))
+                token = ReadName(source, position, line, col);
+            else if (c is '"' or '\'')
+                token = ReadString(source, position, line, col);
+            else if (Grammar.MatchOpenLongBracket.IsMatch(source, position))
+                token = ReadLongString(source, position, line, col);
+            else if (Grammar.MatchComment.IsMatch(source, position))
+                token = ReadComment(source, position, line, col);
+            else if (Grammar.IsSymbol(c))
+                token = ReadSymbol(source, position, line, col);
+            else
+                throw new LuaLexingException($"Unrecognized character '{c}'", line, col);
+            
+            position += token.OriginalString.Length;
+            line = token.EndLine;
+            col = token.EndCol;
+
+            yield return token;
+        }
     }
 
     // All 'position' parameters of the reader functions are the index of the first character to start reading from.
@@ -17,8 +48,7 @@ public static class Lexer
     private static readonly List<KeyValuePair<string, TokenType>> PrevMatches = new(Grammar.MaxPrefixCount);
     private static readonly List<KeyValuePair<string, TokenType>> CurMatches = new(Grammar.MaxPrefixCount);
     
-    // TODO: There's probably a better way to do this.
-    // TODO: After symbol matching, check if matched symbol was a quote mark or open bracket to try string matching
+    // TODO: There's almost certainly a better way to do this. This REALLY needs a rework.
     private static LuaToken ReadSymbol(string source, int position, ushort line, ushort col)
     {
         Span<char> buffer = stackalloc char[Grammar.MaxSymbolLength];
@@ -28,7 +58,7 @@ public static class Lexer
         for (var offset = 0; offset < Grammar.MaxSymbolLength; offset++)
         {
             buffer[offset] = source[position + offset];
-            var prefixed = Grammar.Symbols.StartsWith(buffer[..offset]);
+            var prefixed = Grammar.Symbols.StartsWith(buffer[..(offset + 1)]);
             CurMatches.AddRange(prefixed);
 
             if (CurMatches.Count == 0)
@@ -40,10 +70,10 @@ public static class Lexer
                     throw new LuaLexingException($"Unrecognized symbol '{source[position]}'", line, col);
                 
                 var matchedToken 
-                    = PrevMatches.First(match => match.Key.Length == offset).Value;
+                    = PrevMatches.First(match => match.Key.Length == offset);
                 
                 return new LuaToken(source.AsMemory(position, offset), null, 
-                    matchedToken, line, col, line, (ushort)(col + offset));
+                    matchedToken.Value, line, col, line, (ushort)(col + offset));
             }
 
             if (CurMatches.Count == 1)
@@ -378,7 +408,7 @@ public static class Lexer
                         str.Remove(str.Length - level - 1, level + 1);
                         offset++;
                         endCol++;
-                        return new LuaToken(source.AsMemory(position, offset + 1),
+                        return new LuaToken(source.AsMemory(position, offset),
                             str.ToString(), TokenType.String, line, col, endLine, endCol);
                     }
                     
@@ -418,7 +448,6 @@ public static class Lexer
                 null, TokenType.Comment, line, col, token.EndLine, token.EndCol);
         }
 
-        // TODO: Verify empty comment at end of source doesn't fail to lex
         var offset = 2;
         var endCol = col + 2;
         while (position + offset < source.Length)
@@ -429,7 +458,7 @@ public static class Lexer
             {
                 var newlineMatch = Grammar.MatchNewline.Match(source, position + offset);
                 offset += newlineMatch.Length;
-                return new LuaToken(source.AsMemory(position, offset + 1), null,
+                return new LuaToken(source.AsMemory(position, offset), null,
                     TokenType.Comment, line, col, (ushort)(line + 1), 1);
             }
 
@@ -437,7 +466,7 @@ public static class Lexer
             endCol++;
         }
 
-        return new LuaToken(source.AsMemory(position, offset + 1), null, TokenType.Comment,
+        return new LuaToken(source.AsMemory(position, offset), null, TokenType.Comment,
             line, col, line, (ushort)endCol);
     }
 }
