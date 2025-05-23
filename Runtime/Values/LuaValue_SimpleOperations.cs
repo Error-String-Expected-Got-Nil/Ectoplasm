@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 // ReSharper disable SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
 
-namespace Ectoplasm.Runtime.LuaValue;
+namespace Ectoplasm.Runtime.Values;
 
 public readonly partial struct LuaValue
 {

@@ -1,11 +1,11 @@
 ﻿using System.Text;
-using Ectoplasm.Runtime.LuaValue;
+using Ectoplasm.Runtime.Values;
 
 namespace Ectoplasm.Runtime;
 
 /// <summary>
 /// Value type representing a Lua string. Only a wrapper around an array of <see cref="byte"/>, marked as internal to
-/// prevent mutation or access by external users. All interaction should occur through <see cref="LuaValue"/>.
+/// prevent mutation or access by external users. All interaction should occur through <see cref="Values.LuaValue"/>.
 /// </summary>
 internal readonly struct LuaString : IEquatable<LuaString>
 {

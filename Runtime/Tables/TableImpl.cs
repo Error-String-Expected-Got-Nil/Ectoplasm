@@ -20,7 +20,7 @@ internal abstract class TableImpl
     /// The value contained at the given index if it existed, or <see cref="LuaValueKind.Nil"/> if the index did not
     /// exist.
     /// </returns>
-    public abstract LuaValue.LuaValue Get(LuaValue.LuaValue index);
+    public abstract Values.LuaValue Get(Values.LuaValue index);
 
     /// <summary>
     /// Attempt to set the value at a given index to a given value.
@@ -31,5 +31,5 @@ internal abstract class TableImpl
     /// If the set was successful, the same TableImpl. If not, the implementation will be upgraded, the new
     /// implementation will take the assignment, and the new implementation will be returned.
     /// </returns>
-    public abstract TableImpl Set(LuaValue.LuaValue index, LuaValue.LuaValue value);
+    public abstract TableImpl Set(Values.LuaValue index, Values.LuaValue value);
 }

@@ -1,5 +1,5 @@
 ﻿using Ectoplasm.Runtime;
-using Ectoplasm.Runtime.LuaValue;
+using Ectoplasm.Runtime.Values;
 
 namespace Ectoplasm.SimpleExpressions.Operators;
 

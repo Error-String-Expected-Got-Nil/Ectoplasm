@@ -1,7 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using Ectoplasm.Lexing;
 
-namespace Ectoplasm.Runtime.LuaValue;
+namespace Ectoplasm.Runtime.Values;
 
 /// <summary>
 /// Represents a dynamic value used in Lua.

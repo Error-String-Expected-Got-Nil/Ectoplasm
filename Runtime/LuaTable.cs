@@ -1,12 +1,12 @@
-﻿using Ectoplasm.Runtime.LuaValue;
-using Ectoplasm.Runtime.Tables;
+﻿using Ectoplasm.Runtime.Tables;
+using Ectoplasm.Runtime.Values;
 
 namespace Ectoplasm.Runtime;
 
 /// <summary>
 /// <para>
-/// Type representing a Lua table. Can be indexed using any <see cref="LuaValue"/> other than
-/// <see cref="LuaValueKind.Nil"/> or <see cref="double.NaN"/>, returning any <see cref="LuaValue"/>. A return of
+/// Type representing a Lua table. Can be indexed using any <see cref="Values.LuaValue"/> other than
+/// <see cref="LuaValueKind.Nil"/> or <see cref="double.NaN"/>, returning any <see cref="Values.LuaValue"/>. A return of
 /// <see cref="LuaValueKind.Nil"/> on an index get means that index has no value; furthermore, setting an index to
 /// <see cref="LuaValueKind.Nil"/> means removing that index.
 /// </para>
@@ -44,7 +44,7 @@ public class LuaTable
     /// <para>
     /// In Ectoplasm, the largest value that can be returned by this is the <see cref="int"/>
     /// <see cref="int.MaxValue"/>. This is because the contiguous integer key portion of tables is implemented as a
-    /// <see cref="List{T}"/> of <see cref="LuaValue"/>s, and this property is retrieved by getting the
+    /// <see cref="List{T}"/> of <see cref="Values.LuaValue"/>s, and this property is retrieved by getting the
     /// <see cref="List{T}.Count"/> property of this list. If you somehow find yourself in a situation where you should
     /// be getting a return more than this value, you should reconsider if Lua via Ectoplasm is the correct choice of
     /// programming language for what you're trying to do.
@@ -64,7 +64,7 @@ public class LuaTable
     /// <remarks>
     /// Ensure the number of items in the enumeration is less than <see cref="int"/> <see cref="int.MaxValue"/>.
     /// </remarks>
-    public LuaTable(params IEnumerable<LuaValue.LuaValue> values)
+    public LuaTable(params IEnumerable<LuaValue> values)
     {
         var list = values.ToList();
         _implementation = new TableImpl_Array(list, list.Count(val => val.Kind == LuaValueKind.Nil));
@@ -72,7 +72,7 @@ public class LuaTable
     
     // TODO: Constructor from IEnumerable<KeyValuePair<LuaValue, LuaValue>> and from LuaState stack
     
-    public LuaValue.LuaValue this[LuaValue.LuaValue index]
+    public LuaValue this[LuaValue index]
     {
         get => _implementation.Get(index);
         set

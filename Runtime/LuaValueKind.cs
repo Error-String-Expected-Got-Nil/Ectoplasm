@@ -1,4 +1,4 @@
-﻿using Ectoplasm.Runtime.LuaValue;
+﻿using Ectoplasm.Runtime.Values;
 
 namespace Ectoplasm.Runtime;
 
@@ -26,7 +26,7 @@ public enum LuaValueKind
     
     /// <summary>
     /// Immutable byte sequence. Underlying C# type is <see cref="LuaString"/>, though this type is marked as internal,
-    /// and it is only externally accessible through <see cref="LuaValue"/>.
+    /// and it is only externally accessible through <see cref="Values.LuaValue"/>.
     /// </summary>
     String,
     

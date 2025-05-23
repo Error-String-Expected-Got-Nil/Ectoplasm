@@ -3,14 +3,14 @@
 /// <summary>
 /// Table implementation for tables containing only string keys.
 /// </summary>
-internal class TableImpl_Strings(Dictionary<LuaString, LuaValue.LuaValue> values) : TableImpl
+internal class TableImpl_Strings(Dictionary<LuaString, Values.LuaValue> values) : TableImpl
 {
     /// <inheritdoc/>
     // A TableImpl_Strings will never have integer keys and therefore always has length 0.
     public override long Length => 0;
     
     /// <inheritdoc/>
-    public override LuaValue.LuaValue Get(LuaValue.LuaValue index)
+    public override Values.LuaValue Get(Values.LuaValue index)
     {
         if (index.Kind != LuaValueKind.String) return default;
         values.TryGetValue((LuaString)index._ref, out var value);
@@ -18,7 +18,7 @@ internal class TableImpl_Strings(Dictionary<LuaString, LuaValue.LuaValue> values
     }
 
     /// <inheritdoc/>
-    public override TableImpl Set(LuaValue.LuaValue index, LuaValue.LuaValue value)
+    public override TableImpl Set(Values.LuaValue index, Values.LuaValue value)
     {
         if (index.Kind != LuaValueKind.String)
         {
@@ -29,7 +29,7 @@ internal class TableImpl_Strings(Dictionary<LuaString, LuaValue.LuaValue> values
                 {
                     1 => new TableImpl_Array([value], 0),
                     2 => new TableImpl_Array([default, value], 1),
-                    _ => new TableImpl_Integers(new Dictionary<long, LuaValue.LuaValue> { { coercedInteger, value } },
+                    _ => new TableImpl_Integers(new Dictionary<long, Values.LuaValue> { { coercedInteger, value } },
                         [], 0)
                 };
 

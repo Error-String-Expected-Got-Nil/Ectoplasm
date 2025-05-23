@@ -11,23 +11,23 @@ internal class TableImpl_Empty : TableImpl
     
     /// <inheritdoc/>
     // And contains only nil values.
-    public override LuaValue.LuaValue Get(LuaValue.LuaValue index) => default;
+    public override Values.LuaValue Get(Values.LuaValue index) => default;
 
     /// <inheritdoc/>
     // And always needs to be upgraded when an index is assigned a non-nil value.
-    public override TableImpl Set(LuaValue.LuaValue index, LuaValue.LuaValue value)
+    public override TableImpl Set(Values.LuaValue index, Values.LuaValue value)
     {
         if (value.Kind == LuaValueKind.Nil) return this;
 
         if (index.Kind == LuaValueKind.String)
-            return new TableImpl_Strings(new Dictionary<LuaString, LuaValue.LuaValue> { { (LuaString)index._ref, value } });
+            return new TableImpl_Strings(new Dictionary<LuaString, Values.LuaValue> { { (LuaString)index._ref, value } });
         
         if (index.TryCoerceInteger(out var coercedInteger))
             return coercedInteger switch
             {
                 1 => new TableImpl_Array([value], 0),
                 2 => new TableImpl_Array([default, value], 1),
-                _ => new TableImpl_Integers(new Dictionary<long, LuaValue.LuaValue> { { coercedInteger, value } },
+                _ => new TableImpl_Integers(new Dictionary<long, Values.LuaValue> { { coercedInteger, value } },
                     [], 0)
             };
 

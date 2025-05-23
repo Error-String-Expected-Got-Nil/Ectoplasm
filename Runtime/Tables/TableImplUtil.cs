@@ -1,4 +1,4 @@
-﻿using Ectoplasm.Runtime.LuaValue;
+﻿using Ectoplasm.Runtime.Values;
 
 namespace Ectoplasm.Runtime.Tables;
 
@@ -7,19 +7,19 @@ public static class TableImplUtil
     /// <summary>
     /// A threshold for the number of excess <see cref="LuaValueKind.Nil"/> values that must be present in a list before
     /// memory-saving optimizations, like trimming excess list capacity and splitting part of a list into a dictionary,
-    /// are performed. Each <see cref="LuaValue"/> is 24 bytes.
+    /// are performed. Each <see cref="Values.LuaValue"/> is 24 bytes.
     /// </summary>
     internal const int MinCountForMemorySaving = 64;
     
     /// <summary>
     /// Removes excess <see cref="LuaValueKind.Nil"/> values at the end of a <see cref="List{T}"/> of
-    /// <see cref="LuaValue"/>s.
+    /// <see cref="Values.LuaValue"/>s.
     /// </summary>
     /// <param name="list">List to trim nils off of.</param>
     /// <param name="nilCount">
     /// Reference to int variable tracking the list's count of nils. Amount of nils removed is subtracted from this.
     /// </param>
-    public static void TrimExcessNils(List<LuaValue.LuaValue> list, ref int nilCount)
+    public static void TrimExcessNils(List<LuaValue> list, ref int nilCount)
     {
         var index = list.Count;
         while (list[index].Kind != LuaValueKind.Nil) index--;
@@ -35,9 +35,9 @@ public static class TableImplUtil
     }
     
     // Horribly gangly utility function that produces a TableImpl_Complete given old data and a new index/value pair.
-    internal static TableImpl_Complete UpgradeToCompleteImpl(LuaValue.LuaValue index, LuaValue.LuaValue value,
-        Dictionary<LuaString, LuaValue.LuaValue>? stringsDict = null, Dictionary<long, LuaValue.LuaValue>? intsDict = null,
-        List<LuaValue.LuaValue>? list = null, int nilCount = 0)
+    internal static TableImpl_Complete UpgradeToCompleteImpl(LuaValue index, LuaValue value,
+        Dictionary<LuaString, LuaValue>? stringsDict = null, Dictionary<long, LuaValue>? intsDict = null,
+        List<LuaValue>? list = null, int nilCount = 0)
         // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
         => index.Kind switch
         {
@@ -47,14 +47,14 @@ public static class TableImplUtil
                 : new TableImpl_Complete(default, value, [], [], stringsDict ?? [],
                     intsDict ?? [], list ?? [], nilCount),
             LuaValueKind.Float => new TableImpl_Complete(default, default,
-                new Dictionary<double, LuaValue.LuaValue> { { index._float, value } }, [],
+                new Dictionary<double, LuaValue> { { index._float, value } }, [],
                 stringsDict ?? [], intsDict ?? [], list ?? [], nilCount),
             LuaValueKind.String => new TableImpl_Complete(default, default, [],
-                [], new Dictionary<LuaString, LuaValue.LuaValue> { { (LuaString)index._ref, value } }, 
+                [], new Dictionary<LuaString, LuaValue> { { (LuaString)index._ref, value } }, 
                 intsDict ?? [], list ?? [], nilCount),
             LuaValueKind.Function or LuaValueKind.Userdata or LuaValueKind.Thread or LuaValueKind.Table 
                 => new TableImpl_Complete(default, default, [],
-                new Dictionary<object, LuaValue.LuaValue> { { index._ref, value } }, stringsDict ?? [],
+                new Dictionary<object, LuaValue> { { index._ref, value } }, stringsDict ?? [],
                 intsDict ?? [], list ?? [], nilCount),
             _ => throw new ArgumentException($"Failed to find suitable upgrade path for index (Kind = {index.Kind})",
                 nameof(index))

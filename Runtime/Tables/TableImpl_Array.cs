@@ -5,7 +5,7 @@
 /// int.MaxValue, such that no more than half of the array is empty (has <see cref="LuaValueKind.Nil"/> value). This
 /// is almost always the case for tables used like arrays in Lua.
 /// </summary>
-internal class TableImpl_Array(List<LuaValue.LuaValue> values, int nilCount) : TableImpl
+internal class TableImpl_Array(List<Values.LuaValue> values, int nilCount) : TableImpl
 {
     private int _nilCount = nilCount;
     
@@ -13,7 +13,7 @@ internal class TableImpl_Array(List<LuaValue.LuaValue> values, int nilCount) : T
     public override long Length => values.Count;
     
     /// <inheritdoc/>
-    public override LuaValue.LuaValue Get(LuaValue.LuaValue index)
+    public override Values.LuaValue Get(Values.LuaValue index)
     {
         if (!index.TryCoerceInteger(out var coercedIndex)) return default;
         coercedIndex--;
@@ -22,7 +22,7 @@ internal class TableImpl_Array(List<LuaValue.LuaValue> values, int nilCount) : T
     }
 
     /// <inheritdoc/>
-    public override TableImpl Set(LuaValue.LuaValue index, LuaValue.LuaValue value)
+    public override TableImpl Set(Values.LuaValue index, Values.LuaValue value)
     {
         // Index isn't integer, implementation may need upgrade
         if (!index.TryCoerceInteger(out var coercedIndex))
@@ -31,7 +31,7 @@ internal class TableImpl_Array(List<LuaValue.LuaValue> values, int nilCount) : T
             if (value.Kind == LuaValueKind.Nil) return this;
 
             if (index.Kind == LuaValueKind.String)
-                return new TableImpl_Multi(new Dictionary<LuaString, LuaValue.LuaValue> { { (LuaString)index._ref, value } }, 
+                return new TableImpl_Multi(new Dictionary<LuaString, Values.LuaValue> { { (LuaString)index._ref, value } }, 
                     [], values, _nilCount);
             
             return TableImplUtil.UpgradeToCompleteImpl(index, value, list: values, nilCount: _nilCount);
@@ -46,7 +46,7 @@ internal class TableImpl_Array(List<LuaValue.LuaValue> values, int nilCount) : T
             if (value.Kind == LuaValueKind.Nil) return this;
 
             // coercedIndex is incremented to undo the earlier decrement
-            return new TableImpl_Integers(new Dictionary<long, LuaValue.LuaValue> { { coercedIndex + 1, value } }, 
+            return new TableImpl_Integers(new Dictionary<long, Values.LuaValue> { { coercedIndex + 1, value } }, 
                 values, _nilCount);
         }
 
@@ -71,7 +71,7 @@ internal class TableImpl_Array(List<LuaValue.LuaValue> values, int nilCount) : T
             if (_nilCount + extraNils > (intIndex + 1) / 2)
                 // Nil ratio will be over one half. Instead, we'll upgrade to TableImpl_Integers and add the new value
                 // into its dictionary portion. Note that coercedIndex is incremented to undo the earlier decrement.
-                return new TableImpl_Integers(new Dictionary<long, LuaValue.LuaValue> { { coercedIndex + 1, value } },
+                return new TableImpl_Integers(new Dictionary<long, Values.LuaValue> { { coercedIndex + 1, value } },
                     values, _nilCount);
             
             // Nil ratio won't be over half, we can append normally
