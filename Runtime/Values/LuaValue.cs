@@ -400,17 +400,25 @@ public readonly partial struct LuaValue
     }
 
     /// <summary>
-    /// Creates a new LuaValue from a <see cref="TokenType.Numeral"/> <see cref="LuaToken"/>. 
+    /// Creates a new LuaValue from a <see cref="LuaToken"/>. 
     /// </summary>
     /// <param name="token">The <see cref="LuaToken"/> holding the value of the new LuaValue.</param>
     /// <exception cref="ArgumentException">
-    /// Thrown if the <see cref="LuaToken"/> is not a <see cref="TokenType.Numeral"/>.
+    /// Thrown if the <see cref="LuaToken"/> is not a <see cref="TokenType.Numeral"/> or <see cref="TokenType.String"/>.
     /// </exception>
     public LuaValue(LuaToken token)
     {
-        if (token.Type != TokenType.Numeral)
-            throw new ArgumentException("Attempt to create LuaValue from non-numeral LuaToken.", nameof(token));
+        if (token.Type is not (TokenType.Numeral or TokenType.String))
+            throw new ArgumentException("Attempt to create LuaValue from non-numeral, non-string LuaToken.", 
+                nameof(token));
 
+        if (token.Type == TokenType.String)
+        {
+            Kind = LuaValueKind.String;
+            _ref = new LuaString((string)token.Data!);
+            return;
+        }
+        
         if (token.Data is long value)
         {
             Kind = LuaValueKind.Integer;
@@ -452,7 +460,7 @@ public readonly partial struct LuaValue
         }
     }
 
-    public override string ToString() => GlobalFunctions.LuaToString(this);
+    public override string ToString() => GlobalFunctions.LuaToStringUtf16(this);
 
     #endregion
     

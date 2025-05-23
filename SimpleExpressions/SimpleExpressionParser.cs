@@ -102,14 +102,14 @@ public static class SimpleExpressionParser
             {
                 var curPrec = Grammar.OperatorPrecedence[token.Type];
                 var topPrec = Grammar.OperatorPrecedence[topToken.Type];
-                
-                // 'curPrec >= 10' means 'is the current operator right-associative', since precedence is > 9 if and
-                // only if the operator is right-associative.
-                if (topPrec <= curPrec && (topPrec != curPrec || curPrec >= 10)) break;
-                
-                // Current precedence is less than top precedence, or they're the same and current has priority due to
-                // associativity, pop the top operator into the output queue.
-                output.Enqueue(GetExpressionForOperator(operatorStack.Pop()));
+
+                if (topPrec > curPrec || (topPrec == curPrec && Grammar.IsLeftAssociative(token.Type)))
+                {
+                    output.Enqueue(GetExpressionForOperator(operatorStack.Pop()));
+                    continue;
+                }
+
+                break;
             }
             
             operatorStack.Push(token);
@@ -144,7 +144,8 @@ public static class SimpleExpressionParser
     }
 
     private static bool IsValueToken(TokenType type) 
-        => type is TokenType.Numeral or TokenType.String or TokenType.Name;
+        => type is TokenType.Numeral or TokenType.String or TokenType.Name or TokenType.Nil or TokenType.True 
+            or TokenType.False;
 
     private static SimpleExpression GetExpressionForOperator(LuaToken token)
         // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
@@ -155,6 +156,8 @@ public static class SimpleExpressionParser
             TokenType.Mul => new Simexp_OpMul(),
             TokenType.Div => new Simexp_OpDiv(),
             TokenType.IntDiv => new Simexp_OpIntDiv(),
+            TokenType.Neg => new Simexp_OpNeg(),
+            TokenType.Concat => new Simexp_OpConcat(),
             _ => throw new SimpleExpressionParsingException(
                 $"Unexpected token {token.OriginalString} when trying to parse operator on line {token.StartLine}, " +
                 $"col {token.StartCol}")

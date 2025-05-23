@@ -7,9 +7,9 @@ namespace Ectoplasm.Runtime;
 /// Value type representing a Lua string. Only a wrapper around an array of <see cref="byte"/>, marked as internal to
 /// prevent mutation or access by external users. All interaction should occur through <see cref="Values.LuaValue"/>.
 /// </summary>
-internal readonly struct LuaString : IEquatable<LuaString>
+internal readonly struct LuaString(byte[] data) : IEquatable<LuaString>
 {
-    private readonly byte[] _data;
+    private readonly byte[] _data = data;
 
     public ReadOnlySpan<byte> Data => _data;
 
@@ -32,24 +32,18 @@ internal readonly struct LuaString : IEquatable<LuaString>
 
     public long Length => _data.Length;
 
-    internal LuaString(byte[] data)
-    {
-        _data = data;
-    }
+    public LuaString(LuaString data) : this(data._data) { }
 
-    public LuaString(LuaString data)
-    {
-        _data = data._data;
-    }
+    public LuaString(ReadOnlySpan<byte> data) : this(data.ToArray()) { }
 
-    public LuaString(ReadOnlySpan<byte> data)
-    {
-        _data = data.ToArray();
-    }
+    public LuaString(string data) : this(Encoding.UTF8.GetBytes(data)) { }
 
-    public LuaString(string data)
+    public static LuaString Concat(LuaString a, LuaString b)
     {
-        _data = Encoding.UTF8.GetBytes(data);
+        var buffer = new byte[a._data.Length + b._data.Length];
+        Array.Copy(a._data, 0, buffer, 0, a._data.Length);
+        Array.Copy(b._data, 0, buffer, a._data.Length, b._data.Length);
+        return new LuaString(buffer);
     }
 
     public bool Equals(LuaString other)
@@ -65,4 +59,6 @@ internal readonly struct LuaString : IEquatable<LuaString>
     private const int HashSeed = 5381;
     public override int GetHashCode() 
         => _data.Aggregate(HashSeed, (hash, b) => (hash << 5) + hash + b);
+
+    public override bool Equals(object? obj) => obj is LuaString luaString && Equals(luaString);
 }

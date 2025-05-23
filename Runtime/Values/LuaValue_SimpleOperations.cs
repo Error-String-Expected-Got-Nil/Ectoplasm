@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+using Ectoplasm.Runtime.Stdlib;
+
 // ReSharper disable SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
 
 namespace Ectoplasm.Runtime.Values;
@@ -41,24 +43,24 @@ public readonly partial struct LuaValue
     public static LuaValue SimpleAdd(LuaValue a, LuaValue b)
         => PrepareForSimpleArithmetic(ref a, ref b) switch
         {
-            LuaValueKind.Integer => a._integer + b._integer,
-            LuaValueKind.Float => a._float + b._float,
+            LuaValueKind.Integer => new LuaValue(a._integer + b._integer),
+            LuaValueKind.Float => new LuaValue(a._float + b._float),
             _ => throw new UnreachableException()
         };
     
     public static LuaValue SimpleSub(LuaValue a, LuaValue b)
         => PrepareForSimpleArithmetic(ref a, ref b) switch
         {
-            LuaValueKind.Integer => a._integer - b._integer,
-            LuaValueKind.Float => a._float - b._float,
+            LuaValueKind.Integer => new LuaValue(a._integer - b._integer),
+            LuaValueKind.Float => new LuaValue(a._float - b._float),
             _ => throw new UnreachableException()
         };
     
     public static LuaValue SimpleMul(LuaValue a, LuaValue b)
         => PrepareForSimpleArithmetic(ref a, ref b) switch
         {
-            LuaValueKind.Integer => a._integer * b._integer,
-            LuaValueKind.Float => a._float * b._float,
+            LuaValueKind.Integer => new LuaValue(a._integer * b._integer),
+            LuaValueKind.Float => new LuaValue(a._float * b._float),
             _ => throw new UnreachableException()
         };
     
@@ -77,4 +79,23 @@ public readonly partial struct LuaValue
             LuaValueKind.Float => new LuaValue((long)(a._float / b._float)),
             _ => throw new UnreachableException()
         };
+
+    public static LuaValue SimpleNeg(LuaValue n)
+    {
+        if (n.Kind is not (LuaValueKind.Integer or LuaValueKind.Float))
+            throw new LuaRuntimeException($"Attempt to perform simple arithmetic on non-number kind {n.Kind}");
+
+        return n.Kind == LuaValueKind.Integer ? new LuaValue(-n._integer) : new LuaValue(-n._float);
+    }
+    
+    public static LuaValue SimpleConcat(LuaValue a, LuaValue b)
+    {
+        if (a.Kind is not (LuaValueKind.String or LuaValueKind.Integer or LuaValueKind.Float))
+            throw new LuaRuntimeException($"Attempt to concatenate invalid kind {a.Kind}");
+        if (b.Kind is not (LuaValueKind.String or LuaValueKind.Integer or LuaValueKind.Float))
+            throw new LuaRuntimeException($"Attempt to concatenate invalid kind {b.Kind}");
+        
+        return new LuaValue(LuaString.Concat(GlobalFunctions.LuaToStringInternal(a), 
+            GlobalFunctions.LuaToStringInternal(b)));
+    }
 }

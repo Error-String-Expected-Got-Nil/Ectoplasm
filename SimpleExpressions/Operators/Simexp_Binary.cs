@@ -15,11 +15,11 @@ public abstract class Simexp_Binary : SimpleExpression
     /// <inheritdoc/>
     public override void Init(Stack<SimpleExpression> stack)
     {
-        OpA = stack.Pop();
-        if (!OpA.IsInit) OpA.Init(stack);
-
         OpB = stack.Pop();
         if (!OpB.IsInit) OpB.Init(stack);
+
+        OpA = stack.Pop();
+        if (!OpA.IsInit) OpA.Init(stack);
 
         _init = true;
     }

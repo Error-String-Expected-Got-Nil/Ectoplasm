@@ -101,7 +101,7 @@ public static partial class Grammar
         { Add, 8 }, { Sub, 8 },
         { Mul, 9 }, { Div, 9 }, { IntDiv, 9 }, { Mod, 9 },
         { Not, 10 }, { Length, 10 }, { Neg, 10 }, { BitwiseNot, 10 }, // Unary operators
-        { Exp, 11 } // Note that exponentiation is also right-associative, unlike other binary operators.
+        { Exp, 11 }
     };
 
     /// <summary>
@@ -110,6 +110,14 @@ public static partial class Grammar
     /// them directly.
     /// </summary>
     public static readonly HashSet<TokenType> UnaryOperators = [Not, Length, Sub, BitwiseXor];
+
+    /// <summary>
+    /// Determines if an operator token type is left associative.
+    /// </summary>
+    /// <param name="type">Operator token type to check.</param>
+    /// <returns>True if operator token type is left associative.</returns>
+    public static bool IsLeftAssociative(TokenType type) 
+        => type is not (Concat or Not or Length or Neg or BitwiseNot or Exp);
 
     /// <summary>
     /// Maximum number of keys starting with the same starting character.
