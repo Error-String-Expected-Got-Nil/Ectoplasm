@@ -1,4 +1,6 @@
-﻿namespace Ectoplasm.Lexing;
+﻿using Ectoplasm.Utils;
+
+namespace Ectoplasm.Lexing;
 
 public readonly record struct LuaToken(
     ReadOnlyMemory<char> OriginalString,
@@ -21,7 +23,7 @@ public readonly record struct LuaToken(
         {
             TokenType.Name => $"<{(string)Data!}>",
             TokenType.Numeral => $"<{(Data! is long ? (long)Data : (double)Data!)}>",
-            TokenType.String => $"<\"{((string)Data!).Replace("\n", "\\n")}\">",
+            TokenType.String => $"<\"{((string)Data!).GetEscapedString()}\">",
             _ => ""
         });
 }

@@ -82,34 +82,6 @@ public class LoggedILGenerator(ILGenerator orig) : ILGenerator
         _log.Append(padded);
         _log.AppendLine(extra.ToString());
     }
-
-    // Converts a string into a new string that looks like an in-code escaped string
-    private static string GetEscapedString(string str)
-    {
-        var lit = new StringBuilder(str.Length + 2);
-        
-        lit.Append('"');
-        foreach (var c in str)
-            lit.Append(c switch
-            {
-                '"' => "\\\"",
-                '\\' => @"\\",
-                '\0' => @"\0",
-                '\a' => @"\a",
-                '\b' => @"\b",
-                '\f' => @"\f",
-                '\n' => @"\n",
-                '\r' => @"\r",
-                '\t' => @"\t",
-                '\v' => @"\v",
-                _ => char.GetUnicodeCategory(c) == UnicodeCategory.Control 
-                    ? @"\u" + ((int)c).ToString("x4") 
-                    : c
-            });
-        lit.Append('"');
-
-        return lit.ToString();
-    } 
     
     public override int ILOffset => orig.ILOffset;
     
@@ -207,7 +179,7 @@ public class LoggedILGenerator(ILGenerator orig) : ILGenerator
 
     public override void Emit(OpCode opcode, string str)
     {
-        Log(opcode, GetEscapedString(str));
+        Log(opcode, str.GetEscapedString());
         orig.Emit(opcode, str);
     }
 
