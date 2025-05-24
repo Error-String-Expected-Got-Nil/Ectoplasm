@@ -36,8 +36,8 @@ public class LoggedILGenerator(ILGenerator orig) : ILGenerator
         {
             foreach (var ns in _namespaces)
             {
-                str.Append("using ");
-                str.AppendLine(ns);
+                str.Append("using ")
+                    .AppendLine(ns);
             }
 
             str.AppendLine();
@@ -47,11 +47,11 @@ public class LoggedILGenerator(ILGenerator orig) : ILGenerator
         {
             foreach (var local in _locals)
             {
-                str.Append('[');
-                str.Append(local.LocalIndex);
-                str.Append(']');
-                str.Append(' ');
-                str.Append(local.LocalType);
+                str.Append('[')
+                    .Append(local.LocalIndex)
+                    .Append(']')
+                    .Append(' ')
+                    .Append(local.LocalType);
                 if (local.IsPinned) str.Append(" pinned");
             }
 
@@ -65,10 +65,15 @@ public class LoggedILGenerator(ILGenerator orig) : ILGenerator
     
     private void Log(OpCode opcode, object? extra = null)
     {
+        if (_indented) _log.Append("    ");
+        
         if (extra is null)
         {
-            if (_indented) _log.Append("    ");
-            _log.AppendLine(opcode.ToString());
+            _log.Append("IL_")
+                .Append(orig.ILOffset.ToString("x4"))
+                .Append(": ")
+                .AppendLine(opcode.ToString());
+            
             return;
         }
 
@@ -78,9 +83,11 @@ public class LoggedILGenerator(ILGenerator orig) : ILGenerator
             PaddedOpcodeStrings.Add(opcode, padded);
         }
 
-        if (_indented) _log.Append("    ");
-        _log.Append(padded);
-        _log.AppendLine(extra.ToString());
+        _log.Append("IL_")
+            .Append(orig.ILOffset.ToString("x4"))
+            .Append(": ")
+            .Append(padded)
+            .AppendLine(extra.ToString());
     }
     
     public override int ILOffset => orig.ILOffset;
@@ -191,7 +198,10 @@ public class LoggedILGenerator(ILGenerator orig) : ILGenerator
     
     public override void MarkLabel(Label loc)
     {
-        throw new NotImplementedException();
+        _log.Append('[');
+        _log.Append(loc.Id);
+        _log.AppendLine("]");
+        orig.MarkLabel(loc);
     }
 
     public override void EmitCall(OpCode opcode, MethodInfo methodInfo, Type[]? optionalParameterTypes)
@@ -293,8 +303,8 @@ public class LoggedILGenerator(ILGenerator orig) : ILGenerator
     
     public override Label BeginExceptionBlock()
     {
-        _log.AppendLine(".try");
-        _log.AppendLine("{");
+        _log.AppendLine(".try")
+            .AppendLine("{");
         _indented = true;
         
         return orig.BeginExceptionBlock();
@@ -302,10 +312,10 @@ public class LoggedILGenerator(ILGenerator orig) : ILGenerator
     
     public override void BeginCatchBlock(Type? exceptionType)
     {
-        _log.AppendLine("}");
-        _log.Append(".catch   ");
-        _log.AppendLine(exceptionType?.ToString() ?? "");
-        _log.AppendLine("{");
+        _log.AppendLine("}")
+            .Append(".catch   ")
+            .AppendLine(exceptionType?.ToString() ?? "")
+            .AppendLine("{");
         
         orig.BeginCatchBlock(exceptionType);
     }
@@ -324,9 +334,9 @@ public class LoggedILGenerator(ILGenerator orig) : ILGenerator
 
     public override void BeginFinallyBlock()
     {
-        _log.AppendLine("}");
-        _log.AppendLine(".finally");
-        _log.AppendLine("{");
+        _log.AppendLine("}")
+            .AppendLine(".finally")
+            .AppendLine("{");
         
         orig.BeginFinallyBlock();
     }
