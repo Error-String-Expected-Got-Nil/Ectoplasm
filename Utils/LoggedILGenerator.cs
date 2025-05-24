@@ -145,9 +145,9 @@ public class LoggedILGenerator(ILGenerator orig) : ILGenerator
         var str = new StringBuilder();
         foreach (var label in labels)
         {
-            str.Append('[');
-            str.Append(label.Id);
-            str.Append(']');
+            str.Append('[')
+                .Append(label.Id)
+                .Append(']');
         }
 
         Log(opcode, str);
@@ -198,9 +198,9 @@ public class LoggedILGenerator(ILGenerator orig) : ILGenerator
     
     public override void MarkLabel(Label loc)
     {
-        _log.Append('[');
-        _log.Append(loc.Id);
-        _log.AppendLine("]");
+        _log.Append('[')
+            .Append(loc.Id)
+            .AppendLine("]");
         orig.MarkLabel(loc);
     }
 
@@ -212,9 +212,9 @@ public class LoggedILGenerator(ILGenerator orig) : ILGenerator
             str.Append(methodInfo);
             foreach (var param in optionalParameterTypes)
             {
-                str.Append('<');
-                str.Append(param);
-                str.Append('>');
+                str.Append('<')
+                    .Append(param)
+                    .Append('>');
             }
             
             Log(opcode, str);
@@ -232,15 +232,15 @@ public class LoggedILGenerator(ILGenerator orig) : ILGenerator
     {
         var str = new StringBuilder();
 
-        str.Append('[');
-        str.Append(callingConvention.ToString());
-        str.Append(']');
+        str.Append('[')
+            .Append(callingConvention.ToString())
+            .Append(']');
 
         if (returnType is not null)
         {
-            str.Append('{');
-            str.Append(returnType);
-            str.Append('}');
+            str.Append('{')
+                .Append(returnType)
+                .Append('}');
         }
 
         if (parameterTypes is { Length: > 0 })
@@ -248,9 +248,9 @@ public class LoggedILGenerator(ILGenerator orig) : ILGenerator
             str.Append('(');
             foreach (var type in parameterTypes)
             {
-                str.Append('<');
-                str.Append(type);
-                str.Append('>');
+                str.Append('<')
+                    .Append(type)
+                    .Append('>');
             }
             str.Append(')');
         }
@@ -259,9 +259,9 @@ public class LoggedILGenerator(ILGenerator orig) : ILGenerator
         {
             foreach (var type in optionalParameterTypes)
             {
-                str.Append('<');
-                str.Append(type);
-                str.Append('>');
+                str.Append('<')
+                    .Append(type)
+                    .Append('>');
             }
         }
         
@@ -274,15 +274,15 @@ public class LoggedILGenerator(ILGenerator orig) : ILGenerator
     {
         var str = new StringBuilder();
 
-        str.Append('[');
-        str.Append(unmanagedCallConv.ToString());
-        str.Append(']');
+        str.Append('[')
+            .Append(unmanagedCallConv.ToString())
+            .Append(']');
 
         if (returnType is not null)
         {
-            str.Append('{');
-            str.Append(returnType);
-            str.Append('}');
+            str.Append('{')
+                .Append(returnType)
+                .Append('}');
         }
 
         if (parameterTypes is { Length: > 0 })
@@ -290,9 +290,9 @@ public class LoggedILGenerator(ILGenerator orig) : ILGenerator
             str.Append('(');
             foreach (var type in parameterTypes)
             {
-                str.Append('<');
-                str.Append(type);
-                str.Append('>');
+                str.Append('<')
+                    .Append(type)
+                    .Append('>');
             }
             str.Append(')');
         }
