@@ -404,21 +404,36 @@ public readonly partial struct LuaValue
     /// </summary>
     /// <param name="token">The <see cref="LuaToken"/> holding the value of the new LuaValue.</param>
     /// <exception cref="ArgumentException">
-    /// Thrown if the <see cref="LuaToken"/> is not a <see cref="TokenType.Numeral"/> or <see cref="TokenType.String"/>.
+    /// Thrown if the <see cref="LuaToken"/> is not a value.
     /// </exception>
     public LuaValue(LuaToken token)
     {
-        if (token.Type is not (TokenType.Numeral or TokenType.String))
-            throw new ArgumentException("Attempt to create LuaValue from non-numeral, non-string LuaToken.", 
-                nameof(token));
-
-        if (token.Type == TokenType.String)
+        // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
+        switch (token.Type)
         {
-            Kind = LuaValueKind.String;
-            _ref = new LuaString((string)token.Data!);
-            return;
+            case TokenType.Nil:
+                Kind = LuaValueKind.Nil;
+                return;
+            case TokenType.True:
+                Kind = LuaValueKind.Boolean;
+                _boolean = true;
+                return;
+            case TokenType.False:
+                Kind = LuaValueKind.Boolean;
+                _boolean = false;
+                return;
+            case TokenType.String:
+                Kind = LuaValueKind.String;
+                _ref = new LuaString((string)token.Data!);
+                return;
+            case TokenType.Numeral:
+                break;
+            default:
+                throw new ArgumentException(
+                    $"Attempt to create LuaValue from non-value LuaToken. Token: \"{token.OriginalString}\"", 
+                    nameof(token));
         }
-        
+
         if (token.Data is long value)
         {
             Kind = LuaValueKind.Integer;
