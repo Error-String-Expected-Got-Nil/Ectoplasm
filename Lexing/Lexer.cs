@@ -2,8 +2,19 @@
 
 namespace Ectoplasm.Lexing;
 
+/// <summary>
+/// Static class holding code for lexical analysis of Lua source code.
+/// </summary>
 public static class Lexer
 {
+    /// <summary>
+    /// Lexically analyze a string containing Lua source code, producing a sequence of <see cref="LuaToken"/>s.
+    /// </summary>
+    /// <param name="source">Source code to lex.</param>
+    /// <returns>The same source code, broken up into a series of <see cref="LuaToken"/>s.</returns>
+    /// <exception cref="LuaLexingException">
+    /// Thrown when encountering basic lexical errors, like malformed string literals or invalid characters.
+    /// </exception>
     public static IEnumerable<LuaToken> Lex(string source)
     {
         // Do nothing for empty input

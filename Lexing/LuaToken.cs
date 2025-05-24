@@ -2,6 +2,23 @@
 
 namespace Ectoplasm.Lexing;
 
+/// <summary>
+/// A readonly record struct containing information about a single token from a Lua program, including the section of
+/// source code that produced it.
+/// </summary>
+/// <param name="OriginalString">The slice of the original source string that produced this token.</param>
+/// <param name="Data">
+/// Extra data about this token. Only used by the following <see cref="TokenType"/>s: <br/>
+/// - <see cref="TokenType.Name"/>: <see cref="string"/> containing the text of the name. <br/>
+/// - <see cref="TokenType.String"/>: <see cref="string"/> containing the parsed contents of the string. <br/>
+/// - <see cref="TokenType.Numeral"/>: Either a <see cref="long"/> or <see cref="double"/>, representing the parsed
+/// value of the numeral.
+/// </param>
+/// <param name="Type">The <see cref="TokenType"/> of this token.</param>
+/// <param name="StartLine">The line of source this token starts on.</param>
+/// <param name="StartCol">The column of the line this token starts on that the token starts.</param>
+/// <param name="EndLine">The line of source this token ends on.</param>
+/// <param name="EndCol">The column of the line this token ends on that the token ends.</param>
 public readonly record struct LuaToken(
     ReadOnlyMemory<char> OriginalString,
     object? Data,
