@@ -1,4 +1,5 @@
-﻿using Ectoplasm.Runtime;
+﻿using System.Reflection.Emit;
+using Ectoplasm.Runtime;
 using Ectoplasm.Runtime.Values;
 using LuaValue = Ectoplasm.Runtime.Values.LuaValue;
 
@@ -24,4 +25,10 @@ public abstract class SimpleExpression
     /// with this call.
     /// </summary>
     public abstract void Init(Stack<SimpleExpression> stack);
+
+    /// <summary>
+    /// Takes an <see cref="ILGenerator"/> and uses it to emit instructions such that the stack transitions to put the
+    /// result of evaluating this expression on top.
+    /// </summary>
+    public abstract void Compile(ILGenerator il);
 }

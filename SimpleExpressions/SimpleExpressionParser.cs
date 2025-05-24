@@ -15,7 +15,7 @@ public static class SimpleExpressionParser
     /// <param name="tokens">List of tokens to parse.</param>
     /// <returns>Parsed expression.</returns>
     /// <exception cref="SimpleExpressionParsingException">Thrown if the expression is malformed.</exception>
-    public static SimpleExpression Parse(IEnumerable<LuaToken> tokens)
+    public static Simexp_Root Parse(IEnumerable<LuaToken> tokens)
     {
         // Flag to track if we should see a value next. If we find something that isn't a value when we expect one,
         // then the operator must be a unary operator; this allows us to distinguish unary and binary negation.
@@ -23,6 +23,7 @@ public static class SimpleExpressionParser
 
         var output = new Queue<SimpleExpression>();
         var operatorStack = new Stack<LuaToken>();
+        var upvalues = new List<LuaValue>();
         
         foreach (var tokenOriginal in tokens)
         {
@@ -38,11 +39,18 @@ public static class SimpleExpressionParser
                 // After seeing a value, we expect the next token to not be a value
                 expectingValue = false;
 
+                var value = token.Type switch
+                {
+                    TokenType.Name or TokenType.String => (string)token.Data!,
+                    _ => new LuaValue(token)
+                };
+                
+                upvalues.Add(value);
+
                 SimpleExpression newExp = token.Type switch
                 {
-                    TokenType.Name => new Simexp_Variable((string)token.Data!),
-                    TokenType.String => new Simexp_Value((string)token.Data!),
-                    _ => new Simexp_Value(new LuaValue(token))
+                    TokenType.Name => new Simexp_Variable(value, upvalues.Count - 1),
+                    _ => new Simexp_Value(value, upvalues.Count - 1)
                 };
                 
                 output.Enqueue(newExp);
@@ -133,9 +141,9 @@ public static class SimpleExpressionParser
         var initStack = new Stack<SimpleExpression>(output);
         try
         {
-            var top = initStack.Pop();
-            top.Init(initStack);
-            return top;
+            var root = new Simexp_Root(initStack.Pop(), upvalues.ToArray());
+            root.Init(initStack);
+            return root;
         }
         catch (Exception)
         {
