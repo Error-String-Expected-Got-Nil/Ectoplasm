@@ -6,6 +6,12 @@ using System.Text;
 
 namespace Ectoplasm.Utils;
 
+/// <summary>
+/// Wrapper around <see cref="ILGenerator"/> that logs any emitted instructions and their operands, and local variable
+/// declarations. A human-friendly string can then be retrieved via the <see cref="GetLog"/> method. Useful as a way to
+/// check that dynamic code generation is producing good IL without needing to save and disassemble the raw bytecode.
+/// </summary>
+/// <param name="orig">Original <see cref="ILGenerator"/> to wrap.</param>
 // ReSharper disable once InconsistentNaming
 public class LoggedILGenerator(ILGenerator orig) : ILGenerator
 {
