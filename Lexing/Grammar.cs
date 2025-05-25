@@ -122,7 +122,7 @@ public static partial class Grammar
     /// <summary>
     /// Maximum number of keys starting with the same starting character.
     /// </summary>
-    // Not computer especially efficiently, but it only runs once anyway, and it isn't that bad.
+    // Not computed especially efficiently, but it only runs once anyway, and it isn't that bad.
     public static readonly int MaxPrefixCount
         = Symbols.Keys.Select(key => Symbols.StartsWith([key[0]]).Count()).Max();
     
