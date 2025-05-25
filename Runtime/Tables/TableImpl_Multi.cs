@@ -1,10 +1,12 @@
-﻿namespace Ectoplasm.Runtime.Tables;
+﻿using Ectoplasm.Runtime.Values;
+
+namespace Ectoplasm.Runtime.Tables;
 
 /// <summary>
 /// Table implementation for tables with both string and integer keys. Integer keys may be any integer, as well.
 /// </summary>
-internal class TableImpl_Multi(Dictionary<LuaString, Values.LuaValue> stringsDictPortion, 
-    Dictionary<long, Values.LuaValue> dictPortion, List<Values.LuaValue> listPortion, int listNilCount) : TableImpl
+internal class TableImpl_Multi(Dictionary<LuaString, LuaValue> stringsDictPortion, 
+    Dictionary<long, LuaValue> dictPortion, List<LuaValue> listPortion, int listNilCount) : TableImpl
 {
     private int _listNilCount = listNilCount;
 
@@ -14,7 +16,7 @@ internal class TableImpl_Multi(Dictionary<LuaString, Values.LuaValue> stringsDic
     // All of this is copied from TableImpl_Integers and TableImpl_Strings and glued together
     
     /// <inheritdoc/>
-    public override Values.LuaValue Get(Values.LuaValue index)
+    public override LuaValue Get(LuaValue index)
     {
         if (index.Kind == LuaValueKind.String)
         {
@@ -33,7 +35,7 @@ internal class TableImpl_Multi(Dictionary<LuaString, Values.LuaValue> stringsDic
     }
 
     /// <inheritdoc/>
-    public override TableImpl Set(Values.LuaValue index, Values.LuaValue value)
+    public override TableImpl Set(LuaValue index, LuaValue value)
     {
         if (index.Kind == LuaValueKind.String)
             return SetString((LuaString)index._ref, value);
@@ -47,7 +49,7 @@ internal class TableImpl_Multi(Dictionary<LuaString, Values.LuaValue> stringsDic
             _listNilCount);
     }
 
-    private TableImpl_Multi SetString(LuaString index, Values.LuaValue value)
+    private TableImpl_Multi SetString(LuaString index, LuaValue value)
     {
         if (value.Kind == LuaValueKind.Nil)
         {
@@ -59,7 +61,7 @@ internal class TableImpl_Multi(Dictionary<LuaString, Values.LuaValue> stringsDic
         return this;
     }
 
-    private TableImpl_Multi SetInteger(long index, Values.LuaValue value)
+    private TableImpl_Multi SetInteger(long index, LuaValue value)
     {
         // Decrement because Lua tables use 1-based indexing
         index--;

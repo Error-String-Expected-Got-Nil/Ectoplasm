@@ -1,4 +1,6 @@
-﻿namespace Ectoplasm.Runtime.Tables;
+﻿using Ectoplasm.Runtime.Values;
+
+namespace Ectoplasm.Runtime.Tables;
 
 /// <summary>
 /// Implementation for a Lua table. May support only a subset of Lua values, in which case it can be upgraded,
@@ -20,7 +22,7 @@ internal abstract class TableImpl
     /// The value contained at the given index if it existed, or <see cref="LuaValueKind.Nil"/> if the index did not
     /// exist.
     /// </returns>
-    public abstract Values.LuaValue Get(Values.LuaValue index);
+    public abstract LuaValue Get(LuaValue index);
 
     /// <summary>
     /// Attempt to set the value at a given index to a given value.
@@ -31,5 +33,5 @@ internal abstract class TableImpl
     /// If the set was successful, the same TableImpl. If not, the implementation will be upgraded, the new
     /// implementation will take the assignment, and the new implementation will be returned.
     /// </returns>
-    public abstract TableImpl Set(Values.LuaValue index, Values.LuaValue value);
+    public abstract TableImpl Set(LuaValue index, LuaValue value);
 }

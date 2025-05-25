@@ -1,15 +1,17 @@
-﻿namespace Ectoplasm.Runtime.Tables;
+﻿using Ectoplasm.Runtime.Values;
+
+namespace Ectoplasm.Runtime.Tables;
 
 /// <summary>
 /// Table implementation able to handle any valid Lua value.
 /// </summary>
-internal class TableImpl_Complete(Values.LuaValue trueValue, Values.LuaValue falseValue, 
-    Dictionary<double, Values.LuaValue> floatsDictPortion, Dictionary<object, Values.LuaValue> refsDictPortion, 
-    Dictionary<LuaString, Values.LuaValue> stringsDictPortion, Dictionary<long, Values.LuaValue> dictPortion,
-    List<Values.LuaValue> listPortion, int listNilCount) : TableImpl
+internal class TableImpl_Complete(LuaValue trueValue, LuaValue falseValue, 
+    Dictionary<double, LuaValue> floatsDictPortion, Dictionary<object, LuaValue> refsDictPortion, 
+    Dictionary<LuaString, LuaValue> stringsDictPortion, Dictionary<long, LuaValue> dictPortion,
+    List<LuaValue> listPortion, int listNilCount) : TableImpl
 {
-    private Values.LuaValue _trueValue = trueValue;
-    private Values.LuaValue _falseValue = falseValue;
+    private LuaValue _trueValue = trueValue;
+    private LuaValue _falseValue = falseValue;
     private int _listNilCount = listNilCount;
 
     /// <inheritdoc/>
@@ -18,7 +20,7 @@ internal class TableImpl_Complete(Values.LuaValue trueValue, Values.LuaValue fal
     // Large portions copied from TableImpl_Multi
     
     /// <inheritdoc/>
-    public override Values.LuaValue Get(Values.LuaValue index)
+    public override LuaValue Get(LuaValue index)
     {
         if (!index.TryCoerceInteger(out var coercedIndex))
             return index.Kind switch
@@ -40,7 +42,7 @@ internal class TableImpl_Complete(Values.LuaValue trueValue, Values.LuaValue fal
     }
 
     /// <inheritdoc/>
-    public override TableImpl Set(Values.LuaValue index, Values.LuaValue value)
+    public override TableImpl Set(LuaValue index, LuaValue value)
     {
         if (!index.TryCoerceInteger(out var coercedIndex))
             return index.Kind switch
@@ -56,7 +58,7 @@ internal class TableImpl_Complete(Values.LuaValue trueValue, Values.LuaValue fal
         return SetInteger(coercedIndex, value);
     }
 
-    private TableImpl_Complete SetBoolean(bool index, Values.LuaValue value)
+    private TableImpl_Complete SetBoolean(bool index, LuaValue value)
     {
         if (index) _trueValue = value;
         else _falseValue = value;
@@ -64,7 +66,7 @@ internal class TableImpl_Complete(Values.LuaValue trueValue, Values.LuaValue fal
         return this;
     }
 
-    private TableImpl_Complete SetFloat(double index, Values.LuaValue value)
+    private TableImpl_Complete SetFloat(double index, LuaValue value)
     {
         if (double.IsNaN(index)) throw new LuaRuntimeException("Table index is NaN");
         
@@ -78,7 +80,7 @@ internal class TableImpl_Complete(Values.LuaValue trueValue, Values.LuaValue fal
         return this;
     }
 
-    private TableImpl_Complete SetRef(object index, Values.LuaValue value)
+    private TableImpl_Complete SetRef(object index, LuaValue value)
     {
         if (value.Kind == LuaValueKind.Nil)
         {
@@ -90,7 +92,7 @@ internal class TableImpl_Complete(Values.LuaValue trueValue, Values.LuaValue fal
         return this;
     }
     
-    private TableImpl_Complete SetString(LuaString index, Values.LuaValue value)
+    private TableImpl_Complete SetString(LuaString index, LuaValue value)
     {
         if (value.Kind == LuaValueKind.Nil)
         {
@@ -102,7 +104,7 @@ internal class TableImpl_Complete(Values.LuaValue trueValue, Values.LuaValue fal
         return this;
     }
 
-    private TableImpl_Complete SetInteger(long index, Values.LuaValue value)
+    private TableImpl_Complete SetInteger(long index, LuaValue value)
     {
         // Decrement because Lua tables use 1-based indexing
         index--;
