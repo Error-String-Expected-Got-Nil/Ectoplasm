@@ -29,11 +29,9 @@ internal class TableImpl_Strings(Dictionary<LuaString, LuaValue> values) : Table
             if (index.TryCoerceInteger(out var coercedInteger))
                 return coercedInteger switch
                 {
-                    // TODO: This should be TableImpl_Multi! What the hell was I thinking?? Too tired to fix this
-                    //  right now though
-                    1 => new TableImpl_Array([value], 0),
-                    2 => new TableImpl_Array([default, value], 1),
-                    _ => new TableImpl_Integers(new Dictionary<long, LuaValue> { { coercedInteger, value } },
+                    1 => new TableImpl_Multi(values, [], [value], 0),
+                    2 => new TableImpl_Multi(values, [], [default, value], 1),
+                    _ => new TableImpl_Multi(values, new Dictionary<long, LuaValue> { { coercedInteger, value } },
                         [], 0)
                 };
 
