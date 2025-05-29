@@ -80,7 +80,10 @@ public static class Lexer
     private static readonly List<KeyValuePair<string, TokenType>> PrevMatches = new(Grammar.MaxPrefixCount);
     private static readonly List<KeyValuePair<string, TokenType>> CurMatches = new(Grammar.MaxPrefixCount);
     
-    private static LuaToken ReadSymbol(string source, int position, ushort line, ushort col)
+    /// <remarks>
+    /// Not thread safe.
+    /// </remarks>
+    public static LuaToken ReadSymbol(string source, int position, ushort line, ushort col)
     {
         Span<char> buffer = stackalloc char[Grammar.MaxSymbolLength];
         PrevMatches.Clear();
@@ -121,7 +124,7 @@ public static class Lexer
         throw new LuaLexingException("Failed to read symbol", line, col);
     }
 
-    private static LuaToken ReadName(string source, int position, ushort line, ushort col)
+    public static LuaToken ReadName(string source, int position, ushort line, ushort col)
     {
         var match = Grammar.MatchName.Match(source, position);
 
@@ -136,7 +139,7 @@ public static class Lexer
             col, line, (ushort)(col + match.Length));
     }
 
-    private static LuaToken ReadNumber(string source, int position, ushort line, ushort col)
+    public static LuaToken ReadNumber(string source, int position, ushort line, ushort col)
     {
         var match = Grammar.MatchNumber.Match(source, position);
         
@@ -153,7 +156,7 @@ public static class Lexer
             (ushort)(col + match.Length));
     }
 
-    private static LuaToken ReadWhitespace(string source, int position, ushort line, ushort col)
+    public static LuaToken ReadWhitespace(string source, int position, ushort line, ushort col)
     {
         var match = Grammar.MatchWhitespace.Match(source, position);
 
@@ -180,7 +183,7 @@ public static class Lexer
             line, col, endLine, endCol);
     }
 
-    private static LuaToken ReadString(string source, int position, ushort line, ushort col)
+    public static LuaToken ReadString(string source, int position, ushort line, ushort col)
     {
         var delimiter = source[position];
         if (delimiter is not ('\'' or '"'))
@@ -344,7 +347,7 @@ public static class Lexer
         throw new LuaLexingException("Found end of source before completing string", line, col);
     }
 
-    private static LuaToken ReadLongString(string source, int position, ushort line, ushort col)
+    public static LuaToken ReadLongString(string source, int position, ushort line, ushort col)
     {
         if (source[position] != '[')
             throw new LuaLexingException("Failed to read long string literal", line, col);
@@ -466,7 +469,7 @@ public static class Lexer
         }
     }
 
-    private static LuaToken ReadComment(string source, int position, ushort line, ushort col)
+    public static LuaToken ReadComment(string source, int position, ushort line, ushort col)
     {
         if (position + 2 > source.Length || source[position] != '-' || source[position + 1] != '-')
             throw new LuaLexingException("Failed to read comment", line, col);
