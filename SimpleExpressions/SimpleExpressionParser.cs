@@ -9,8 +9,8 @@ public static class SimpleExpressionParser
 {
     /// <summary>
     /// Parses a simple standalone Lua expression using Dijkstra's shunting yard algorithm. Only accepts numerals,
-    /// strings, variables, arithmetic operators, and logical operators. 'Variables' are names in the expression, they
-    /// are indexed during expression evaluation from a given table. 
+    /// strings, variables, arithmetic operators, 'Variables' are names in the expression, they are indexed during
+    /// expression evaluation from a given table. 
     /// </summary>
     /// <param name="tokens">List of tokens to parse.</param>
     /// <returns>Parsed expression.</returns>
