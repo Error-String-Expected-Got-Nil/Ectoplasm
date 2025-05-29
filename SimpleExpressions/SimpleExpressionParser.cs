@@ -1,7 +1,6 @@
 ﻿using Ectoplasm.Lexing;
 using Ectoplasm.Runtime.Values;
 using Ectoplasm.SimpleExpressions.Operators;
-using LuaValue = Ectoplasm.Runtime.Values.LuaValue;
 
 namespace Ectoplasm.SimpleExpressions;
 

@@ -7,6 +7,8 @@ namespace Ectoplasm.Lexing;
 /// </summary>
 public static class Lexer
 {
+    private static readonly ReadOnlyMemory<char> EndOfChunkString = "<end of chunk>".AsMemory();
+    
     /// <summary>
     /// Lexically analyze a string containing Lua source code, producing a sequence of <see cref="LuaToken"/>s.
     /// </summary>
@@ -18,7 +20,12 @@ public static class Lexer
     public static IEnumerable<LuaToken> Lex(string source)
     {
         // Do nothing for empty input
-        if (source.Length == 0) yield break;
+        if (source.Length == 0)
+        {
+            yield return new LuaToken(EndOfChunkString, null, TokenType.EndOfChunk, 0, 0, 0, 
+                0);
+            yield break;
+        }
         
         var position = 0;
         ushort line = 1;
@@ -70,6 +77,8 @@ public static class Lexer
 
             yield return token;
         }
+        
+        yield return new LuaToken(EndOfChunkString, null, TokenType.EndOfChunk, line, col, line, col);
     }
 
     // All 'position' parameters of the reader functions are the index of the first character to start reading from.

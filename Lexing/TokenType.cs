@@ -80,5 +80,8 @@ public enum TokenType
     Name, // Identifiers
     Numeral, // Numbers, both float and integer
     String, // String literals
-    Whitespace // Whitespace
+    
+    Whitespace, // Whitespace
+    
+    EndOfChunk // Appended after lexing source to indicate the end of a chunk
 }
