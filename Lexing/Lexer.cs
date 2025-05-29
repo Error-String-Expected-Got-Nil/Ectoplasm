@@ -15,6 +15,9 @@ public static class Lexer
     /// <exception cref="LuaLexingException">
     /// Thrown when encountering basic lexical errors, like malformed string literals or invalid characters.
     /// </exception>
+    /// <remarks>
+    /// The ReadSymbol function used for reading symbols is not thread-safe so, by extension, this isn't either.
+    /// </remarks>
     public static IEnumerable<LuaToken> Lex(string source)
     {
         // Do nothing for empty input
