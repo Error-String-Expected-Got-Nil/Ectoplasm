@@ -29,6 +29,12 @@ public readonly record struct LuaToken(
     ushort EndCol
 )
 {
+    /// <summary>
+    /// Gets the original string of this token, or the text "&lt;string&gt;" if this is a string token, since the
+    /// original text of a string is often longer than desired for debug printouts.
+    /// </summary>
+    public string OriginalOrPlaceholder => Type is TokenType.String ? "<string>" : OriginalString.ToString();
+    
     public override string ToString()
     {
         var formatted = FormattedData();
