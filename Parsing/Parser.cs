@@ -85,17 +85,14 @@ public static class Parser
                 {
                     if (lastWasPrefixExp && token.Type is TokenType.String or OpenTable)
                     {
-                        // TODO: Not an error, this is a function call with the string or table literal.
-                        //  Set lastWasPrefixExp to true and expectingValue to false
-                        throw new NotImplementedException();
+                        ParseLiteralCall();
+                        // expectingValue and lastWasPrefixExp remain the same after this
+                        continue;
                     }
 
-                    // TODO: Fix this, it's not invalid, it's just the end of the expression
-                    
-                    // If we see a value when we aren't expecting to, and it isn't a literal argument to a prefix
-                    // expression, then that is invalid.
-                    throw new LuaParsingException($"Unexpected value '{(token.Type == TokenType.String ? "<string>"
-                        : token.OriginalString)}'", token.StartLine, token.StartCol);
+                    // If we see a value when not expecting one, and it wasn't a literal argument to a function call,
+                    // then it's the next statement, the expression is finished.
+                    break;
                 }
                 
                 // Otherwise, we push it to the output stack immediately.
@@ -148,7 +145,15 @@ public static class Parser
                 continue;
             }
             
-            // TODO: Parse table constructors here
+            if (token.Type is OpenTable)
+            {
+                var (table, length) = ParseTableConstructor(source, position + offset);
+                output.Push(table);
+                expectingValue = false;
+                lastWasPrefixExp = false;
+                offset += length;
+                continue;
+            }
             
             // At this point, we know we're parsing an operator of some kind. If we were expecting a value, this is only
             // valid if it's a unary operator.
@@ -204,18 +209,25 @@ public static class Parser
                         $"Unexpected token '{next.OriginalString}' (expected Name operand for method operator)",
                         next.StartLine, next.StartCol);
 
+                output.Push(new Expr_String((string)next.Data!, next.StartLine, next.StartCol));
+                output.Push(new Expr_Index(token.StartLine, token.StartCol));
+                offset += 2;
+                
                 // Source will always end with an EndOfChunk token, so we know there will always be a second-next token
                 // if the next token wasn't an EndOfChunk (and we currently know it's a Name)
-                var argsStart = source[position + offset + 2];
-
+                var argsStart = source[position + offset];
+                
+                if (argsStart.Type is TokenType.String or OpenTable)
+                {
+                    ParseLiteralCall(true);
+                    continue;
+                }
+                
                 if (argsStart.Type is not OpenExp)
                     throw new LuaParsingException(
                         $"Unexpected token '{argsStart.OriginalString}' (expected arguments for method operator)",
                         argsStart.StartLine, argsStart.StartCol);
                 
-                output.Push(new Expr_String((string)next.Data!, next.StartLine, next.StartCol));
-                output.Push(new Expr_Index(token.StartLine, token.StartCol));
-                offset += 2;
                 ParseCall(true); // Parse call pushes the call expression itself
                 offset++;
                 continue;
@@ -333,6 +345,34 @@ public static class Parser
             => token.Type is >= Add and <= BitwiseNot
                 or >= And and <= Not;
 
+        // Parses a call with a single string literal or table constructor argument, starting at the literal. Increments
+        // offset to next token automatically.
+        void ParseLiteralCall(bool isMethodCall = false)
+        {
+            var startToken = source[position + offset];
+
+            if (startToken.Type is not (TokenType.String or OpenTable))
+                throw new LuaParsingException(
+                    "Attempt to parse function call with literal argument starting on token that was not string " +
+                    "literal or table constructor", startToken.StartLine, startToken.StartCol);
+
+            if (startToken.Type is TokenType.String)
+            {
+                output.Push(new Expr_String((string)startToken.Data!, startToken.StartLine, startToken.StartCol));
+                offset++;
+            }
+            else
+            {
+                var (table, length) = ParseTableConstructor(source, position + offset);
+                output.Push(table);
+                offset += length;
+            }
+            
+            output.Push(isMethodCall 
+                ? new Expr_MethodCall(1, startToken.StartLine, startToken.StartCol) 
+                : new Expr_Call(1, startToken.StartLine, startToken.StartCol));
+        }
+        
         // Parses a call operation, starting at its opening parenthesis
         void ParseCall(bool isMethodCall = false)
         {
@@ -403,5 +443,85 @@ public static class Parser
                     $"Attempt to get expression for non-operator token '{token.OriginalOrPlaceholder}'",
                     token.StartLine, token.StartCol)
             };
+    }
+
+    /// <summary>
+    /// Parse a table constructor, starting from its opening curly bracket.
+    /// </summary>
+    /// <returns>
+    /// The table construction expression, and the length of the table constructor. Length includes the final closing
+    /// curly bracket of the table constructor.
+    /// </returns>
+    public static (Expr_Table Table, int Length) ParseTableConstructor(LuaToken[] source, int position)
+    {
+        var startToken = source[position];
+
+        if (startToken.Type is not OpenTable)
+            throw new LuaParsingException($"Attempt to parse table constructor starting on invalid token",
+                startToken.StartLine, startToken.StartCol);
+
+        var keyed = new List<(Expression Key, Expression Value)>();
+        var unkeyed = new List<Expression>();
+        
+        var offset = 1;
+        while (source[position + offset] is LuaToken { Type: not CloseTable } token)
+        {
+            // Keyed entry with Name as key
+            if (token.Type is Name && source[position + offset + 1].Type is Assign)
+            {
+                var key = new Expr_String((string)token.Data!, token.StartLine, token.StartCol);
+                var (value, length) = ParseExpression(source, position + offset + 2, true);
+                
+                keyed.Add((key, value));
+                
+                offset += length + 2;
+            }
+            // Keyed entry with expression as key
+            else if (token.Type is OpenIndex)
+            {
+                var (key, keyLength) = ParseExpression(source, position + offset + 1, true);
+                offset += keyLength;
+
+                var closeIndexToken = source[position + offset];
+                if (closeIndexToken.Type is not CloseIndex)
+                    throw new LuaParsingException(
+                        $"Unexpected token '{closeIndexToken.OriginalOrPlaceholder}' (expected close to index opened " +
+                        $"on line {token.StartLine}, column {token.StartCol})", closeIndexToken.StartLine,
+                        closeIndexToken.StartCol);
+
+                var assignToken = source[position + offset + 1];
+                if (assignToken.Type is not Assign)
+                    throw new LuaParsingException(
+                        $"Unexpected token '{assignToken.OriginalOrPlaceholder}' (expected assignment between " +
+                        "expression index and expression value in table constructor)");
+
+                var (value, valueLength) = ParseExpression(source, position + offset + 2, true);
+                
+                keyed.Add((key, value));
+                
+                offset += valueLength + 2;
+            }
+            // Otherwise, unkeyed entry
+            else
+            {
+                var (value, length) = ParseExpression(source, position + offset, true);
+                
+                unkeyed.Add(value);
+                
+                offset += length;
+            }
+            
+            // After parsing entry, check for comma or semicolon, skip if there. If close table, do not skip. If
+            // anything else, throw error.
+            var nextToken = source[position + offset];
+            if (nextToken.Type is CloseTable) continue;
+            if (nextToken.Type is Separator or Statement) offset++;
+            else
+                throw new LuaParsingException(
+                    $"Unexpected token '{nextToken.OriginalOrPlaceholder}' (expected delimiter between table entries " +
+                    "or close to table constructor)", nextToken.StartLine, nextToken.StartCol);
+        }
+
+        return (new Expr_Table(keyed, unkeyed, startToken.StartLine, startToken.StartCol), offset + 1);
     }
 }
