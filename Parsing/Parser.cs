@@ -260,14 +260,15 @@ public static class Parser
             
             if (token.Type is CloseExp)
             {
-                LuaToken topToken = default;
+                LuaToken topToken;
                 
                 while (true)
                 {
                     if (operatorStack.Count == 0)
                     {
                         // Unbalanced closing parenthesis is fine if this was a recursive call
-                        if (terminateOnDelimiter) break;
+                        // Goto is used here in order to break out of the outer loop immediately
+                        if (terminateOnDelimiter) goto breakOuter;
                         throw new LuaParsingException("Unbalanced closing parenthesis", token.StartLine,
                             token.StartCol);
                     }
@@ -276,7 +277,7 @@ public static class Parser
 
                     // Pop operators until we hit the bottom of the operator stack or find the parenthesis that opened
                     // this one
-                    if (topToken.Type != CloseExp)
+                    if (topToken.Type != OpenExp)
                         output.Push(GetExpressionForOperator(topToken));
                     else break;
                 }
@@ -291,6 +292,9 @@ public static class Parser
                 lastWasPrefixExp = true;
                 offset++;
                 continue;
+                
+                breakOuter:
+                break;
             }
 
             if (IsOperator(token))
@@ -328,7 +332,15 @@ public static class Parser
                 $"'{source[position].OriginalOrPlaceholder}')", 
                 startLine, startCol);
 
-        var exp = new Expr_Root(output.Pop(), startLine, startCol);
+        foreach (var token in operatorStack)
+        {
+            if (token.Type is OpenExp)
+                throw new LuaParsingException("Unbalanced opening parenthesis", token.StartLine, token.StartCol);
+            
+            output.Push(GetExpressionForOperator(token));
+        }
+        
+        var exp = new Expr_Root(startLine, startCol);
         exp.Initialize(output);
 
         return (exp, offset);

@@ -1,7 +1,8 @@
 ﻿namespace Ectoplasm.Parsing.Expressions;
 
-public class Expr_Root(Expression root, ushort line, ushort col) : Expression(line, col)
+public class Expr_Root(ushort line, ushort col) : Expression(line, col)
 {
+    private Expression? _root;
     private bool _init;
     
     // Expr_Root checks if it's already initialized specifically for recursive index expressions. Expr_Index is used for
@@ -10,7 +11,8 @@ public class Expr_Root(Expression root, ushort line, ushort col) : Expression(li
     internal override void Initialize(Stack<Expression> stack)
     {
         if (_init) return;
-        root.Initialize(stack);
+        _root = stack.Pop();
+        _root.Initialize(stack);
         _init = true;
     }
 }
