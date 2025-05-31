@@ -492,7 +492,7 @@ public static class Parser
             else if (token.Type is OpenIndex)
             {
                 var (key, keyLength) = ParseExpression(source, position + offset + 1, true);
-                offset += keyLength;
+                offset += keyLength + 1;
 
                 var closeIndexToken = source[position + offset];
                 if (closeIndexToken.Type is not CloseIndex)

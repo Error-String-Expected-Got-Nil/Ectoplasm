@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Globalization;
 using Ectoplasm.Runtime.Values;
+using Ectoplasm.Utils;
 
 namespace Ectoplasm.Runtime.Stdlib;
 
@@ -14,14 +15,14 @@ public static class GlobalFunctions
     private static readonly LuaString StringThread = new("<thread>"u8);
     private static readonly LuaString StringTable = new("<table>"u8);
     
-    public static string LuaToStringUtf16(LuaValue value)
+    public static string LuaToStringUtf16(LuaValue value, bool escapeStrings = false)
         => value.Kind switch
         {
             LuaValueKind.Nil => "nil",
             LuaValueKind.Boolean => value._boolean.ToString(),
             LuaValueKind.Integer => value._integer.ToString(),
             LuaValueKind.Float => value._float.ToString(CultureInfo.InvariantCulture),
-            LuaValueKind.String => value.StringUtf16Safe,
+            LuaValueKind.String => escapeStrings ? value.StringUtf16Safe.GetEscapedString() : value.StringUtf16Safe,
             LuaValueKind.Function => "<function>",
             LuaValueKind.Userdata => "<userdata>",
             LuaValueKind.Thread => "<thread>",

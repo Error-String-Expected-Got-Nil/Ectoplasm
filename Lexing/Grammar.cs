@@ -236,7 +236,8 @@ public static partial class Grammar
             or '&'
             or '#'
             or '['
-            or ']';
+            or ']'
+            or '^';
 
     /// <summary>
     /// Checks if a character is a valid whitespace character in Lua syntax.

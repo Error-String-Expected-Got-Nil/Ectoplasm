@@ -15,4 +15,8 @@ public class Expr_Root(ushort line, ushort col) : Expression(line, col)
         _root.Initialize(stack);
         _init = true;
     }
+
+    // Expr_Root skips itself when enumerating
+    public override IEnumerable<(Expression Expr, int Depth)> DepthFirstEnumerate(int depth = 0)
+        => _root!.DepthFirstEnumerate(depth);
 }

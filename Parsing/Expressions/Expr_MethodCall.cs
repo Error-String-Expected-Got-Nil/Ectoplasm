@@ -23,4 +23,18 @@ public class Expr_MethodCall(int argc, ushort line, ushort col) : Expression(lin
         _instance = index.OpA;
         _functionName = index.OpB;
     }
+
+    public override IEnumerable<(Expression Expr, int Depth)> DepthFirstEnumerate(int depth = 0)
+        => base.DepthFirstEnumerate(depth)
+            .Concat(_arguments
+                .Select(arg => arg.DepthFirstEnumerate(depth + 1))
+                .Reverse()
+                .Aggregate(new List<(Expression Expr, int Depth)>(),
+                    (accum, item) =>
+                    {
+                        accum.AddRange(item);
+                        return accum;
+                    }))
+            .Concat(_instance!.DepthFirstEnumerate(depth + 1))
+            .Concat(_functionName!.DepthFirstEnumerate(depth + 1));
 }
