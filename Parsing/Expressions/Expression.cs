@@ -7,12 +7,12 @@ public abstract class Expression(ushort line, ushort col)
     /// <summary>
     /// The line of source this expression starts on.
     /// </summary>
-    public ushort StartLine { get; private set; } = line;
+    public ushort StartLine => line;
     
     /// <summary>
     /// The column of source this expression starts on.
     /// </summary>
-    public ushort StartCol { get; private set; } = col;
+    public ushort StartCol => col;
 
     /// <summary>
     /// Initialize this expression by popping operands from a given stack and initializing them.

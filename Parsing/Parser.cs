@@ -2,6 +2,7 @@
 using Ectoplasm.Parsing.Expressions;
 using Ectoplasm.Parsing.Expressions.BinaryOperators;
 using Ectoplasm.Parsing.Expressions.UnaryOperators;
+using Ectoplasm.Parsing.Statements;
 using Ectoplasm.Runtime.Values;
 
 using static Ectoplasm.Lexing.TokenType;
@@ -30,7 +31,172 @@ public static class Parser
     }
 
     /// <summary>
-    /// [FILL IN DOCUMENTATION]
+    /// Parse a sequence of <see cref="LuaToken"/>s as a block of statements, starting from the given position.
+    /// </summary>
+    /// <returns>The list of statements that make up the block, and the number of tokens that make them up.</returns>
+    public static (List<Statement> Block, int Length) ParseBlock(LuaToken[] source, int position)
+    {
+        var statements = new List<Statement>();
+
+        var offset = 0;
+        while (true)
+        {
+            var token = source[position + offset];
+
+            switch (token.Type)
+            {
+                case TokenType.Statement:
+                    statements.Add(new Stat_Empty(token.StartLine, token.StartCol));
+                    offset++;
+                    continue;
+                
+                case LabelSep:
+                    var labelName = source[position + offset + 1];
+                    
+                    if (labelName.Type is not Name)
+                        throw new LuaParsingException(labelName, "expected Name of label");
+
+                    var labelEndToken = source[position + offset + 2];
+                    if (labelEndToken.Type is not LabelSep)
+                        throw new LuaParsingException(labelEndToken, "expected closing label separator");
+                    
+                    statements.Add(new Stat_Label((string)labelName.Data!, token.StartLine, token.StartCol));
+                    offset += 3;
+                    continue;
+                
+                case Goto:
+                    var targetLabelName = source[position + offset + 1];
+
+                    if (targetLabelName.Type is not Name)
+                        throw new LuaParsingException(targetLabelName, "expected Name of target label");
+                    
+                    statements.Add(new Stat_Goto((string)targetLabelName.Data!, token.StartLine, token.StartCol));
+                    offset += 2;
+                    continue;
+                
+                case Break:
+                    statements.Add(new Stat_Break(token.StartLine, token.StartCol));
+                    offset++;
+                    continue;
+                
+                case Do:
+                    var (doBlockContents, doBlockLength) = ParseBlock(source, position + offset + 1);
+
+                    var doBlockEndToken = source[position + offset + 1 + doBlockLength];
+                    if (doBlockEndToken.Type is not End)
+                        throw new LuaParsingException(doBlockEndToken, 
+                            $"expected end to do block started on line {token.StartLine}, column {token.StartCol}");
+                    
+                    statements.Add(new Stat_Do(doBlockContents, token.StartLine, token.StartCol));
+                    offset += 1 + doBlockLength + 1;
+                    continue;
+                
+                case While:
+                    var (whileExp, whileExpLength) = ParseExpression(source, position + offset + 1);
+
+                    var whileDoToken = source[position + offset + 1 + whileExpLength];
+                    if (whileDoToken.Type is not Do)
+                        throw new LuaParsingException(whileDoToken,
+                            "expected 'do' to delimit expression of while loop started on line " +
+                            $"{token.StartLine}, column {token.StartCol}");
+
+                    var (whileBlockContents, whileBlockLength) =
+                        ParseBlock(source, position + offset + 1 + whileExpLength + 1);
+
+                    var whileEndToken = source[position + offset + 1 + whileExpLength + 1 + whileBlockLength + 1];
+                    if (whileEndToken.Type is not End)
+                        throw new LuaParsingException(whileEndToken,
+                            "expected end to while statement do block started on " +
+                            $"line {whileDoToken.StartLine}, column {whileDoToken.StartCol}");
+
+                    statements.Add(new Stat_While(whileExp, whileBlockContents, token.StartLine, token.StartCol));
+                    offset += 1 + whileExpLength + 1 + whileBlockLength + 1;
+                    continue;
+                
+                case Repeat:
+                    var (repeatBlockContents, repeatBlockLength) = ParseBlock(source, position + offset + 1);
+
+                    var repeatUntilToken = source[position + offset + 1 + repeatBlockLength];
+                    if (repeatUntilToken.Type is not Until)
+                        throw new LuaParsingException(repeatUntilToken,
+                            "expected 'until' to delimit block of repeat statement started on " +
+                            $"line {token.StartLine}, column {token.StartCol}");
+
+                    var (untilExp, untilExpLength) =
+                        ParseExpression(source, position + offset + 1 + repeatBlockLength + 1);
+
+                    statements.Add(new Stat_Repeat(untilExp, repeatBlockContents, token.StartLine, token.StartCol));
+                    offset += 1 + repeatBlockLength + 1 + untilExpLength;
+                    continue;
+                
+                case If:
+                    var (ifExp, ifExpLength) = ParseExpression(source, position + offset + 1);
+
+                    var ifThenToken = source[position + offset + 1 + ifExpLength];
+                    if (ifThenToken.Type is not Then)
+                        throw new LuaParsingException(ifThenToken,
+                            "expected 'then' to delimit expression of if statement started on " +
+                            $"line {token.StartLine}, column {token.StartCol}");
+
+                    var (ifBlockContents, ifBlockLength) = ParseBlock(source, position + offset + 1 + ifExpLength + 1);
+
+                    var ifClauses = new List<(Expression Condition, List<Statement> Block)> 
+                        { (ifExp, ifBlockContents) };
+                    List<Statement>? elseBlock = null;
+                    
+                    offset += 1 + ifExpLength + 1 + ifBlockLength;
+                    while (true)
+                    {
+                        var ifContinuationToken = source[position + offset];
+                        
+                        if (ifContinuationToken.Type is Else)
+                        {
+                            var (elseBlockContents, elseBlockLength) = ParseBlock(source, position + offset + 1);
+                            elseBlock = elseBlockContents;
+                            offset += 1 + elseBlockLength;
+                            break;
+                        }
+
+                        if (ifContinuationToken.Type is Elseif)
+                        {
+                            var (elseifExp, elseifExpLength) = ParseExpression(source, position + offset + 1);
+
+                            var elseifThenToken = source[position + offset + 1 + elseifExpLength];
+                            if (elseifThenToken.Type is not Then)
+                                throw new LuaParsingException(elseifThenToken,
+                                    "expected 'then' to delimit expression of elseif clause started on " +
+                                    $"line {ifContinuationToken.StartLine}, column {ifContinuationToken.StartCol}");
+
+                            var (elseifBlockContents, elseifBlockLength) =
+                                ParseBlock(source, position + offset + 1 + elseifExpLength + 1);
+                            
+                            ifClauses.Add((elseifExp, elseifBlockContents));
+                            offset += 1 + elseifExpLength + 1 + elseifBlockLength;
+                            continue;
+                        }
+
+                        break;
+                    }
+
+                    var ifEndToken = source[position + offset];
+                    if (ifEndToken.Type is not End)
+                        throw new LuaParsingException(ifEndToken, "expected end to if statement started on " +
+                                                                  $"line {token.StartLine}, column {token.StartCol}");
+                    
+                    statements.Add(new Stat_If(ifClauses, elseBlock, token.StartLine, token.StartCol));
+                    offset++;
+                    continue;
+                
+                // TODO: For loops, local variable definitions, function definitions, local function definitions,
+                // function call statements, assignment statements
+            }
+        }
+
+        return (statements, offset);
+    }
+
+    /// <summary>
+    /// Parses a Lua expression starting at a given position in a sequence of source tokens. 
     /// </summary>
     /// <param name="source">Source token sequence to parse.</param>
     /// <param name="position">Index in source to start parsing at.</param>
@@ -39,11 +205,15 @@ public static class Parser
     /// Only applies to closing parentheses, closing brackets, and closing curly brackets. This is used for recursive
     /// calls.
     /// </param>
+    /// <param name="allowZeroLength">
+    /// If true, an exception will not be thrown if the expression is parsed as zero-length. In this case, the returned
+    /// expression will be null, and the returned length will be 0.
+    /// </param>
     /// <returns>The parsed expression, and the number of tokens that make it up.</returns>
     // This is a variant of Dijkstra's shunting yard algorithm adapted for Lua's syntax, and which is able to validate
     // expressions as it parses them.
     public static (Expr_Root Expr, int Length) ParseExpression(LuaToken[] source, int position, 
-        bool terminateOnDelimiter = false)
+        bool terminateOnDelimiter = false, bool allowZeroLength = false)
     {
         if (position >= source.Length)
             throw new LuaParsingException("Attempt to parse expression starting after end of source");
@@ -75,8 +245,7 @@ public static class Parser
             if (token.Type is CloseIndex or CloseTable)
             {
                 if (terminateOnDelimiter) break;
-                throw new LuaParsingException($"Unexpected token '{token.OriginalString}'", token.StartLine,
-                    token.StartCol);
+                throw new LuaParsingException(token);
             }
             
             if (IsValue(token))
@@ -135,10 +304,8 @@ public static class Parser
                 }
 
                 if (!lastWasPrefixExp)
-                    throw new LuaParsingException(
-                        $"Unexpected token '{token.OriginalString}' (function call must be preceded by a Name, index " +
-                        "operation, function call, or parenthesized expression)", 
-                        token.StartLine, token.StartCol);
+                    throw new LuaParsingException(token, "function call must be preceded by a Name, index " +
+                                                         "operation, function call, or parenthesized expression");
 
                 ParseCall(); // ParseCall pushes the call expression itself
                 offset++; // Offset will be on closing parenthesis after ParseCall(), need to increment
@@ -160,9 +327,7 @@ public static class Parser
             if (expectingValue)
             {
                 if (!Grammar.UnaryOperators.Contains(token.Type))
-                    throw new LuaParsingException(
-                        $"Unexpected token '{token.OriginalString}' (expected value or unary operator token)", 
-                        token.StartLine, token.StartCol);
+                    throw new LuaParsingException(token, "expected value or unary operator token");
 
                 // For tokens that could be either unary or binary, replace the binary token with its unary counterpart
                 if (token.Type is Sub)
@@ -174,17 +339,13 @@ public static class Parser
             if (token.Type is IndexName)
             {
                 if (!lastWasPrefixExp)
-                    throw new LuaParsingException(
-                        $"Unexpected token '{token.OriginalString}' (index operator must be preceded by a Name, " +
-                        "index operation, function call, or parenthesized expression)", 
-                        token.StartLine, token.StartCol);
+                    throw new LuaParsingException(token, "index operator must be preceded by a Name, index " +
+                                                         "operation, function call, or parenthesized expression");
 
                 var next = source[position + offset + 1];
                 
                 if (next.Type is not Name)
-                    throw new LuaParsingException(
-                        $"Unexpected token '{next.OriginalString}' (expected Name operand for index operator)",
-                        next.StartLine, next.StartCol);
+                    throw new LuaParsingException(next, "expected Name operand for index operator");
                 
                 // Index operations are evaluated without precedence, we simply push them immediately to the output
                 // For the dot indexing form, the "Name" operand is actually syntactic sugar for a string literal
@@ -197,17 +358,13 @@ public static class Parser
             if (token.Type is IndexMethod)
             {
                 if (!lastWasPrefixExp)
-                    throw new LuaParsingException(
-                        $"Unexpected token '{token.OriginalString}' (method operator must be preceded by a Name, " +
-                        "index operation, function call, or parenthesized expression)", 
-                        token.StartLine, token.StartCol);
+                    throw new LuaParsingException(token, "method operator must be preceded by a Name, index " +
+                                                         "operation, function call, or parenthesized expression");
 
                 var next = source[position + offset + 1];
                 
                 if (next.Type is not Name)
-                    throw new LuaParsingException(
-                        $"Unexpected token '{next.OriginalString}' (expected Name operand for method operator)",
-                        next.StartLine, next.StartCol);
+                    throw new LuaParsingException(next, "expected Name operand for method operator");
 
                 output.Push(new Expr_String((string)next.Data!, next.StartLine, next.StartCol));
                 output.Push(new Expr_Index(token.StartLine, token.StartCol));
@@ -224,9 +381,7 @@ public static class Parser
                 }
                 
                 if (argsStart.Type is not OpenExp)
-                    throw new LuaParsingException(
-                        $"Unexpected token '{argsStart.OriginalString}' (expected arguments for method operator)",
-                        argsStart.StartLine, argsStart.StartCol);
+                    throw new LuaParsingException(argsStart, "expected arguments for method operator");
                 
                 ParseCall(true); // Parse call pushes the call expression itself
                 offset++;
@@ -236,10 +391,8 @@ public static class Parser
             if (token.Type is OpenIndex)
             {
                 if (!lastWasPrefixExp)
-                    throw new LuaParsingException(
-                        $"Unexpected token '{token.OriginalString}' (index operator must be preceded by a Name, " +
-                        "index operation, function call, or parenthesized expression)", 
-                        token.StartLine, token.StartCol);
+                    throw new LuaParsingException(token, "index operator must be preceded by a Name, index " +
+                                                         "operation, function call, or parenthesized expression");
 
                 // Index operation in brackets contains an expression, can recursively parse
                 var (operand, length) = ParseExpression(source, position + offset + 1, 
@@ -248,9 +401,8 @@ public static class Parser
                 offset += length + 1;
                 var close = source[position + offset];
                 if (close.Type is not CloseIndex)
-                    throw new LuaParsingException(
-                        $"Unexpected token '{close.OriginalString}' (expected close to index operation on line " +
-                        $"{token.StartLine}, column {token.StartCol})", close.StartLine, close.StartCol);
+                    throw new LuaParsingException(close, "expected close to index operation on line " +
+                                                         $"{token.StartLine}, column {token.StartCol}");
                 
                 output.Push(operand);
                 output.Push(new Expr_Index(token.StartLine, token.StartCol));
@@ -327,10 +479,17 @@ public static class Parser
         }
 
         if (offset == 0)
+        {
+            // Returns null despite the expression return being non-nullable; this is intentional. This can only happen
+            // if the caller explicitly sets allowZeroLength to true, in which case they should be aware they might get
+            // a null return.
+            if (allowZeroLength) return (null!, 0);
+            
             throw new LuaParsingException(
                 "Expression parsed as length 0 (token incorrectly parsed as expression: " +
-                $"'{source[position].OriginalOrPlaceholder}')", 
+                $"'{source[position].OriginalOrPlaceholder}')",
                 startLine, startCol);
+        }
 
         foreach (var token in operatorStack)
         {
@@ -410,9 +569,7 @@ public static class Parser
                 if (token.Type is CloseExp) continue;
 
                 if (token.Type is not Separator)
-                    throw new LuaParsingException(
-                        $"Unexpected token '{token.OriginalOrPlaceholder}' (expected separator or close to function " +
-                        "call arguments)", token.StartLine, token.StartCol);
+                    throw new LuaParsingException(token, "expected separator or close to function call arguments");
                 
                 offset++;
             }
@@ -496,16 +653,13 @@ public static class Parser
 
                 var closeIndexToken = source[position + offset];
                 if (closeIndexToken.Type is not CloseIndex)
-                    throw new LuaParsingException(
-                        $"Unexpected token '{closeIndexToken.OriginalOrPlaceholder}' (expected close to index opened " +
-                        $"on line {token.StartLine}, column {token.StartCol})", closeIndexToken.StartLine,
-                        closeIndexToken.StartCol);
+                    throw new LuaParsingException(closeIndexToken, "expected close to index opened on line " +
+                                                                   $"{token.StartLine}, column {token.StartCol}");
 
                 var assignToken = source[position + offset + 1];
                 if (assignToken.Type is not Assign)
-                    throw new LuaParsingException(
-                        $"Unexpected token '{assignToken.OriginalOrPlaceholder}' (expected assignment between " +
-                        "expression index and expression value in table constructor)");
+                    throw new LuaParsingException(assignToken, "expected assignment between expression index " + 
+                                                               "and expression value in table constructor");
 
                 var (value, valueLength) = ParseExpression(source, position + offset + 2, true);
                 
@@ -527,11 +681,10 @@ public static class Parser
             // anything else, throw error.
             var nextToken = source[position + offset];
             if (nextToken.Type is CloseTable) continue;
-            if (nextToken.Type is Separator or Statement) offset++;
+            if (nextToken.Type is Separator or TokenType.Statement) offset++;
             else
-                throw new LuaParsingException(
-                    $"Unexpected token '{nextToken.OriginalOrPlaceholder}' (expected delimiter between table entries " +
-                    "or close to table constructor)", nextToken.StartLine, nextToken.StartCol);
+                throw new LuaParsingException(nextToken, "expected delimiter between table entries or close " +
+                                                         "to table constructor");
         }
 
         return (new Expr_Table(keyed, unkeyed, startToken.StartLine, startToken.StartCol), offset + 1);
