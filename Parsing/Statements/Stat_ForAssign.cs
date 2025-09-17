@@ -7,8 +7,8 @@ namespace Ectoplasm.Parsing.Statements;
 /// <param name="initial">Expression producing the initial value of the starting variable.</param>
 /// <param name="end">Expression producing the value to end the loop on.</param>
 /// <param name="increment">Optional expression to increment the control variable with.</param>
-public class Stat_ForAssign(LuaToken name, Expression initial, Expression end, Expression? increment, ushort line, 
-    ushort col) : Statement(line, col)
+public class Stat_ForAssign(LuaToken name, Expression initial, Expression end, Expression? increment, 
+    List<Statement> block, ushort line, ushort col) : Statement(line, col)
 {
     
 }

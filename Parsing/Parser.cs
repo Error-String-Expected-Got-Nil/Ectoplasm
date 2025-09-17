@@ -247,7 +247,7 @@ public static class Parser
 
                         offset++;
                         statements.Add(new Stat_ForAssign(namelist[0], initExp, endExp, incExp, 
-                            token.StartLine, token.StartCol));
+                            forBlockContents, token.StartLine, token.StartCol));
                         continue;
                     }
                     
