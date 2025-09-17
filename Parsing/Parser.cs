@@ -187,14 +187,114 @@ public static class Parser
                     offset++;
                     continue;
                 
-                // TODO: For loops, local variable definitions, function definitions, local function definitions,
-                // function call statements, assignment statements
+                case For:
+                    var (namelist, namelistLength) = ParseNamelist(source, position + offset + 1);
+
+                    var followingToken = source[position + offset + 1 + namelistLength];
+                    offset += 1 + namelistLength + 1;
+                    
+                    if (followingToken.Type is Assign)
+                    {
+                        // For statement starting with initial assignment must be followed by a separator, then an
+                        // expression, then optionally another separator and expression.
+
+                        if (namelist.Count != 1)
+                            throw new LuaParsingException("For loop with initial assignment may only define one name",
+                                token.StartLine, token.StartCol);
+                        
+                        var (initExp, initExpLength) = ParseExpression(source, position + offset);
+
+                        // Separator between assignment and end expression
+                        var initEndSep = source[position + offset + initExpLength];
+
+                        if (initEndSep.Type is not Separator)
+                            throw new LuaParsingException(initEndSep, 
+                                "expected separator between assignment and end expressions of for statement " +
+                                $"started on line {token.StartLine}, column {token.StartCol}");
+
+                        offset += initExpLength + 1;
+                        var (endExp, endExpLength) = ParseExpression(source, position + offset);
+
+                        // Token following the end expression. If it is a separator, we parse the increment expression
+                        // after it, then set it to the token following that expression. Otherwise, we continue to
+                        // verifying it's a 'do' token.
+                        offset += endExpLength;
+                        var forContinuationToken = source[position + offset];
+
+                        Expr_Root? incExp = null;
+                        if (forContinuationToken.Type is Separator)
+                        {
+                            (incExp, var incExpLength) = ParseExpression(source, position + offset);
+                            
+                            offset += incExpLength;
+                            forContinuationToken = source[position + offset];
+                        }
+
+                        if (forContinuationToken.Type is not Do)
+                            throw new LuaParsingException(forContinuationToken,
+                                "expected 'do' to delimit header of for statement started on line " +
+                                $"{token.StartLine}, column {token.StartCol}");
+
+                        offset++;
+                        var (forBlockContents, forBlockLength) = ParseBlock(source, position + offset);
+                        offset += forBlockLength;
+
+                        var forEndToken = source[position + offset];
+                        if (forEndToken.Type is not End)
+                            throw new LuaParsingException(forEndToken,
+                                $"expected end to for loop started on line {token.StartLine}, " +
+                                $"column {token.StartCol}");
+
+                        offset++;
+                        statements.Add(new Stat_ForAssign(namelist[0], initExp, endExp, incExp, 
+                            token.StartLine, token.StartCol));
+                        continue;
+                    }
+                    
+                    if (followingToken.Type is In)
+                    {
+                        // TODO
+                    }
+                    
+                    // Following token was not an Assign or In token
+                    throw new LuaParsingException(followingToken, 
+                        "expected 'in' or '=' after name or namelist at beginning of for statement started on " + 
+                        $"line {token.StartLine}, column {token.StartCol}");
+                
+                // TODO: Local variable definitions, function definitions, local function definitions,
+                //  function call statements, assignment statements
             }
         }
 
         return (statements, offset);
     }
 
+    private static (List<LuaToken> Names, int Length) ParseNamelist(LuaToken[] source, int position)
+    {
+        var names = new List<LuaToken>();
+
+        var offset = 0;
+        while (true)
+        {
+            var token = source[position + offset];
+
+            if (token.Type is not Name)
+                throw new LuaParsingException(token, $"expected Name in namelist, got {token.Type} instead");
+            
+            names.Add(token);
+
+            offset++;
+            token = source[position + offset];
+
+            // Check for separator between names. If not there, we've reached the end of the namelist.
+            if (token.Type is not Separator)
+                return (names, offset); // Offset already 1 more than number of tokens consumed
+
+            // Otherwise, increment offset to skip the separator.
+            offset++;
+        }
+    }
+    
     /// <summary>
     /// Parses a Lua expression starting at a given position in a sequence of source tokens. 
     /// </summary>
