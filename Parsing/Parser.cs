@@ -14,6 +14,11 @@ namespace Ectoplasm.Parsing;
 /// </summary>
 public static class Parser
 {
+    // TODO: Big one, rewrite all of these to not use an array of tokens as the input. It should be entirely possible
+    //  to write all of these as accepting an IEnumerable<LuaToken> instead. I'm not sure why I didn't do that in the
+    //  first place, to be honest. This would also remove the need to constantly deal with position, length, and offset
+    //  parameters, as the current position would be implicit as the next token in the enumeration.
+    
     /// <summary>
     /// Parse a set of <see cref="LuaToken"/>s as a single chunk of Lua code.
     /// </summary>
