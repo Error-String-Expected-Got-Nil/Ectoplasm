@@ -246,7 +246,7 @@ public static class Parser
                                 $"expected end to for loop started on line {token.StartLine}, " +
                                 $"column {token.StartCol}");
                         
-                        statements.Add(new Stat_ForAssign(namelist[0], initExp, endExp, incExp, 
+                        statements.Add(new Stat_ForNumeric(namelist[0], initExp, endExp, incExp, 
                             forBlockContents, token.StartLine, token.StartCol));
                         source.MoveNext();
                         continue;
@@ -254,7 +254,29 @@ public static class Parser
                     
                     if (followingToken.Type is In)
                     {
-                        // TODO
+                        source.MoveNext();
+
+                        var explist = ParseExplist(source);
+
+                        var forDoToken = source.Current;
+                        if (forDoToken.Type is not Do)
+                            throw new LuaParsingException(forDoToken,
+                                "expected 'do' to delimit header of for statement started on line " +
+                                $"{token.StartLine}, column {token.StartCol}");
+
+                        source.MoveNext();
+                        var forBlockContents = ParseBlock(source);
+                        
+                        var forEndToken = source.Current;
+                        if (forEndToken.Type is not End)
+                            throw new LuaParsingException(forEndToken,
+                                $"expected end to for loop started on line {token.StartLine}, " +
+                                $"column {token.StartCol}");
+                        
+                        statements.Add(new Stat_ForGeneric(namelist, explist, forBlockContents, token.StartLine, 
+                            token.StartCol));
+                        source.MoveNext();
+                        continue;
                     }
                     
                     // Following token was not an Assign or In token
@@ -262,8 +284,11 @@ public static class Parser
                         "expected 'in' or '=' after name or namelist at beginning of for statement started on " + 
                         $"line {token.StartLine}, column {token.StartCol}");
                 
-                // TODO: Local variable definitions, function definitions, local function definitions,
-                //  function call statements, assignment statements
+                case Local:
+                    // TODO: Local variable and function definition
+                    continue;
+                
+                // TODO: Function definitions, function call statements, assignment statements
             }
         }
 
@@ -289,6 +314,20 @@ public static class Parser
                 return names;
             
             source.MoveNext();
+        }
+    }
+
+    // Very simple function which parses a list of expressions delimited by Separator tokens.
+    private static List<Expression> ParseExplist(IEnumerator<LuaToken> source)
+    {
+        var exps = new List<Expression>();
+
+        while (true)
+        {
+            exps.Add(ParseExpression(source));
+
+            if (source.Current.Type is not Separator)
+                return exps;
         }
     }
     
