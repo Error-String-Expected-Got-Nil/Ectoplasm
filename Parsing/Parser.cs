@@ -311,8 +311,8 @@ public static class Parser
     /// <returns>The parsed expression.</returns>
     // This is a variant of Dijkstra's shunting yard algorithm adapted for Lua's syntax, and which is able to validate
     // expressions as it parses them.
-    public static Expr_Root ParseExpression(IEnumerator<LuaToken> source,
-        bool terminateOnDelimiter = false, bool allowZeroLength = false)
+    public static Expr_Root ParseExpression(IEnumerator<LuaToken> source, bool terminateOnDelimiter = false, 
+        bool allowZeroLength = false)
     {
         var startLine = source.Current.StartLine;
         var startCol = source.Current.StartCol;
@@ -730,21 +730,8 @@ public static class Parser
         {
             var token = source.Current;
             
-            // Keyed entry with Name as key
-            // TODO: This is bad, doesn't work. Need to somehow check for the token after the Name being an assignment.
-            //  Idea: Add this as a special case handling for the unkeyed code path. After parsing the unkeyed
-            //  expression, check the next token. If assignment, check if the expression consists only of an
-            //  Expr_Variable, in which case this was actually a shorthand keyed entry. Handle accordingly.
-            if (token.Type is Name && GetNextToken().Type is Assign)
-            {
-                var key = new Expr_String((string)token.Data!, token.StartLine, token.StartCol);
-                source.MoveNext();
-                var value = ParseExpression(source, true);
-                
-                keyed.Add((key, value));
-            }
-            // Keyed entry with expression as key
-            else if (token.Type is OpenIndex)
+            // Keyed entry
+            if (token.Type is OpenIndex)
             {
                 source.MoveNext();
                 var key = ParseExpression(source, true);
@@ -766,10 +753,31 @@ public static class Parser
                 
                 keyed.Add((key, value));
             }
-            // Otherwise, unkeyed entry
+            // Otherwise, unkeyed entry or syntactic sugar keyed entry
             else
             {
-                unkeyed.Add(ParseExpression(source, true));
+                var unkeyedExpr = ParseExpression(source, true);
+
+                // After parsing the expression, check if the next token is an Assign token. If so, this might have been
+                // the syntactic sugar form for a keyed entry.
+                if (source.Current.Type is Assign)
+                {
+                    // Said form requires the prior token be a lone Name. The parsed expression will only consist of an
+                    // Expr_Variable in that case, so we can check that to see if it was. If not, then this is a syntax
+                    // error.
+                    if (unkeyedExpr.Name is not { } keyName)
+                        throw new LuaParsingException(source.Current, 
+                            "expected separator between entries in table constructor");
+                    
+                    source.MoveNext();
+                    var value = ParseExpression(source, true);
+                    
+                    keyed.Add((new Expr_String(keyName, unkeyedExpr.StartLine, unkeyedExpr.StartCol), value));
+                }
+                else
+                {
+                    unkeyed.Add(unkeyedExpr);
+                }
             }
             
             // After parsing entry, check for comma or semicolon, skip if there. If close table, exit loop. If anything
@@ -785,12 +793,5 @@ public static class Parser
         // Loop exits on encountering CloseTable token. Advance to token following it.
         source.MoveNext();
         return new Expr_Table(keyed, unkeyed, startToken.StartLine, startToken.StartCol);
-
-        // Little utility function to advance source stream and get the next token in-line.
-        LuaToken GetNextToken()
-        {
-            source.MoveNext();
-            return source.Current;
-        }
     }
 }

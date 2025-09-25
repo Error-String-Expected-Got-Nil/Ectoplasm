@@ -4,6 +4,12 @@ public class Expr_Root(ushort line, ushort col) : Expression(line, col)
 {
     private Expression? _root;
     private bool _init;
+
+    /// <summary>
+    /// If this expression consists only of an Expr_Variable, returns the Name used for that variable as a string.
+    /// Otherwise, returns null.
+    /// </summary>
+    public string? Name => _root is Expr_Variable name ? name.Name : null;
     
     // Expr_Root checks if it's already initialized specifically for recursive index expressions. Expr_Index is used for
     // every form of indexing, but in the specific case of indexing like: 'tab[expr]', the 'expr' does not need to be 
