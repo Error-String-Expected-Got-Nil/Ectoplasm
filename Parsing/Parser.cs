@@ -731,6 +731,10 @@ public static class Parser
             var token = source.Current;
             
             // Keyed entry with Name as key
+            // TODO: This is bad, doesn't work. Need to somehow check for the token after the Name being an assignment.
+            //  Idea: Add this as a special case handling for the unkeyed code path. After parsing the unkeyed
+            //  expression, check the next token. If assignment, check if the expression consists only of an
+            //  Expr_Variable, in which case this was actually a shorthand keyed entry. Handle accordingly.
             if (token.Type is Name && GetNextToken().Type is Assign)
             {
                 var key = new Expr_String((string)token.Data!, token.StartLine, token.StartCol);
