@@ -25,15 +25,15 @@ public static class Parser
     /// <exception cref="LuaParsingException">
     /// [FILL IN DOCUMENTATION]
     /// </exception>
-    public static ParsedChunk Parse(LuaToken[] source)
+    public static ParsedChunk Parse(IEnumerator<LuaToken> source)
     {
         return null!;
     }
 
     /// <summary>
-    /// Parse a sequence of <see cref="LuaToken"/>s as a block of statements, starting from the given position.
+    /// Parse a sequence of <see cref="LuaToken"/>s as a block of statements.
     /// </summary>
-    /// <returns>The list of statements that make up the block, and the number of tokens that make them up.</returns>
+    /// <returns>The list of statements that make up the block.</returns>
     public static List<Statement> ParseBlock(IEnumerator<LuaToken> source)
     {
         var statements = new List<Statement>();
