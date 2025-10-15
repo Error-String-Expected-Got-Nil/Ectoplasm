@@ -81,7 +81,8 @@ public static partial class Grammar
         { "==", EqualTo },
         { "~=", NotEqualTo },
         { ".", IndexName },
-        { ":", IndexMethod }
+        { ":", IndexMethod },
+        { "#", Length }
     };
 
     /// <summary>
