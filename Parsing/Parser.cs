@@ -44,251 +44,273 @@ public static class Parser
 
             switch (token.Type)
             {
-                case TokenType.Statement:
-                    statements.Add(new Stat_Empty(token.StartLine, token.StartCol));
-                    source.MoveNext();
-                    continue;
-                
-                case LabelSep:
-                    source.MoveNext();
-                    var labelName = source.Current;
-                    
-                    if (labelName.Type is not Name)
-                        throw new LuaParsingException(labelName, "expected Name of label");
-
-                    source.MoveNext();
-                    var labelEndToken = source.Current;
-                    if (labelEndToken.Type is not LabelSep)
-                        throw new LuaParsingException(labelEndToken, "expected closing label separator");
-                    
-                    statements.Add(new Stat_Label((string)labelName.Data!, token.StartLine, token.StartCol));
-                    source.MoveNext();
-                    continue;
-                
-                case Goto:
-                    source.MoveNext();
-                    var targetLabelName = source.Current;
-
-                    if (targetLabelName.Type is not Name)
-                        throw new LuaParsingException(targetLabelName, "expected Name of target label");
-                    
-                    statements.Add(new Stat_Goto((string)targetLabelName.Data!, token.StartLine, token.StartCol));
-                    source.MoveNext();
-                    continue;
-                
-                case Break:
-                    statements.Add(new Stat_Break(token.StartLine, token.StartCol));
-                    source.MoveNext();
-                    continue;
-                
-                case Do:
-                    source.MoveNext();
-                    var doBlockContents = ParseBlock(source);
-                    
-                    var doBlockEndToken = source.Current;
-                    if (doBlockEndToken.Type is not End)
-                        throw new LuaParsingException(doBlockEndToken, 
-                            $"expected end to do block started on line {token.StartLine}, column {token.StartCol}");
-                    
-                    statements.Add(new Stat_Do(doBlockContents, token.StartLine, token.StartCol));
-                    source.MoveNext();
-                    continue;
-                
-                case While:
-                    source.MoveNext();
-                    var whileExp = ParseExpression(source);
-
-                    var whileDoToken = source.Current;
-                    if (whileDoToken.Type is not Do)
-                        throw new LuaParsingException(whileDoToken,
-                            "expected 'do' to delimit expression of while loop started on line " +
-                            $"{token.StartLine}, column {token.StartCol}");
-
-                    source.MoveNext();
-                    var whileBlockContents = ParseBlock(source);
-                    
-                    var whileEndToken = source.Current;
-                    if (whileEndToken.Type is not End)
-                        throw new LuaParsingException(whileEndToken,
-                            "expected end to while statement do block started on " +
-                            $"line {whileDoToken.StartLine}, column {whileDoToken.StartCol}");
-
-                    statements.Add(new Stat_While(whileExp, whileBlockContents, token.StartLine, token.StartCol));
-                    source.MoveNext();
-                    continue;
-                
-                case Repeat:
-                    source.MoveNext();
-                    var repeatBlockContents = ParseBlock(source);
-                    
-                    var repeatUntilToken = source.Current;
-                    if (repeatUntilToken.Type is not Until)
-                        throw new LuaParsingException(repeatUntilToken,
-                            "expected 'until' to delimit block of repeat statement started on " +
-                            $"line {token.StartLine}, column {token.StartCol}");
-
-                    source.MoveNext();
-                    var untilExp = ParseExpression(source);
-
-                    statements.Add(new Stat_Repeat(untilExp, repeatBlockContents, token.StartLine, token.StartCol));
-                    continue;
-                
-                case If:
-                    source.MoveNext();
-                    var ifExp = ParseExpression(source);
-                    
-                    var ifThenToken = source.Current;
-                    if (ifThenToken.Type is not Then)
-                        throw new LuaParsingException(ifThenToken,
-                            "expected 'then' to delimit expression of if statement started on " +
-                            $"line {token.StartLine}, column {token.StartCol}");
-
-                    source.MoveNext();
-                    var ifBlockContents = ParseBlock(source);
-
-                    var ifClauses = new List<(Expression Condition, List<Statement> Block)> 
-                        { (ifExp, ifBlockContents) };
-                    List<Statement>? elseBlock = null;
-                    
-                    while (true)
-                    {
-                        var ifContinuationToken = source.Current;
-                        
-                        if (ifContinuationToken.Type is Else)
-                        {
-                            source.MoveNext();
-                            elseBlock = ParseBlock(source);
-                            break;
-                        }
-
-                        if (ifContinuationToken.Type is Elseif)
-                        {
-                            source.MoveNext();
-                            var elseifExp = ParseExpression(source);
-
-                            var elseifThenToken = source.Current;
-                            if (elseifThenToken.Type is not Then)
-                                throw new LuaParsingException(elseifThenToken,
-                                    "expected 'then' to delimit expression of elseif clause started on " +
-                                    $"line {ifContinuationToken.StartLine}, column {ifContinuationToken.StartCol}");
-
-                            source.MoveNext();
-                            var elseifBlockContents = ParseBlock(source);
-                            
-                            ifClauses.Add((elseifExp, elseifBlockContents));
-                            continue;
-                        }
-
-                        break;
-                    }
-
-                    var ifEndToken = source.Current;
-                    if (ifEndToken.Type is not End)
-                        throw new LuaParsingException(ifEndToken, 
-                            $"expected end to if statement started on line {token.StartLine}, column {token.StartCol}");
-                    
-                    statements.Add(new Stat_If(ifClauses, elseBlock, token.StartLine, token.StartCol));
-                    source.MoveNext();
-                    continue;
-                
-                case For:
-                    source.MoveNext();
-                    var namelist = ParseNamelist(source);
-
-                    var followingToken = source.Current;
-                    
-                    if (followingToken.Type is Assign)
-                    {
-                        // For statement starting with initial assignment must be followed by a separator, then an
-                        // expression, then optionally another separator and expression.
-
-                        if (namelist.Count != 1)
-                            throw new LuaParsingException("For loop with initial assignment may only define one name",
-                                token.StartLine, token.StartCol);
-
-                        source.MoveNext();
-                        var initExp = ParseExpression(source);
-
-                        // Separator between assignment and end expression
-                        var initEndSep = source.Current;
-                        if (initEndSep.Type is not Separator)
-                            throw new LuaParsingException(initEndSep, 
-                                "expected separator between assignment and end expressions of for statement " +
-                                $"started on line {token.StartLine}, column {token.StartCol}");
-
-                        source.MoveNext();
-                        var endExp = ParseExpression(source);
-
-                        // Token following the end expression. If it is a separator, we parse the increment expression
-                        // after it, then set it to the token following that expression. Otherwise, we continue to
-                        // verifying it's a 'do' token.
-                        var forContinuationToken = source.Current;
-
-                        Expr_Root? incExp = null;
-                        if (forContinuationToken.Type is Separator)
-                        {
-                            source.MoveNext();
-                            incExp = ParseExpression(source);
-                            forContinuationToken = source.Current;
-                        }
-
-                        if (forContinuationToken.Type is not Do)
-                            throw new LuaParsingException(forContinuationToken,
-                                "expected 'do' to delimit header of for statement started on line " +
-                                $"{token.StartLine}, column {token.StartCol}");
-
-                        source.MoveNext();
-                        var forBlockContents = ParseBlock(source);
-
-                        var forEndToken = source.Current;
-                        if (forEndToken.Type is not End)
-                            throw new LuaParsingException(forEndToken,
-                                $"expected end to for loop started on line {token.StartLine}, " +
-                                $"column {token.StartCol}");
-                        
-                        statements.Add(new Stat_ForNumeric(namelist[0], initExp, endExp, incExp, 
-                            forBlockContents, token.StartLine, token.StartCol));
-                        source.MoveNext();
-                        continue;
-                    }
-                    
-                    if (followingToken.Type is In)
-                    {
-                        source.MoveNext();
-
-                        var explist = ParseExplist(source);
-
-                        var forDoToken = source.Current;
-                        if (forDoToken.Type is not Do)
-                            throw new LuaParsingException(forDoToken,
-                                "expected 'do' to delimit header of for statement started on line " +
-                                $"{token.StartLine}, column {token.StartCol}");
-
-                        source.MoveNext();
-                        var forBlockContents = ParseBlock(source);
-                        
-                        var forEndToken = source.Current;
-                        if (forEndToken.Type is not End)
-                            throw new LuaParsingException(forEndToken,
-                                $"expected end to for loop started on line {token.StartLine}, " +
-                                $"column {token.StartCol}");
-                        
-                        statements.Add(new Stat_ForGeneric(namelist, explist, forBlockContents, token.StartLine, 
-                            token.StartCol));
-                        source.MoveNext();
-                        continue;
-                    }
-                    
-                    // Following token was not an Assign or In token
-                    throw new LuaParsingException(followingToken, 
-                        "expected 'in' or '=' after name or namelist at beginning of for statement started on " + 
-                        $"line {token.StartLine}, column {token.StartCol}");
+                case TokenType.Statement: ParseStatement(); continue;
+                case LabelSep: ParseLabelSep(); continue;
+                case Goto: ParseGoto(); continue;
+                case Break: ParseBreak(); continue;
+                case Do: ParseDo(); continue;
+                case While: ParseWhile(); continue;
+                case Repeat: ParseRepeat(); continue;
+                case If: ParseIf(); continue;
+                case For: ParseFor(); continue;
                 
                 case Local:
                     // TODO: Local variable and function definition
                     continue;
                 
                 // TODO: Function definitions, function call statements, assignment statements
+            }
+
+            continue;
+
+            void ParseFor()
+            {
+                source.MoveNext();
+                var namelist = ParseNamelist(source);
+
+                var followingToken = source.Current;
+                    
+                if (followingToken.Type is Assign)
+                {
+                    // For statement starting with initial assignment must be followed by a separator, then an
+                    // expression, then optionally another separator and expression.
+
+                    if (namelist.Count != 1)
+                        throw new LuaParsingException("For loop with initial assignment may only define one name",
+                            token.StartLine, token.StartCol);
+
+                    source.MoveNext();
+                    var initExp = ParseExpression(source);
+
+                    // Separator between assignment and end expression
+                    var initEndSep = source.Current;
+                    if (initEndSep.Type is not Separator)
+                        throw new LuaParsingException(initEndSep, 
+                            "expected separator between assignment and end expressions of for statement " +
+                            $"started on line {token.StartLine}, column {token.StartCol}");
+
+                    source.MoveNext();
+                    var endExp = ParseExpression(source);
+
+                    // Token following the end expression. If it is a separator, we parse the increment expression
+                    // after it, then set it to the token following that expression. Otherwise, we continue to
+                    // verifying it's a 'do' token.
+                    var forContinuationToken = source.Current;
+
+                    Expr_Root? incExp = null;
+                    if (forContinuationToken.Type is Separator)
+                    {
+                        source.MoveNext();
+                        incExp = ParseExpression(source);
+                        forContinuationToken = source.Current;
+                    }
+
+                    if (forContinuationToken.Type is not Do)
+                        throw new LuaParsingException(forContinuationToken,
+                            "expected 'do' to delimit header of for statement started on line " +
+                            $"{token.StartLine}, column {token.StartCol}");
+
+                    source.MoveNext();
+                    var forBlockContents = ParseBlock(source);
+
+                    var forEndToken = source.Current;
+                    if (forEndToken.Type is not End)
+                        throw new LuaParsingException(forEndToken,
+                            $"expected end to for loop started on line {token.StartLine}, " +
+                            $"column {token.StartCol}");
+                        
+                    statements.Add(new Stat_ForNumeric(namelist[0], initExp, endExp, incExp, 
+                        forBlockContents, token.StartLine, token.StartCol));
+                    source.MoveNext();
+                    return;
+                }
+                    
+                if (followingToken.Type is In)
+                {
+                    source.MoveNext();
+
+                    var explist = ParseExplist(source);
+
+                    var forDoToken = source.Current;
+                    if (forDoToken.Type is not Do)
+                        throw new LuaParsingException(forDoToken,
+                            "expected 'do' to delimit header of for statement started on line " +
+                            $"{token.StartLine}, column {token.StartCol}");
+
+                    source.MoveNext();
+                    var forBlockContents = ParseBlock(source);
+                        
+                    var forEndToken = source.Current;
+                    if (forEndToken.Type is not End)
+                        throw new LuaParsingException(forEndToken,
+                            $"expected end to for loop started on line {token.StartLine}, " +
+                            $"column {token.StartCol}");
+                        
+                    statements.Add(new Stat_ForGeneric(namelist, explist, forBlockContents, token.StartLine, 
+                        token.StartCol));
+                    source.MoveNext();
+                    return;
+                }
+                    
+                // Following token was not an Assign or In token
+                throw new LuaParsingException(followingToken, 
+                    "expected 'in' or '=' after name or namelist at beginning of for statement started on " + 
+                    $"line {token.StartLine}, column {token.StartCol}");
+            }
+
+            void ParseIf()
+            {
+                source.MoveNext();
+                var ifExp = ParseExpression(source);
+                    
+                var ifThenToken = source.Current;
+                if (ifThenToken.Type is not Then)
+                    throw new LuaParsingException(ifThenToken,
+                        "expected 'then' to delimit expression of if statement started on " +
+                        $"line {token.StartLine}, column {token.StartCol}");
+
+                source.MoveNext();
+                var ifBlockContents = ParseBlock(source);
+
+                var ifClauses = new List<(Expression Condition, List<Statement> Block)> 
+                    { (ifExp, ifBlockContents) };
+                List<Statement>? elseBlock = null;
+                    
+                while (true)
+                {
+                    var ifContinuationToken = source.Current;
+                        
+                    if (ifContinuationToken.Type is Else)
+                    {
+                        source.MoveNext();
+                        elseBlock = ParseBlock(source);
+                        break;
+                    }
+
+                    if (ifContinuationToken.Type is Elseif)
+                    {
+                        source.MoveNext();
+                        var elseifExp = ParseExpression(source);
+
+                        var elseifThenToken = source.Current;
+                        if (elseifThenToken.Type is not Then)
+                            throw new LuaParsingException(elseifThenToken,
+                                "expected 'then' to delimit expression of elseif clause started on " +
+                                $"line {ifContinuationToken.StartLine}, column {ifContinuationToken.StartCol}");
+
+                        source.MoveNext();
+                        var elseifBlockContents = ParseBlock(source);
+                            
+                        ifClauses.Add((elseifExp, elseifBlockContents));
+                        continue;
+                    }
+
+                    break;
+                }
+
+                var ifEndToken = source.Current;
+                if (ifEndToken.Type is not End)
+                    throw new LuaParsingException(ifEndToken, 
+                        $"expected end to if statement started on line {token.StartLine}, column {token.StartCol}");
+                    
+                statements.Add(new Stat_If(ifClauses, elseBlock, token.StartLine, token.StartCol));
+                source.MoveNext();
+            }
+
+            void ParseRepeat()
+            {
+                source.MoveNext();
+                var repeatBlockContents = ParseBlock(source);
+                    
+                var repeatUntilToken = source.Current;
+                if (repeatUntilToken.Type is not Until)
+                    throw new LuaParsingException(repeatUntilToken,
+                        "expected 'until' to delimit block of repeat statement started on " +
+                        $"line {token.StartLine}, column {token.StartCol}");
+
+                source.MoveNext();
+                var untilExp = ParseExpression(source);
+
+                statements.Add(new Stat_Repeat(untilExp, repeatBlockContents, token.StartLine, token.StartCol));
+            }
+
+            void ParseWhile()
+            {
+                source.MoveNext();
+                var whileExp = ParseExpression(source);
+
+                var whileDoToken = source.Current;
+                if (whileDoToken.Type is not Do)
+                    throw new LuaParsingException(whileDoToken,
+                        "expected 'do' to delimit expression of while loop started on line " +
+                        $"{token.StartLine}, column {token.StartCol}");
+
+                source.MoveNext();
+                var whileBlockContents = ParseBlock(source);
+                    
+                var whileEndToken = source.Current;
+                if (whileEndToken.Type is not End)
+                    throw new LuaParsingException(whileEndToken,
+                        "expected end to while statement do block started on " +
+                        $"line {whileDoToken.StartLine}, column {whileDoToken.StartCol}");
+
+                statements.Add(new Stat_While(whileExp, whileBlockContents, token.StartLine, token.StartCol));
+                source.MoveNext();
+            }
+
+            void ParseDo()
+            {
+                source.MoveNext();
+                var doBlockContents = ParseBlock(source);
+                    
+                var doBlockEndToken = source.Current;
+                if (doBlockEndToken.Type is not End)
+                    throw new LuaParsingException(doBlockEndToken, 
+                        $"expected end to do block started on line {token.StartLine}, column {token.StartCol}");
+                    
+                statements.Add(new Stat_Do(doBlockContents, token.StartLine, token.StartCol));
+                source.MoveNext();
+            }
+
+            void ParseBreak()
+            {
+                statements.Add(new Stat_Break(token.StartLine, token.StartCol));
+                source.MoveNext();
+            }
+
+            void ParseGoto()
+            {
+                source.MoveNext();
+                var targetLabelName = source.Current;
+
+                if (targetLabelName.Type is not Name)
+                    throw new LuaParsingException(targetLabelName, "expected Name of target label");
+                    
+                statements.Add(new Stat_Goto((string)targetLabelName.Data!, token.StartLine, token.StartCol));
+                source.MoveNext();
+            }
+
+            void ParseLabelSep()
+            {
+                source.MoveNext();
+                var labelName = source.Current;
+                    
+                if (labelName.Type is not Name)
+                    throw new LuaParsingException(labelName, "expected Name of label");
+
+                source.MoveNext();
+                var labelEndToken = source.Current;
+                if (labelEndToken.Type is not LabelSep)
+                    throw new LuaParsingException(labelEndToken, "expected closing label separator");
+                    
+                statements.Add(new Stat_Label((string)labelName.Data!, token.StartLine, token.StartCol));
+                source.MoveNext();
+            }
+
+            void ParseStatement()
+            {
+                statements.Add(new Stat_Empty(token.StartLine, token.StartCol));
+                source.MoveNext();
             }
         }
 
