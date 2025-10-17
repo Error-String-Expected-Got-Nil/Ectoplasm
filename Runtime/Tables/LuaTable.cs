@@ -1,7 +1,7 @@
 ﻿using Ectoplasm.Runtime.Tables;
 using Ectoplasm.Runtime.Values;
 
-namespace Ectoplasm.Runtime;
+namespace Ectoplasm.Runtime.Tables;
 
 /// <summary>
 /// <para>

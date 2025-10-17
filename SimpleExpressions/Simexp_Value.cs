@@ -1,6 +1,6 @@
 ﻿using System.Reflection.Emit;
-using Ectoplasm.Runtime;
 using Ectoplasm.Runtime.Values;
+using Ectoplasm.Runtime.Tables;
 using Ectoplasm.Utils;
 
 namespace Ectoplasm.SimpleExpressions;

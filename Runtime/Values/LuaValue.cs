@@ -1,6 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using Ectoplasm.Lexing;
 using Ectoplasm.Runtime.Stdlib;
+using Ectoplasm.Runtime.Tables;
 using Ectoplasm.Runtime.Functions;
 
 namespace Ectoplasm.Runtime.Values;

@@ -1,4 +1,6 @@
-﻿namespace Ectoplasm.Runtime;
+﻿using Ectoplasm.Runtime.Tables;
+
+namespace Ectoplasm.Runtime;
 
 public class LuaUserdata(object userdata, LuaTable? metatable = null)
 {

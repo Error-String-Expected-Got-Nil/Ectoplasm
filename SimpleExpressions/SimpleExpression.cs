@@ -1,7 +1,6 @@
 ﻿using System.Reflection.Emit;
-using Ectoplasm.Runtime;
 using Ectoplasm.Runtime.Values;
-using LuaValue = Ectoplasm.Runtime.Values.LuaValue;
+using Ectoplasm.Runtime.Tables;
 
 namespace Ectoplasm.SimpleExpressions;
 

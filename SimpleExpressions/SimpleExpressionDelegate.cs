@@ -1,5 +1,5 @@
-﻿using Ectoplasm.Runtime;
-using Ectoplasm.Runtime.Values;
+﻿using Ectoplasm.Runtime.Values;
+using Ectoplasm.Runtime.Tables;
 
 namespace Ectoplasm.SimpleExpressions;
 

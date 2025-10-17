@@ -1,7 +1,7 @@
-﻿using System.Text.RegularExpressions;
-using Ectoplasm.Lexing;
+﻿using Ectoplasm.Lexing;
 using Ectoplasm.Runtime;
 using Ectoplasm.SimpleExpressions;
+using Ectoplasm.Runtime.Tables;
 
 namespace Ectoplasm;
 
