@@ -12,6 +12,7 @@ public static class GlobalFunctions
     private static readonly LuaString StringNil = new("nil"u8);
     private static readonly LuaString StringTrue = new("true"u8);
     private static readonly LuaString StringFalse = new("false"u8);
+    private static readonly LuaString StringZero = new("0"u8);
 
     private static byte[] StringFunction => "function: \0\0\0\0\0\0\0\0"u8.ToArray();
     private static byte[] StringUserdata => "userdata: \0\0\0\0\0\0\0\0"u8.ToArray();
@@ -42,9 +43,8 @@ public static class GlobalFunctions
         {
             LuaValueKind.Nil => StringNil,
             LuaValueKind.Boolean => value._boolean ? StringTrue : StringFalse,
-            // TODO: Slightly inefficient to convert to 'string' then to LuaValue like this, maybe make native integer
-            //  and float tostring functions for UTF-8 byte arrays?
-            LuaValueKind.Integer => new LuaString(value._integer.ToString()),
+            LuaValueKind.Integer => LongToString(value._integer),
+            // TODO: Native float -> UTF-8 string conversion function
             LuaValueKind.Float => new LuaString(value._float.ToString(CultureInfo.InvariantCulture)),
             LuaValueKind.String => (LuaString)value._ref,
             LuaValueKind.Function => WriteHashUtf8(StringFunction, 10, value._ref),
@@ -65,6 +65,33 @@ public static class GlobalFunctions
         var j = 0;
         for (var i = 7 * 4; i >= 0; i -= 4, j++)
             str[index + j] = "0123456789abcdef"u8[(hash >> i) & 0b1111];
+
+        return new LuaString(str);
+    }
+
+    // TODO: Determine if this is actually better than using long.ToString() and converting to UTF-8
+    private static LuaString LongToString(long num)
+    {
+        if (num == 0) return StringZero;
+        
+        var isNegative = false;
+        if (num < 0)
+        {
+            num = -num;
+            isNegative = true;
+        }
+
+        var digits = (int)Math.Log10(num) + 1;
+
+        var str = new byte[digits + (isNegative ? 1 : 0)];
+        if (isNegative) str[0] = 45; // 45 is the code for the hyphen '-' in UTF-8
+
+        var modifier = isNegative ? 0 : 1;
+        for (var i = digits - modifier; i > 0 - modifier; i--)
+        {
+            str[i] = "0123456789"u8[(int)(num % 10)];
+            num /= 10;
+        }
 
         return new LuaString(str);
     }
