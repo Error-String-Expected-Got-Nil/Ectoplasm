@@ -1,4 +1,6 @@
-﻿namespace Ectoplasm.Runtime.Values;
+﻿using Ectoplasm.Runtime.Values;
+
+namespace Ectoplasm.Runtime.Functions;
 
 /// <summary>
 /// Basic reference-type container for a <see cref="LuaValue"/>. As implied by the name, this exists primarily for the
