@@ -346,6 +346,8 @@ public static class Parser
         return statements;
     }
 
+    #region Auxillilary Parsing Functions
+    
     private static List<(LuaToken name, LocalAttribute Attribute)> ParseAttNamelist(IEnumerator<LuaToken> source, 
         string? sourceName)
     {
@@ -439,6 +441,8 @@ public static class Parser
                 return exps;
         }
     }
+    
+    #endregion
     
     /// <summary>
     /// Parses a Lua expression starting at a given position in a sequence of source tokens. 
