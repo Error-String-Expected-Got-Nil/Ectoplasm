@@ -383,7 +383,7 @@ public static class Parser
         }
     }
     
-    private static List<LuaToken> ParseNamelist(IEnumerator<LuaToken> source, string sourceName)
+    private static List<LuaToken> ParseNamelist(IEnumerator<LuaToken> source, string? sourceName)
     {
         var names = new List<LuaToken>();
         
@@ -406,7 +406,7 @@ public static class Parser
     }
 
     // Very simple function which parses a list of expressions delimited by Separator tokens.
-    private static List<Expression> ParseExplist(IEnumerator<LuaToken> source, string sourceName)
+    private static List<Expression> ParseExplist(IEnumerator<LuaToken> source, string? sourceName)
     {
         var exps = new List<Expression>();
 
