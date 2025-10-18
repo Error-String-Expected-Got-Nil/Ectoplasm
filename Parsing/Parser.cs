@@ -63,6 +63,8 @@ public static class Parser
 
             continue;
 
+            #region Parsing Functions
+            
             void ParseFor()
             {
                 source.MoveNext();
@@ -312,12 +314,71 @@ public static class Parser
                 statements.Add(new Stat_Empty(token.StartLine, token.StartCol));
                 source.MoveNext();
             }
+            
+            #endregion
         }
 
         // TODO: Ensure enumerator ends on token following last token in block
         return statements;
     }
 
+    private static List<(LuaToken name, LocalAttribute Attribute)> ParseAttNamelist(IEnumerator<LuaToken> source)
+    {
+        var names = new List<(LuaToken, LocalAttribute)>();
+
+        while (true)
+        {
+            var token = source.Current;
+            
+            if (token.Type is not Name)
+                throw new LuaParsingException(token,
+                    $"expected Name in attnamelist, got {token.Type} instead");
+
+            var name = token;
+            var attribute = LocalAttribute.None;
+
+            source.MoveNext();
+            if (source.Current.Type is LessThan /* < */)
+            {
+                // This local name appears to have an attribute attached, let's check that the syntax is correct and
+                // that it's a valid attribute.
+
+                source.MoveNext();
+                if (source.Current.Type is not Name)
+                    throw new LuaParsingException(source.Current,
+                        $"expected Name for attribute of local variable defined on line {token.StartLine}, " +
+                        $"column {token.StartCol}, got {source.Current.Type} instead");
+
+                var attributeName = (string)source.Current.Data!;
+                attribute = attributeName switch
+                {
+                    "const" => LocalAttribute.Const,
+                    "close" => LocalAttribute.Close,
+                    _ => throw new LuaParsingException(source.Current, 
+                        $"attribute name for local variable defined on line {token.StartLine}, column " +
+                        $"{token.StartCol} was not valid; valid attribute names are 'const' and 'close', got " +
+                        $"'{attributeName}' instead")
+                };
+
+                source.MoveNext();
+                if (source.Current.Type is not GreaterThan /* > */)
+                    throw new LuaParsingException(source.Current,
+                        "expected '>' to close attribute tag of local variable defined on line " +
+                        $"{token.StartLine}, column {token.StartCol}");
+
+                // Move to next token, should be separator or end of attnamelist
+                source.MoveNext();
+            }
+            
+            names.Add((name, attribute));
+
+            if (source.Current.Type is not Separator)
+                return names;
+
+            source.MoveNext();
+        }
+    }
+    
     private static List<LuaToken> ParseNamelist(IEnumerator<LuaToken> source)
     {
         var names = new List<LuaToken>();
