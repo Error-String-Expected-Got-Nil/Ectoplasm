@@ -459,6 +459,7 @@ public readonly partial struct LuaValue
     /// True if the LuaValue was an integer, or a float convertable to an integer without loss of fraction. False
     /// otherwise.
     /// </returns>
+    /// TODO: Add bool argument to optionally make this permit string coercion as well
     public bool TryCoerceInteger(out long value)
     {
         // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
