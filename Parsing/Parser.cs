@@ -53,17 +53,38 @@ public static class Parser
                 case Repeat: ParseRepeat(); continue;
                 case If: ParseIf(); continue;
                 case For: ParseFor(); continue;
-                
-                case Local:
-                    // TODO: Local variable and function definition
-                    continue;
+                case Local: ParseLocal(); continue;
                 
                 // TODO: Function definitions, function call statements, assignment statements
             }
 
             continue;
-
+            
             #region Parsing Functions
+            
+            void ParseLocal()
+            {
+                source.MoveNext();
+
+                if (source.Current.Type is Function)
+                {
+                    // TODO: Parse local function def
+                    throw new NotImplementedException();
+                }
+                
+                // Not a local function def, must be followed by an attnamelist
+                var attnamelist = ParseAttNamelist(source, sourceName);
+                List<Expression>? expressions = null;
+
+                // Declaration also includes assignment
+                if (source.Current.Type is Assign)
+                {
+                    source.MoveNext();
+                    expressions = ParseExplist(source, sourceName);
+                }
+                
+                statements.Add(new Stat_LocalDeclaration(attnamelist, expressions, token.StartLine, token.StartCol));
+            }
             
             void ParseFor()
             {
@@ -326,7 +347,7 @@ public static class Parser
     }
 
     private static List<(LuaToken name, LocalAttribute Attribute)> ParseAttNamelist(IEnumerator<LuaToken> source, 
-        string sourceName)
+        string? sourceName)
     {
         var names = new List<(LuaToken, LocalAttribute)>();
 
