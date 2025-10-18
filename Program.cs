@@ -20,7 +20,7 @@ internal static class Program
             try
             {
                 var tokens = Lexer.Lex(line)
-                    .Where(token => token.Type is not (TokenType.Whitespace or TokenType.Comment))
+                    .Where(token => token.Type is not (TokenType.Whitespace or TokenType.Comment or TokenType.EndOfChunk))
                     .ToList();
 
                 SimpleExpression exp;
