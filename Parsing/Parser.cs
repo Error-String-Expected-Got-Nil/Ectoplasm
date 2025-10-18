@@ -470,7 +470,7 @@ public static class Parser
             if (token.Type is CloseIndex or CloseTable)
             {
                 if (terminateOnDelimiter) break;
-                throw new LuaParsingException(token);
+                throw new LuaParsingException(token, null, sourceName);
             }
             
             if (IsValue(token))
@@ -529,8 +529,9 @@ public static class Parser
                 }
 
                 if (!lastWasPrefixExp)
-                    throw new LuaParsingException(token, "function call must be preceded by a Name, index " +
-                                                         "operation, function call, or parenthesized expression");
+                    throw new LuaParsingException(token, 
+                        "function call must be preceded by a Name, index operation, function call, or " +
+                        "parenthesized expression", sourceName);
 
                 ParseCall(); // ParseCall pushes the call expression itself
                 source.MoveNext(); // Offset will be on closing parenthesis after ParseCall(), need to increment
@@ -551,7 +552,7 @@ public static class Parser
             if (expectingValue)
             {
                 if (!Grammar.UnaryOperators.Contains(token.Type))
-                    throw new LuaParsingException(token, "expected value or unary operator token");
+                    throw new LuaParsingException(token, "expected value or unary operator token", sourceName);
 
                 // For tokens that could be either unary or binary, replace the binary token with its unary counterpart
                 if (token.Type is Sub)
@@ -563,14 +564,15 @@ public static class Parser
             if (token.Type is IndexName)
             {
                 if (!lastWasPrefixExp)
-                    throw new LuaParsingException(token, "index operator must be preceded by a Name, index " +
-                                                         "operation, function call, or parenthesized expression");
+                    throw new LuaParsingException(token, 
+                        "index operator must be preceded by a Name, index operation, function call, or " +
+                        "parenthesized expression", sourceName);
 
                 source.MoveNext();
                 var next = source.Current;
                 
                 if (next.Type is not Name)
-                    throw new LuaParsingException(next, "expected Name operand for index operator");
+                    throw new LuaParsingException(next, "expected Name operand for index operator", sourceName);
                 
                 // Index operations are evaluated without precedence, we simply push them immediately to the output
                 // For the dot indexing form, the "Name" operand is actually syntactic sugar for a string literal
@@ -583,14 +585,15 @@ public static class Parser
             if (token.Type is IndexMethod)
             {
                 if (!lastWasPrefixExp)
-                    throw new LuaParsingException(token, "method operator must be preceded by a Name, index " +
-                                                         "operation, function call, or parenthesized expression");
+                    throw new LuaParsingException(token, 
+                        "method operator must be preceded by a Name, index operation, function call, or " +
+                        "parenthesized expression", sourceName);
 
                 source.MoveNext();
                 var next = source.Current;
                 
                 if (next.Type is not Name)
-                    throw new LuaParsingException(next, "expected Name operand for method operator");
+                    throw new LuaParsingException(next, "expected Name operand for method operator", sourceName);
 
                 output.Push(new Expr_String((string)next.Data!, next.StartLine, next.StartCol));
                 output.Push(new Expr_Index(token.StartLine, token.StartCol));
@@ -607,7 +610,7 @@ public static class Parser
                 }
                 
                 if (argsStart.Type is not OpenExp)
-                    throw new LuaParsingException(argsStart, "expected arguments for method operator");
+                    throw new LuaParsingException(argsStart, "expected arguments for method operator", sourceName);
                 
                 ParseCall(true); // Parse call pushes the call expression itself
                 source.MoveNext();
@@ -617,8 +620,9 @@ public static class Parser
             if (token.Type is OpenIndex)
             {
                 if (!lastWasPrefixExp)
-                    throw new LuaParsingException(token, "index operator must be preceded by a Name, index " +
-                                                         "operation, function call, or parenthesized expression");
+                    throw new LuaParsingException(token, 
+                        "index operator must be preceded by a Name, index operation, function call, or " +
+                        "parenthesized expression", sourceName);
 
                 // Index operation in brackets contains an expression, can recursively parse
                 var operand = ParseExpression(source, sourceName, true);
@@ -626,8 +630,9 @@ public static class Parser
                 source.MoveNext();
                 var close = source.Current;
                 if (close.Type is not CloseIndex)
-                    throw new LuaParsingException(close, "expected close to index operation on line " +
-                                                         $"{token.StartLine}, column {token.StartCol}");
+                    throw new LuaParsingException(close, 
+                        $"expected close to index operation on line {token.StartLine}, column {token.StartCol}", 
+                        sourceName);
                 
                 output.Push(operand);
                 output.Push(new Expr_Index(token.StartLine, token.StartCol));
@@ -647,7 +652,7 @@ public static class Parser
                         // Goto is used here in order to break out of the outer loop immediately
                         if (terminateOnDelimiter) goto breakOuter;
                         throw new LuaParsingException("Unbalanced closing parenthesis", token.StartLine,
-                            token.StartCol);
+                            token.StartCol, sourceName);
                     }
 
                     topToken = operatorStack.Pop();
@@ -716,13 +721,14 @@ public static class Parser
             throw new LuaParsingException(
                 "Expression parsed as length 0 (token incorrectly parsed as expression: " +
                 $"'{source.Current.OriginalOrPlaceholder}')",
-                startLine, startCol);
+                startLine, startCol, sourceName);
         }
 
         foreach (var token in operatorStack)
         {
             if (token.Type is OpenExp)
-                throw new LuaParsingException("Unbalanced opening parenthesis", token.StartLine, token.StartCol);
+                throw new LuaParsingException("Unbalanced opening parenthesis", token.StartLine, token.StartCol, 
+                    sourceName);
             
             output.Push(GetExpressionForOperator(token));
         }
@@ -753,7 +759,7 @@ public static class Parser
             if (startToken.Type is not (TokenType.String or OpenTable))
                 throw new LuaParsingException(
                     "Attempt to parse function call with literal argument starting on token that was not string " +
-                    "literal or table constructor", startToken.StartLine, startToken.StartCol);
+                    "literal or table constructor", startToken.StartLine, startToken.StartCol, sourceName);
 
             if (startToken.Type is TokenType.String)
             {
@@ -777,7 +783,7 @@ public static class Parser
             
             if (startToken.Type is not OpenExp)
                 throw new LuaParsingException("Attempt to parse function call arguments starting on invalid token",
-                    startToken.StartLine, startToken.StartCol);
+                    startToken.StartLine, startToken.StartCol, sourceName);
             
             source.MoveNext();
             var argc = 0;
@@ -795,7 +801,8 @@ public static class Parser
                 if (token.Type is CloseExp) continue;
 
                 if (token.Type is not Separator)
-                    throw new LuaParsingException(token, "expected separator or close to function call arguments");
+                    throw new LuaParsingException(token, "expected separator or close to function call arguments", 
+                        sourceName);
                 
                 source.MoveNext();
             }
@@ -836,7 +843,7 @@ public static class Parser
                 BitwiseNot => new Expr_BitwiseNot(token.StartLine, token.StartCol),
                 _ => throw new LuaParsingException(
                     $"Attempt to get expression for non-operator token '{token.OriginalOrPlaceholder}'",
-                    token.StartLine, token.StartCol)
+                    token.StartLine, token.StartCol, sourceName)
             };
     }
 
@@ -850,8 +857,8 @@ public static class Parser
         var startToken = source.Current;
 
         if (startToken.Type is not OpenTable)
-            throw new LuaParsingException($"Attempt to parse table constructor starting on invalid token",
-                startToken.StartLine, startToken.StartCol);
+            throw new LuaParsingException("Attempt to parse table constructor starting on invalid token",
+                startToken.StartLine, startToken.StartCol, sourceName);
 
         var keyed = new List<(Expression Key, Expression Value)>();
         var unkeyed = new List<Expression>();
@@ -871,13 +878,15 @@ public static class Parser
                 var closeIndexToken = source.Current;
                 if (closeIndexToken.Type is not CloseIndex)
                     throw new LuaParsingException(closeIndexToken, 
-                        $"expected close to index opened on line {token.StartLine}, column {token.StartCol}");
+                        $"expected close to index opened on line {token.StartLine}, column {token.StartCol}", 
+                        sourceName);
 
                 source.MoveNext();
                 var assignToken = source.Current;
                 if (assignToken.Type is not Assign)
                     throw new LuaParsingException(assignToken, 
-                        "expected assignment between expression index and expression value in table constructor");
+                        "expected assignment between expression index and expression value in table constructor", 
+                        sourceName);
 
                 source.MoveNext();
                 var value = ParseExpression(source, sourceName, true);
@@ -898,7 +907,7 @@ public static class Parser
                     // error.
                     if (unkeyedExpr.Name is not { } keyName)
                         throw new LuaParsingException(source.Current, 
-                            "expected separator between entries in table constructor");
+                            "expected separator between entries in table constructor", sourceName);
                     
                     source.MoveNext();
                     var value = ParseExpression(source, sourceName, true);
@@ -918,7 +927,7 @@ public static class Parser
             if (nextToken.Type is Separator or TokenType.Statement) source.MoveNext();
             else
                 throw new LuaParsingException(nextToken,
-                    "expected delimiter between table entries or close to table constructor");
+                    "expected delimiter between table entries or close to table constructor", sourceName);
         }
 
         // Loop exits on encountering CloseTable token. Advance to token following it.
