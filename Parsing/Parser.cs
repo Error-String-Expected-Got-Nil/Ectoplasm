@@ -38,6 +38,9 @@ public static class Parser
     {
         var statements = new List<Statement>();
         
+        // TODO: Fault tolerance. Exceptions should be caught, logged, then bundled into an AggregateException and
+        //  be re-thrown at the end, so that the parser can recognize more than one syntax error. Attempt to resume by
+        //  looking for a valid starting token? Not sure what exact conditions should be, but worth a look.
         while (true)
         {
             var token = source.Current;
