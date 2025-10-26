@@ -576,7 +576,7 @@ public static class Parser
             // valid if it's a unary operator.
             if (expectingValue)
             {
-                if (!Grammar.UnaryOperators.Contains(token.Type))
+                if (!Lexicon.UnaryOperators.Contains(token.Type))
                     throw new LuaParsingException(token, "expected value or unary operator token", sourceName);
 
                 // For tokens that could be either unary or binary, replace the binary token with its unary counterpart
@@ -708,10 +708,10 @@ public static class Parser
             {
                 while (operatorStack.TryPeek(out var topToken) && topToken.Type != OpenExp)
                 {
-                    var curPrec = Grammar.OperatorPrecedence[token.Type];
-                    var topPrec = Grammar.OperatorPrecedence[topToken.Type];
+                    var curPrec = Lexicon.OperatorPrecedence[token.Type];
+                    var topPrec = Lexicon.OperatorPrecedence[topToken.Type];
 
-                    if (topPrec > curPrec || (topPrec == curPrec && Grammar.IsLeftAssociative(token.Type)))
+                    if (topPrec > curPrec || (topPrec == curPrec && Lexicon.IsLeftAssociative(token.Type)))
                     {
                         output.Push(GetExpressionForOperator(operatorStack.Pop()));
                         continue;

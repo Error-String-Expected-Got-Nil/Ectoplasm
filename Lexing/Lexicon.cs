@@ -8,7 +8,7 @@ namespace Ectoplasm.Lexing;
 /// <summary>
 /// Static information for matching tokens from raw code during lexing.
 /// </summary>
-public static partial class Grammar
+public static partial class Lexicon
 {
     /// <summary>
     /// Trie relating string for keywords to the token type of that keyword.

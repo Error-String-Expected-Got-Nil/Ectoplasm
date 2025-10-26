@@ -41,7 +41,7 @@ public static class Lexer
                 var c = source[position];
                 if (c is '\n' or '\r')
                 {
-                    var match = Grammar.MatchNewline.Match(source, position);
+                    var match = Lexicon.MatchNewline.Match(source, position);
                     position += match.Length;
                     break;
                 }
@@ -54,19 +54,19 @@ public static class Lexer
             var c = source[position];
 
             LuaToken token;
-            if (Grammar.IsWhitespace(c))
+            if (Lexicon.IsWhitespace(c))
                 token = ReadWhitespace(source, position, line, col, sourceName);
-            else if (Grammar.IsDigit(c))
+            else if (Lexicon.IsDigit(c))
                 token = ReadNumber(source, position, line, col, sourceName);
-            else if (Grammar.IsNameStart(c))
+            else if (Lexicon.IsNameStart(c))
                 token = ReadName(source, position, line, col, sourceName);
             else if (c is '"' or '\'')
                 token = ReadString(source, position, line, col, sourceName);
-            else if (Grammar.MatchOpenLongBracket.IsMatch(source, position))
+            else if (Lexicon.MatchOpenLongBracket.IsMatch(source, position))
                 token = ReadLongString(source, position, line, col, sourceName);
-            else if (Grammar.MatchComment.IsMatch(source, position))
+            else if (Lexicon.MatchComment.IsMatch(source, position))
                 token = ReadComment(source, position, line, col, sourceName);
-            else if (Grammar.IsSymbol(c))
+            else if (Lexicon.IsSymbol(c))
                 token = ReadSymbol(source, position, line, col, sourceName);
             else
                 throw new LuaLexingException($"Unrecognized character '{c}'", line, col, sourceName);
@@ -87,14 +87,14 @@ public static class Lexer
     
     public static LuaToken ReadSymbol(string source, int position, ushort line, ushort col, string? sourceName = null)
     {
-        Span<char> buffer = stackalloc char[Grammar.MaxSymbolLength];
-        var prevMatches = new List<KeyValuePair<string, TokenType>>(Grammar.MaxPrefixCount);
-        var curMatches = new List<KeyValuePair<string, TokenType>>(Grammar.MaxPrefixCount);
+        Span<char> buffer = stackalloc char[Lexicon.MaxSymbolLength];
+        var prevMatches = new List<KeyValuePair<string, TokenType>>(Lexicon.MaxPrefixCount);
+        var curMatches = new List<KeyValuePair<string, TokenType>>(Lexicon.MaxPrefixCount);
         
-        for (var offset = 0; offset < Grammar.MaxSymbolLength; offset++)
+        for (var offset = 0; offset < Lexicon.MaxSymbolLength; offset++)
         {
             buffer[offset] = source[position + offset];
-            var prefixed = Grammar.Symbols.StartsWith(buffer[..(offset + 1)]);
+            var prefixed = Lexicon.Symbols.StartsWith(buffer[..(offset + 1)]);
             curMatches.AddRange(prefixed);
 
             if (curMatches.Count == 0)
@@ -128,12 +128,12 @@ public static class Lexer
 
     public static LuaToken ReadName(string source, int position, ushort line, ushort col, string? sourceName = null)
     {
-        var match = Grammar.MatchName.Match(source, position);
+        var match = Lexicon.MatchName.Match(source, position);
 
         if (match.Length == 0) 
             throw new LuaLexingException("Failed to read name", line, col, sourceName);
 
-        if (Grammar.Keywords.TryGetValue(match.Value, out var keyword))
+        if (Lexicon.Keywords.TryGetValue(match.Value, out var keyword))
             return new LuaToken(source.AsMemory(position, match.Length), null, keyword, line, col,
                 line, (ushort)(col + match.Length));
 
@@ -143,24 +143,24 @@ public static class Lexer
 
     public static LuaToken ReadNumber(string source, int position, ushort line, ushort col, string? sourceName = null)
     {
-        var match = Grammar.MatchNumber.Match(source, position);
+        var match = Lexicon.MatchNumber.Match(source, position);
         
         if (match.Length == 0) 
             throw new LuaLexingException("Failed to read number", line, col, sourceName);
 
-        if (Grammar.IsFloatMatch(match))
+        if (Lexicon.IsFloatMatch(match))
             return new LuaToken(source.AsMemory(position, match.Length),
-                Grammar.ParseFloatMatch(match), TokenType.Numeral, line, col, line, 
+                Lexicon.ParseFloatMatch(match), TokenType.Numeral, line, col, line, 
                 (ushort)(col + match.Length));
 
         return new LuaToken(source.AsMemory(position, match.Length),
-            Grammar.ParseIntegerMatch(match), TokenType.Numeral, line, col, line, 
+            Lexicon.ParseIntegerMatch(match), TokenType.Numeral, line, col, line, 
             (ushort)(col + match.Length));
     }
 
     public static LuaToken ReadWhitespace(string source, int position, ushort line, ushort col, string? sourceName = null)
     {
-        var match = Grammar.MatchWhitespace.Match(source, position);
+        var match = Lexicon.MatchWhitespace.Match(source, position);
 
         if (match.Length == 0)
             throw new LuaLexingException("Failed to read whitespace", line, col, sourceName);
@@ -205,7 +205,7 @@ public static class Lexer
             {
                 escaped = false;
                 
-                if (Grammar.SimpleEscapes.TryGetValue(c, out var escapeChar))
+                if (Lexicon.SimpleEscapes.TryGetValue(c, out var escapeChar))
                 {
                     str.Append(escapeChar);
                     offset++;
@@ -222,7 +222,7 @@ public static class Lexer
                         throw new LuaLexingException("Found end of source before completing string", line, col, sourceName);
 
                     // If next character isn't whitespace, we don't have to do anything.
-                    if (!Grammar.IsWhitespace(source[position + offset + 1]))
+                    if (!Lexicon.IsWhitespace(source[position + offset + 1]))
                     {
                         offset++;
                         endCol++;
@@ -248,14 +248,14 @@ public static class Lexer
                     var firstDigit = source[position + offset + 1];
                     var secondDigit = source[position + offset + 2];
 
-                    if (!Grammar.IsHexDigit(firstDigit))
+                    if (!Lexicon.IsHexDigit(firstDigit))
                         throw new LuaLexingException("Expected hexadecimal digit for hex byte escape sequence", endLine,
                             endCol, sourceName);
-                    if (!Grammar.IsHexDigit(secondDigit))
+                    if (!Lexicon.IsHexDigit(secondDigit))
                         throw new LuaLexingException("Expected hexadecimal digit for hex byte escape sequence", endLine,
                             (ushort)(endCol + 1), sourceName);
 
-                    var hexValue = Grammar.HexDigitValue[firstDigit] * 16 + Grammar.HexDigitValue[secondDigit];
+                    var hexValue = Lexicon.HexDigitValue[firstDigit] * 16 + Lexicon.HexDigitValue[secondDigit];
                     
                     str.Append((char)hexValue);
                     offset += 3;
@@ -264,9 +264,9 @@ public static class Lexer
                 }
 
                 // Decimal byte literal
-                if (Grammar.IsDigit(c))
+                if (Lexicon.IsDigit(c))
                 {
-                    var decMatch = Grammar.MatchDecByteEscape.Match(source, position + offset);
+                    var decMatch = Lexicon.MatchDecByteEscape.Match(source, position + offset);
 
                     var decValue = int.Parse(decMatch.Value);
                     if (decValue > byte.MaxValue)
@@ -283,7 +283,7 @@ public static class Lexer
                 // Unicode code point escape
                 if (c == 'u')
                 {
-                    var unicodeMatch = Grammar.MatchUnicodeEscape.Match(source, position + offset + 1);
+                    var unicodeMatch = Lexicon.MatchUnicodeEscape.Match(source, position + offset + 1);
 
                     if (unicodeMatch.Length == 0)
                         throw new LuaLexingException("Expected curly-bracketed Unicode hex code point", endLine, 
@@ -313,7 +313,7 @@ public static class Lexer
 
                 // Escape followed by a literal newline will allow the string to continue across the newline, and add
                 // a newline to the string.
-                var newlineMatch = Grammar.MatchNewline.Match(source, position + offset);
+                var newlineMatch = Lexicon.MatchNewline.Match(source, position + offset);
                 if (newlineMatch.Length != 0)
                 {
                     str.Append('\n');
@@ -327,7 +327,7 @@ public static class Lexer
                 throw new LuaLexingException($"Unrecognized escape character '{c}'", endLine, endCol, sourceName);
             }
             
-            if (c == Grammar.Escape)
+            if (c == Lexicon.Escape)
             {
                 escaped = true;
                 offset++;
@@ -395,7 +395,7 @@ public static class Lexer
         var str = new StringBuilder();
 
         // Attempt to consume a newline immediately after the opening bracket, and discard it if there was one.
-        var openingNewlineMatch = Grammar.MatchNewline.Match(source, position + offset);
+        var openingNewlineMatch = Lexicon.MatchNewline.Match(source, position + offset);
         if (openingNewlineMatch.Length != 0)
         {
             offset += openingNewlineMatch.Length;
@@ -458,7 +458,7 @@ public static class Lexer
             // Truncate all newline sequences to just \n
             if (c is '\n' or '\r')
             {
-                var newlineMatch = Grammar.MatchNewline.Match(source, position + offset);
+                var newlineMatch = Lexicon.MatchNewline.Match(source, position + offset);
                 str.Append('\n');
                 offset += newlineMatch.Length;
                 endLine++;
@@ -478,7 +478,7 @@ public static class Lexer
         if (position + 2 > source.Length || source[position] != '-' || source[position + 1] != '-')
             throw new LuaLexingException("Failed to read comment", line, col, sourceName);
         
-        var match = Grammar.MatchOpenLongBracket.Match(source, position + 2);
+        var match = Lexicon.MatchOpenLongBracket.Match(source, position + 2);
         if (match.Length != 0)
         {
             var token = ReadLongString(source, position + 2, line, (ushort)(col + 2));
@@ -494,7 +494,7 @@ public static class Lexer
 
             if (c is '\n' or '\r')
             {
-                var newlineMatch = Grammar.MatchNewline.Match(source, position + offset);
+                var newlineMatch = Lexicon.MatchNewline.Match(source, position + offset);
                 offset += newlineMatch.Length;
                 return new LuaToken(source.AsMemory(position, offset), null,
                     TokenType.Comment, line, col, (ushort)(line + 1), 1);

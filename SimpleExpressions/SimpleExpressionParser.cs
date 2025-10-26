@@ -74,7 +74,7 @@ public static class SimpleExpressionParser
             if (expectingValue)
             {
                 // If we were expecting a value, getting an operator is invalid, unless it's a unary operator.
-                if (!Grammar.UnaryOperators.Contains(token.Type))
+                if (!Lexicon.UnaryOperators.Contains(token.Type))
                     throw new SimpleExpressionParsingException(
                         $"Unexpected token {token.OriginalString} at line {token.StartLine}, col {token.StartCol}");
 
@@ -107,10 +107,10 @@ public static class SimpleExpressionParser
 
             while (operatorStack.TryPeek(out var topToken) && topToken.Type != TokenType.OpenExp)
             {
-                var curPrec = Grammar.OperatorPrecedence[token.Type];
-                var topPrec = Grammar.OperatorPrecedence[topToken.Type];
+                var curPrec = Lexicon.OperatorPrecedence[token.Type];
+                var topPrec = Lexicon.OperatorPrecedence[topToken.Type];
 
-                if (topPrec > curPrec || (topPrec == curPrec && Grammar.IsLeftAssociative(token.Type)))
+                if (topPrec > curPrec || (topPrec == curPrec && Lexicon.IsLeftAssociative(token.Type)))
                 {
                     output.Enqueue(GetExpressionForOperator(operatorStack.Pop()));
                     continue;
