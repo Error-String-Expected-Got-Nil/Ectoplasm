@@ -13,6 +13,7 @@ public static class Lexer
     /// Lexically analyze a string containing Lua source code, producing a sequence of <see cref="LuaToken"/>s.
     /// </summary>
     /// <param name="source">Source code to lex.</param>
+    /// <param name="sourceName">Name of source code to lex. Optional, used for better error reporting.</param>
     /// <returns>The same source code, broken up into a series of <see cref="LuaToken"/>s.</returns>
     /// <exception cref="LuaLexingException">
     /// Thrown when encountering basic lexical errors, like malformed string literals or invalid characters.
