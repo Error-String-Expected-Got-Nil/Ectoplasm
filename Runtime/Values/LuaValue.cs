@@ -33,9 +33,9 @@ public readonly partial struct LuaValue
     [FieldOffset(16)] public readonly LuaValueKind Kind;
     
     /// <summary>
-    /// Determines the truthiness of this LuaValue. Returns true if <see cref="Kind"/> is not
-    /// <see cref="LuaValueKind.Nil"/>, or <see cref="LuaValueKind.Boolean"/> with an underlying value of false. False
-    /// otherwise.
+    /// Determines the truthiness of this LuaValue. If <see cref="Kind"/> is <see cref="LuaValueKind.Boolean"/>, returns
+    /// the underlying value of this LuaValue. Otherwise, returns true if <see cref="Kind"/> is not
+    /// <see cref="LuaValueKind.Nil"/>, false if it is.
     /// </summary>
     public bool IsTruthy => Kind == LuaValueKind.Boolean ? _boolean : Kind != LuaValueKind.Nil;
 
