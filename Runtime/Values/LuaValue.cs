@@ -506,6 +506,9 @@ public readonly partial struct LuaValue
     public static explicit operator bool(LuaValue value) => value.Boolean;
     public static explicit operator long(LuaValue value) => value.Integer;
     public static explicit operator double(LuaValue value) => value.Float;
+    public static explicit operator bool?(LuaValue value) => value.NullableBoolean;
+    public static explicit operator long?(LuaValue value) => value.NullableInteger;
+    public static explicit operator double?(LuaValue value) => value.NullableFloat;
     public static explicit operator ReadOnlySpan<byte>(LuaValue value) => value.String;
     public static explicit operator string(LuaValue value) => value.StringUtf16;
     public static explicit operator LuaFunction(LuaValue value) => value.Function;
