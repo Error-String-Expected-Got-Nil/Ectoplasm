@@ -496,10 +496,6 @@ public readonly partial struct LuaValue
     public static implicit operator LuaValue(LuaThread value) => new(value);
     public static implicit operator LuaValue(LuaTable value) => new(value);
 
-    public static implicit operator bool?(LuaValue value) => value.NullableBoolean;
-    public static implicit operator long?(LuaValue value) => value.NullableInteger;
-    public static implicit operator double?(LuaValue value) => value.NullableFloat;
-
     #endregion
     
     #region Explicit Conversions
