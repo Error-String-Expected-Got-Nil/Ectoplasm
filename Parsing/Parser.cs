@@ -351,6 +351,70 @@ public static class Parser
 
     #region Auxillilary Parsing Functions
     
+    // Parses a funcname, returning:
+    // - An assignable expression which resolves to the location the function object should be stored.
+    // - A boolean indicating if the associated function should be a method (extra 'self' parameter).
+    // - A string which can be used as the debug name for the function.
+    private static (Expression AssignLocation, bool IsMethod, string DebugName) ParseFuncname(
+        IEnumerator<LuaToken> source, string? sourceName)
+    {
+
+    }
+
+    // Parses a funcion body, starting from the opening parenthesis for its parameter list.
+    private static Expr_FunctionDef ParseFuncbody(IEnumerator<LuaToken> source, bool isMethod, string? sourceName, 
+        string? debugFunctionName)
+    {
+        var startToken = source.Current;
+        if (startToken.Type is not OpenExp)
+            throw new LuaParsingException("Attempt to parse function body starting on invalid token",
+                startToken.StartLine, startToken.StartCol, sourceName);
+
+        var names = new List<string>();
+
+        if (isMethod) names.Add("self");
+
+        source.MoveNext();
+        var token = source.Current;
+        // Cannot use ParseNamelist as it will throw an exception if it sees a vararg token, but it's not that bad to
+        // just do it manually.
+        if (token.Type is Name)
+        {
+            while (true)
+            {
+                token = source.Current;
+                if (token.Type is not Name) break;
+
+                names.Add((string)token.Data!);
+
+                source.MoveNext();
+                if (source.Current.Type is Separator) source.MoveNext();
+            }
+        }
+
+        // After getting the namelist, the next token should be either vararg or closing parenthesis.
+        var isVararg = source.Current.Type is Varargs;
+        // If vararg was present, next should be closing parenthesis; if not, current should be.
+        if (isVararg) source.MoveNext();
+
+        token = source.Current;
+        if (token.Type is not CloseExp)
+            throw new LuaParsingException(token, $"expected close to function parameter list opened on line " +
+                $"{startToken.StartLine}, column {startToken.StartCol}", sourceName);
+
+        source.MoveNext();
+        var body = ParseBlock(source, sourceName);
+
+        token = source.Current;
+        if (token.Type is not End)
+            throw new LuaParsingException(token, $"expected end to function body block started on line " +
+                $"{startToken.StartCol}, column {startToken.StartCol}", sourceName);
+
+        source.MoveNext();
+
+        return new Expr_FunctionDef(names, isVararg, body, debugFunctionName, startToken.StartLine, startToken.StartCol);
+    }
+
     private static List<(LuaToken name, LocalAttribute Attribute)> ParseAttNamelist(IEnumerator<LuaToken> source, 
         string? sourceName)
     {
