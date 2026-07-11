@@ -6,6 +6,7 @@ public class Expr_Root(ushort line, ushort col) : Expression(line, col)
     private bool _init;
 
     public override bool IsAssignable => _root!.IsAssignable;
+    public override bool IsCall => _root!.IsCall;
 
     /// <summary>
     /// If this expression consists only of an Expr_Variable, returns the Name used for that variable as a string.

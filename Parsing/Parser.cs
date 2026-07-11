@@ -46,6 +46,7 @@ public static class Parser
         {
             var token = source.Current;
 
+            // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
             switch (token.Type)
             {
                 case TokenType.Statement: ParseStatement(); continue;
@@ -59,14 +60,66 @@ public static class Parser
                 case For: ParseFor(); continue;
                 case Local: ParseLocal(); continue;
                 case Function: ParseFunctionDef(); continue;
-                
-                // TODO: Function call statements, assignment statements
+                // Additional statements are not permitted after a block's return statement in Lua, so we break the
+                // statement parsing loop after encountering one.
+                case Return: ParseReturn(); break;
+                default: if (ParseImplicitStatement()) continue; break;
             }
-
-            continue;
+            
+            break;
             
             #region Parsing Functions
 
+            // 'Implicit' statements are statements which don't begin with a keyword that uniquely identifies them.
+            // This could be a function call, an assignment, or the end of the current block.
+            // Returns false if this is the end of the block, true otherwise.
+            bool ParseImplicitStatement()
+            {
+                // Don't MoveNext() here as there's no keyword to skip this time.
+                var exps = ParseExplist(source, sourceName, true);
+
+                // Expression list is empty, this can't be a function call or an assignment, it's the end of the block.
+                if (exps.Count == 0) return false;
+                
+                // Token after explist is assignment, this is an assignment statement.
+                if (source.Current.Type is Assign)
+                {
+                    // For assignment, all expressions in list should be assignable.
+                    foreach (var expr in exps)
+                        if (!expr.IsAssignable)
+                            throw new LuaParsingException("Expression was on left side of assignment statement but " +
+                                "was not assignable", expr.StartLine, expr.StartCol, sourceName);
+
+                    source.MoveNext();
+                    var values = ParseExplist(source, sourceName);
+                    
+                    statements.Add(new Stat_Assign(exps, values, token.StartLine, token.StartCol));
+                    return true;
+                }
+
+                // Otherwise, this should be a single function call.
+                if (exps.Count > 1)
+                    throw new LuaParsingException("Expected statement, got expression list", token.StartLine,
+                        token.StartCol, sourceName);
+                if (!exps[0].IsCall)
+                    throw new LuaParsingException("Expected statement, got non-call expression; only call " +
+                        "expressions are allowed as free-standing statements", token.StartLine, token.StartCol, 
+                        sourceName);
+                
+                statements.Add(new Stat_Call(exps[0], token.StartLine, token.StartCol));
+                return true;
+            }
+            
+            void ParseReturn()
+            {
+                source.MoveNext();
+
+                var returnValues = ParseExplist(source, sourceName, true);
+                if (source.Current.Type is TokenType.Statement) source.MoveNext();
+                
+                statements.Add(new Stat_Return(returnValues, token.StartLine, token.StartCol));
+            }
+            
             void ParseFunctionDef()
             {
                 source.MoveNext();
@@ -372,7 +425,6 @@ public static class Parser
             #endregion
         }
 
-        // TODO: Ensure enumerator ends on token following last token in block
         return statements;
     }
 
@@ -576,13 +628,21 @@ public static class Parser
     }
 
     // Very simple function which parses a list of expressions delimited by Separator tokens.
-    private static List<Expression> ParseExplist(IEnumerator<LuaToken> source, string? sourceName)
+    private static List<Expression> ParseExplist(IEnumerator<LuaToken> source, string? sourceName, 
+        bool allowZeroLengthFirst = false)
     {
         var exps = new List<Expression>();
 
         while (true)
         {
-            exps.Add(ParseExpression(source, sourceName));
+            var expr = ParseExpression(source, sourceName, allowZeroLength: allowZeroLengthFirst && exps.Count == 0);
+            // ParseExpression may return null iff allowZeroLength is true. In this case, there was no expression to
+            // parse, so our list is empty; i.e., we tried to parse something that wasn't an expression list as one.
+            // In this case, we return the empty list.
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+            if (expr is null) return exps;
+            
+            exps.Add(expr);
 
             if (source.Current.Type is not Separator)
                 return exps;

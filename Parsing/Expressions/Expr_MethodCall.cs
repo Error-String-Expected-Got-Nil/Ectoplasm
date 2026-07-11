@@ -7,6 +7,8 @@ public class Expr_MethodCall(int argc, ushort line, ushort col) : Expression(lin
     private Expression? _instance;
     private Expression? _functionName;
 
+    public override bool IsCall => true;
+
     internal override void Initialize(Stack<Expression> stack)
     {
         // Function call arguments don't need to be initialized since they are parsed recursively.
