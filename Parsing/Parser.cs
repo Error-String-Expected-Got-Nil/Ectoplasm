@@ -58,13 +58,24 @@ public static class Parser
                 case If: ParseIf(); continue;
                 case For: ParseFor(); continue;
                 case Local: ParseLocal(); continue;
+                case Function: ParseFunctionDef(); continue;
                 
-                // TODO: Function definitions, function call statements, assignment statements
+                // TODO: Function call statements, assignment statements
             }
 
             continue;
             
             #region Parsing Functions
+
+            void ParseFunctionDef()
+            {
+                source.MoveNext();
+
+                var (location, isMethod, debugName) = ParseFuncname(source, sourceName);
+                var body = ParseFuncbody(source, isMethod, sourceName, debugName);
+                
+                statements.Add(new Stat_Assign([location], [body], token.StartLine, token.StartCol));
+            }
             
             void ParseLocal()
             {
@@ -72,8 +83,23 @@ public static class Parser
 
                 if (source.Current.Type is Function)
                 {
-                    // TODO: Parse local function def
-                    throw new NotImplementedException();
+                    source.MoveNext();
+                    var name = source.Current;
+                    if (name.Type is not Name)
+                        throw new LuaParsingException(name, $"expected name for local function declaration on " + 
+                            $"line {token.StartLine}, column {token.StartCol}", sourceName);
+
+                    source.MoveNext();
+                    var body = ParseFuncbody(source, false, sourceName, (string)name.Data!);
+
+                    // Local function declaration is syntactic sugar for declaring a local variable with the function's
+                    // name, then assigning the anonymous function body to that local variable.
+                    statements.Add(new Stat_LocalDeclaration([(name, LocalAttribute.None)], null, 
+                        token.StartLine, token.StartCol));
+                    statements.Add(new Stat_Assign(
+                        [new Expr_Variable((string)name.Data!, name.StartLine, name.StartCol)], 
+                        [body], token.StartLine, token.StartCol));
+                    return;
                 }
                 
                 // Not a local function def, must be followed by an attnamelist
@@ -407,6 +433,9 @@ public static class Parser
         nameTokens.Add(new LuaToken(string.Empty.AsMemory(), null, EndOfChunk, 
             0, 0, 0, 0));
 
+        // We construct a pseudo-expression token sequence and use ParseExpression to produce the assignable function
+        // name expression for simplicity. Manually constructing the expression object would be tedious and pointless
+        // when ParseExpression can already do it well enough.
         var nameExpr = ParseExpression(nameTokens.GetEnumerator());
 
         return (nameExpr, isMethod, debugName.ToString());
@@ -657,8 +686,11 @@ public static class Parser
                 if (!expectingValue) break;
                 
                 // Otherwise, parse the function as a value
-                // TODO: Parse function def
-                throw new NotImplementedException();
+                source.MoveNext();
+                output.Push(ParseFuncbody(source, false, sourceName, null));
+                expectingValue = false;
+                lastWasPrefixExp = false;
+                continue;
             }
 
             if (token.Type is OpenExp)
