@@ -8,5 +8,5 @@ public class Expr_Value(LuaValue value, ushort line, ushort col) : Expression(li
     internal override void Initialize(Stack<Expression> stack) { }
 
     public override string ToString() 
-        => base.ToString() + $" <{GlobalFunctions.LuaToStringUtf16(value, true)}>";
+        => base.ToString() + $" <{GlobalFunctions.LuaToString(value, true)}>";
 }

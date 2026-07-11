@@ -5,7 +5,7 @@ namespace Ectoplasm.Runtime.Tables;
 /// <summary>
 /// Table implementation for tables containing only string keys.
 /// </summary>
-internal class TableImpl_Strings(Dictionary<LuaString, LuaValue> values) : TableImpl
+internal class TableImpl_Strings(Dictionary<string, LuaValue> values) : TableImpl
 {
     /// <inheritdoc/>
     // A TableImpl_Strings will never have integer keys and therefore always has length 0.
@@ -15,7 +15,7 @@ internal class TableImpl_Strings(Dictionary<LuaString, LuaValue> values) : Table
     public override LuaValue Get(LuaValue index)
     {
         if (index.Kind != LuaValueKind.String) return default;
-        values.TryGetValue((LuaString)index._ref, out var value);
+        values.TryGetValue((string)index._ref, out var value);
         return value;
     }
 
@@ -40,11 +40,11 @@ internal class TableImpl_Strings(Dictionary<LuaString, LuaValue> values) : Table
 
         if (value.Kind == LuaValueKind.Nil)
         {
-            values.Remove((LuaString)index._ref);
+            values.Remove((string)index._ref);
             return this;
         }
 
-        values[(LuaString)index._ref] = value;
+        values[(string)index._ref] = value;
         return this;
     }
 }

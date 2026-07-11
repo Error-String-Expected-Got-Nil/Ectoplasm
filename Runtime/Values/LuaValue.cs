@@ -80,41 +80,10 @@ public readonly partial struct LuaValue
     /// <exception cref="InvalidCastException">
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.String"/>.
     /// </exception>
-    public ReadOnlySpan<byte> String
+    public string String
         => Kind == LuaValueKind.String
-            ? ((LuaString)_ref).Data
-            : throw new InvalidCastException("LuaValue does not represent a Lua string value.");
-    
-    /// <summary>
-    /// Gets this LuaValue as a string.
-    /// </summary>
-    /// <remarks>
-    /// Be aware that a Lua string is, strictly speaking, only an immutable sequence of bytes, and not necessarily a
-    /// valid UTF-8 character sequence.
-    /// </remarks>
-    /// <exception cref="InvalidCastException">
-    /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.String"/>.
-    /// </exception>
-    /// <exception cref="ArgumentException">
-    /// Thrown by internal call if underlying Lua string did not actually represent a valid UTF-8 character sequence.
-    /// </exception>
-    public string StringUtf16 
-        => Kind == LuaValueKind.String 
-            ? ((LuaString)_ref).DataUtf16
-            : throw new InvalidCastException("LuaValue does not represent a Lua string value.");
-
-    /// <summary>
-    /// Gets this LuaValue as a string. Returns a placeholder instead of an exception if the string is not a valid
-    /// UTF-8 Unicode string.
-    /// </summary>
-    /// <exception cref="InvalidCastException">
-    /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.String"/>.
-    /// </exception>
-    public string StringUtf16Safe
-        => Kind == LuaValueKind.String
-            ? ((LuaString)_ref).DataUtf16Safe
-            : throw new InvalidCastException("LuaValue does not represent a Lua string value.");
-        
+            ? (string)_ref
+            : throw new InvalidCastException("LuaValue does not represent a string value.");
         
     /// <summary>
     /// Gets this LuaValue as a Lua function delegate.
@@ -204,28 +173,10 @@ public readonly partial struct LuaValue
     /// <exception cref="InvalidCastException">
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.String"/> or <see cref="LuaValueKind.Nil"/>.
     /// </exception>
-    public ReadOnlySpan<byte> NullableString
+    public string? NullableString
         => Kind == LuaValueKind.Nil
             ? null
             : String;
-
-    /// <summary>
-    /// Gets this LuaValue as a string, or null if <see cref="Kind"/> is <see cref="LuaValueKind.Nil"/>.
-    /// </summary>
-    /// <remarks>
-    /// Be aware that a Lua string is, strictly speaking, only an immutable sequence of bytes, and not necessarily a
-    /// valid UTF-8 character sequence.
-    /// </remarks>
-    /// <exception cref="InvalidCastException">
-    /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.String"/> or <see cref="LuaValueKind.Nil"/>.
-    /// </exception>
-    /// <exception cref="ArgumentException">
-    /// Thrown by internal call if underlying Lua string did not actually represent a valid UTF-8 character sequence.
-    /// </exception>
-    public string? NullableStringUtf16
-        => Kind == LuaValueKind.Nil
-            ? null
-            : StringUtf16;
     
     /// <summary>
     /// Gets this LuaValue as a Lua function delegate, or null if <see cref="Kind"/> is <see cref="LuaValueKind.Nil"/>.
@@ -307,31 +258,11 @@ public readonly partial struct LuaValue
     }
 
     /// <summary>
-    /// Creates a new LuaValue with string value.
-    /// </summary>
-    /// <param name="value">String value of the new LuaValue.</param>
-    public LuaValue(ReadOnlySpan<byte> value)
-    {
-        _ref = new LuaString(value);
-        Kind = LuaValueKind.String;
-    }
-
-    /// <summary>
     /// Creates a new LuaValue with string value. Automatically converts the given string to a UTF-8 byte sequence to
     /// be stored in the value.
     /// </summary>
     /// <param name="value">String value of the new LuaValue.</param>
     public LuaValue(string value)
-    {
-        _ref = new LuaString(value);
-        Kind = LuaValueKind.String;
-    }
-
-    /// <summary>
-    /// For internal use, create a LuaValue directly from a <see cref="LuaString"/>.
-    /// </summary>
-    /// <param name="value">String value of the new LuaValue.</param>
-    internal LuaValue(LuaString value)
     {
         _ref = value;
         Kind = LuaValueKind.String;
@@ -426,7 +357,7 @@ public readonly partial struct LuaValue
                 return;
             case TokenType.String:
                 Kind = LuaValueKind.String;
-                _ref = new LuaString((string)token.Data!);
+                _ref = (string)token.Data!;
                 return;
             case TokenType.Numeral:
                 break;
@@ -478,7 +409,7 @@ public readonly partial struct LuaValue
         }
     }
 
-    public override string ToString() => GlobalFunctions.LuaToStringUtf16(this);
+    public override string ToString() => GlobalFunctions.LuaToString(this);
 
     #endregion
     
@@ -489,7 +420,6 @@ public readonly partial struct LuaValue
     public static implicit operator LuaValue(bool value) => new(value);
     public static implicit operator LuaValue(long value) => new(value);
     public static implicit operator LuaValue(double value) => new(value);
-    public static implicit operator LuaValue(ReadOnlySpan<byte> value) => new(value);
     public static implicit operator LuaValue(string value) => new(value);
     public static implicit operator LuaValue(LuaFunction value) => new(value);
     public static implicit operator LuaValue(LuaUserdata value) => new(value);
@@ -509,8 +439,7 @@ public readonly partial struct LuaValue
     public static explicit operator bool?(LuaValue value) => value.NullableBoolean;
     public static explicit operator long?(LuaValue value) => value.NullableInteger;
     public static explicit operator double?(LuaValue value) => value.NullableFloat;
-    public static explicit operator ReadOnlySpan<byte>(LuaValue value) => value.String;
-    public static explicit operator string(LuaValue value) => value.StringUtf16;
+    public static explicit operator string(LuaValue value) => value.String;
     public static explicit operator LuaFunction(LuaValue value) => value.Function;
     public static explicit operator LuaUserdata(LuaValue value) => value.Userdata;
     public static explicit operator LuaThread(LuaValue value) => value.Thread;

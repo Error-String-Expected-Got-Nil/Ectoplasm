@@ -25,13 +25,12 @@ public enum LuaValueKind
     Float,
     
     /// <summary>
-    /// Immutable byte sequence. Underlying C# type is <see cref="LuaString"/>, though this type is marked as internal,
-    /// and it is only externally accessible through <see cref="Values.LuaValue"/>.
+    /// Immutable byte sequence. Underlying C# type is <see cref="string"/>.
     /// </summary>
     String,
     
     /// <summary>
-    /// Lua function type. Underlying C# type <see cref="LuaFunction"/>.
+    /// Lua function type. Underlying C# type <see cref="Functions.LuaFunction"/>.
     /// </summary>
     Function,
     
@@ -48,7 +47,7 @@ public enum LuaValueKind
     Thread,
     
     /// <summary>
-    /// Lua table type. Underlying C# type <see cref="LuaTable"/>.
+    /// Lua table type. Underlying C# type <see cref="Tables.LuaTable"/>.
     /// </summary>
     Table
 }

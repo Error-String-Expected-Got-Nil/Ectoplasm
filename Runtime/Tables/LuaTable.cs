@@ -1,12 +1,11 @@
-﻿using Ectoplasm.Runtime.Tables;
-using Ectoplasm.Runtime.Values;
+﻿using Ectoplasm.Runtime.Values;
 
 namespace Ectoplasm.Runtime.Tables;
 
 /// <summary>
 /// <para>
-/// Type representing a Lua table. Can be indexed using any <see cref="Values.LuaValue"/> other than
-/// <see cref="LuaValueKind.Nil"/> or <see cref="double.NaN"/>, returning any <see cref="Values.LuaValue"/>. A return of
+/// Type representing a Lua table. Can be indexed using any <see cref="LuaValue"/> other than
+/// <see cref="LuaValueKind.Nil"/> or <see cref="double.NaN"/>, returning any <see cref="LuaValue"/>. A return of
 /// <see cref="LuaValueKind.Nil"/> on an index get means that index has no value; furthermore, setting an index to
 /// <see cref="LuaValueKind.Nil"/> means removing that index.
 /// </para>
@@ -16,11 +15,16 @@ namespace Ectoplasm.Runtime.Tables;
 /// </para>
 /// <para>
 /// When indexing, <see cref="LuaValueKind.Float"/> values which can be coerced to <see cref="LuaValueKind.Integer"/>
-/// values without any loss will index the same values as the equivalent integer. Ex.: <c>table[1] == table[1.0]</c>.
+/// values without any loss of precision will index the same values as the equivalent integer.
+/// Ex.: <c>table[1] == table[1.0]</c>.
 /// </para>
 /// </summary>
 public class LuaTable
 {
+    // A LuaTable is actually just a wrapper around a particular table implementation. A given implementation may only
+    // support a certain subset of value kinds for indexing, the advantage being it doesn't have to waste memory and
+    // lookup time when asked to find an index it knows it can't support. If setting a value kind it doesn't support,
+    // the implementation will upgrade to a form that can, and the LuaTable will swap it out accordingly.
     private TableImpl _implementation = new TableImpl_Empty();
 
     /// <summary>

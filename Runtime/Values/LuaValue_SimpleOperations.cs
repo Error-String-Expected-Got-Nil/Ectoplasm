@@ -95,7 +95,6 @@ public readonly partial struct LuaValue
         if (b.Kind is not (LuaValueKind.String or LuaValueKind.Integer or LuaValueKind.Float))
             throw new LuaRuntimeException($"Attempt to concatenate invalid kind {b.Kind}");
         
-        return new LuaValue(LuaString.Concat(GlobalFunctions.LuaToStringInternal(a), 
-            GlobalFunctions.LuaToStringInternal(b)));
+        return new LuaValue(GlobalFunctions.LuaToString(a) + GlobalFunctions.LuaToString(b));
     }
 }

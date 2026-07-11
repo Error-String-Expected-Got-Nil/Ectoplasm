@@ -5,7 +5,7 @@ namespace Ectoplasm.Runtime.Tables;
 /// <summary>
 /// Table implementation for tables with both string and integer keys. Integer keys may be any integer, as well.
 /// </summary>
-internal class TableImpl_Multi(Dictionary<LuaString, LuaValue> stringsDictPortion, 
+internal class TableImpl_Multi(Dictionary<string, LuaValue> stringsDictPortion, 
     Dictionary<long, LuaValue> dictPortion, List<LuaValue> listPortion, int listNilCount) : TableImpl
 {
     private int _listNilCount = listNilCount;
@@ -20,7 +20,7 @@ internal class TableImpl_Multi(Dictionary<LuaString, LuaValue> stringsDictPortio
     {
         if (index.Kind == LuaValueKind.String)
         {
-            stringsDictPortion.TryGetValue((LuaString)index._ref, out var sValue);
+            stringsDictPortion.TryGetValue((string)index._ref, out var sValue);
             return sValue;
         }
 
@@ -38,7 +38,7 @@ internal class TableImpl_Multi(Dictionary<LuaString, LuaValue> stringsDictPortio
     public override TableImpl Set(LuaValue index, LuaValue value)
     {
         if (index.Kind == LuaValueKind.String)
-            return SetString((LuaString)index._ref, value);
+            return SetString((string)index._ref, value);
 
         if (index.TryCoerceInteger(out var coercedIndex))
             return SetInteger(coercedIndex, value);
@@ -49,7 +49,7 @@ internal class TableImpl_Multi(Dictionary<LuaString, LuaValue> stringsDictPortio
             _listNilCount);
     }
 
-    private TableImpl_Multi SetString(LuaString index, LuaValue value)
+    private TableImpl_Multi SetString(string index, LuaValue value)
     {
         if (value.Kind == LuaValueKind.Nil)
         {

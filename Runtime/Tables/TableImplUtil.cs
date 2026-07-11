@@ -21,7 +21,7 @@ public static class TableImplUtil
     /// </param>
     public static void TrimExcessNils(List<LuaValue> list, ref int nilCount)
     {
-        var index = list.Count;
+        var index = list.Count - 1;
         while (list[index].Kind != LuaValueKind.Nil) index--;
         // Index is now the highest index with a non-nil value. Increment to get the highest nil value index.
         index++;
@@ -36,7 +36,7 @@ public static class TableImplUtil
     
     // Horribly gangly utility function that produces a TableImpl_Complete given old data and a new index/value pair.
     internal static TableImpl_Complete UpgradeToCompleteImpl(LuaValue index, LuaValue value,
-        Dictionary<LuaString, LuaValue>? stringsDict = null, Dictionary<long, LuaValue>? intsDict = null,
+        Dictionary<string, LuaValue>? stringsDict = null, Dictionary<long, LuaValue>? intsDict = null,
         List<LuaValue>? list = null, int nilCount = 0)
         // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
         => index.Kind switch
@@ -50,7 +50,7 @@ public static class TableImplUtil
                 new Dictionary<double, LuaValue> { { index._float, value } }, [],
                 stringsDict ?? [], intsDict ?? [], list ?? [], nilCount),
             LuaValueKind.String => new TableImpl_Complete(default, default, [],
-                [], new Dictionary<LuaString, LuaValue> { { (LuaString)index._ref, value } }, 
+                [], new Dictionary<string, LuaValue> { { (string)index._ref, value } }, 
                 intsDict ?? [], list ?? [], nilCount),
             LuaValueKind.Function or LuaValueKind.Userdata or LuaValueKind.Thread or LuaValueKind.Table 
                 => new TableImpl_Complete(default, default, [],

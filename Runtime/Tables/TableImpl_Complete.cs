@@ -7,7 +7,7 @@ namespace Ectoplasm.Runtime.Tables;
 /// </summary>
 internal class TableImpl_Complete(LuaValue trueValue, LuaValue falseValue, 
     Dictionary<double, LuaValue> floatsDictPortion, Dictionary<object, LuaValue> refsDictPortion, 
-    Dictionary<LuaString, LuaValue> stringsDictPortion, Dictionary<long, LuaValue> dictPortion,
+    Dictionary<string, LuaValue> stringsDictPortion, Dictionary<long, LuaValue> dictPortion,
     List<LuaValue> listPortion, int listNilCount) : TableImpl
 {
     private LuaValue _trueValue = trueValue;
@@ -27,7 +27,7 @@ internal class TableImpl_Complete(LuaValue trueValue, LuaValue falseValue,
             {
                 LuaValueKind.Boolean => index._boolean ? _trueValue : _falseValue,
                 LuaValueKind.Float => floatsDictPortion.GetValueOrDefault(index._float),
-                LuaValueKind.String => stringsDictPortion.GetValueOrDefault((LuaString)index._ref),
+                LuaValueKind.String => stringsDictPortion.GetValueOrDefault((string)index._ref),
                 LuaValueKind.Function or LuaValueKind.Userdata or LuaValueKind.Thread or LuaValueKind.Table 
                     => refsDictPortion.GetValueOrDefault(index._ref),
                 _ => default
@@ -49,7 +49,7 @@ internal class TableImpl_Complete(LuaValue trueValue, LuaValue falseValue,
             {
                 LuaValueKind.Boolean => SetBoolean(index._boolean, value),
                 LuaValueKind.Float => SetFloat(index._float, value),
-                LuaValueKind.String => SetString((LuaString)index._ref, value),
+                LuaValueKind.String => SetString((string)index._ref, value),
                 LuaValueKind.Function or LuaValueKind.Userdata or LuaValueKind.Thread or LuaValueKind.Table 
                     => SetRef(index._ref, value),
                 _ => this
@@ -92,7 +92,7 @@ internal class TableImpl_Complete(LuaValue trueValue, LuaValue falseValue,
         return this;
     }
     
-    private TableImpl_Complete SetString(LuaString index, LuaValue value)
+    private TableImpl_Complete SetString(string index, LuaValue value)
     {
         if (value.Kind == LuaValueKind.Nil)
         {
