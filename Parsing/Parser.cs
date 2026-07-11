@@ -1,4 +1,5 @@
-﻿using Ectoplasm.Lexing;
+﻿using System.Text;
+using Ectoplasm.Lexing;
 using Ectoplasm.Parsing.Expressions;
 using Ectoplasm.Parsing.Expressions.BinaryOperators;
 using Ectoplasm.Parsing.Expressions.UnaryOperators;
@@ -358,17 +359,67 @@ public static class Parser
     private static (Expression AssignLocation, bool IsMethod, string DebugName) ParseFuncname(
         IEnumerator<LuaToken> source, string? sourceName)
     {
+        var startToken = source.Current;
+        if (startToken.Type is not Name)
+            throw new LuaParsingException(startToken, "expected name to start function name", sourceName);
+        
+        var nameTokens = (List<LuaToken>)[startToken];
+        var isMethod = false;
+        var debugName = new StringBuilder((string)startToken.Data!);
+        
+        while (true)
+        {
+            source.MoveNext();
+            
+            var innerToken = source.Current;
+            if (innerToken.Type is not IndexName) break;
 
+            debugName.Append('.');
+            nameTokens.Add(innerToken);
+
+            source.MoveNext();
+            innerToken = source.Current;
+            if (innerToken.Type is not Name)
+                throw new LuaParsingException(innerToken, $"expected indexable name as part of function name " + 
+                    $"started on line {startToken.StartLine}, column {startToken.StartCol}", sourceName);
+
+            debugName.Append((string)innerToken.Data!);
+            nameTokens.Add(innerToken);
+        }
+
+        var token = source.Current;
+        if (token.Type is IndexMethod)
+        {
+            debugName.Append(':');
+            nameTokens.Add(token with { Type = IndexName });
+
+            source.MoveNext();
+            token = source.Current;
+            if (token.Type is not Name)
+                throw new LuaParsingException(token, $"expected indexable name as part of function name " + 
+                    $"started on line {startToken.StartLine}, column {startToken.StartCol}", sourceName);
+
+            debugName.Append((string)token.Data!);
+            nameTokens.Add(token);
+            isMethod = true;
+        }
+        
+        nameTokens.Add(new LuaToken(string.Empty.AsMemory(), null, EndOfChunk, 
+            0, 0, 0, 0));
+
+        var nameExpr = ParseExpression(nameTokens.GetEnumerator());
+
+        return (nameExpr, isMethod, debugName.ToString());
     }
 
-    // Parses a funcion body, starting from the opening parenthesis for its parameter list.
+    // Parses a function body, starting from the opening parenthesis for its parameter list.
     private static Expr_FunctionDef ParseFuncbody(IEnumerator<LuaToken> source, bool isMethod, string? sourceName, 
         string? debugFunctionName)
     {
         var startToken = source.Current;
         if (startToken.Type is not OpenExp)
-            throw new LuaParsingException("Attempt to parse function body starting on invalid token",
-                startToken.StartLine, startToken.StartCol, sourceName);
+            throw new LuaParsingException(startToken, "expected open to function definition parameter list", 
+                sourceName);
 
         var names = new List<string>();
 
@@ -506,6 +557,8 @@ public static class Parser
 
             if (source.Current.Type is not Separator)
                 return exps;
+
+            source.MoveNext();
         }
     }
     
