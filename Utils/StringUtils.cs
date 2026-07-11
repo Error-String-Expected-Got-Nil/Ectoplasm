@@ -30,5 +30,11 @@ public static class StringUtils
         lit.Append('"');
 
         return lit.ToString();
-    } 
+    }
+ 
+    public static StringBuilder AppendRep(this StringBuilder sb, string str, int count, string finish = "")
+    {
+        for (var i = 0; i < count; i++) sb.Append(str);
+        return finish.Length == 0 ? sb : sb.AppendLine(finish);
+    }
 }

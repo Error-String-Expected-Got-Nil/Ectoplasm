@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Ectoplasm.Utils;
 
 namespace Ectoplasm.Parsing.Expressions;
 
@@ -47,17 +48,21 @@ public abstract class Expression(ushort line, ushort col)
     /// <summary>
     /// Converts this expression tree to a string in a human-friendly format suitable for debug printouts.
     /// </summary>
-    public string GetDebugString()
+    public string GetDebugString(int baseDepth = 0)
+        => AddToDebugString(new StringBuilder(), baseDepth).ToString();
+
+    /// <summary>
+    /// Adds a debug-formatted printout of this expression tree to the end of a StringBuilder. Uses newlines.
+    /// </summary>
+    public StringBuilder AddToDebugString(StringBuilder str, int baseDepth = 0)
     {
-        var str = new StringBuilder();
         foreach (var (expr, depth) in DepthFirstEnumerate())
         {
-            for (var i = 0; i < depth; i++) str.Append(".   ");
-            
-            str.Append(expr)
+            str.AppendRep(".   ", depth + baseDepth) 
+                .Append(expr)
                 .AppendLine();
         }
 
-        return str.ToString();
+        return str;
     }
 }

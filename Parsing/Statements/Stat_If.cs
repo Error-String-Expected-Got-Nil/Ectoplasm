@@ -1,4 +1,6 @@
-﻿using Ectoplasm.Parsing.Expressions;
+﻿using System.Text;
+using Ectoplasm.Parsing.Expressions;
+using Ectoplasm.Utils;
 
 namespace Ectoplasm.Parsing.Statements;
 
@@ -12,5 +14,23 @@ namespace Ectoplasm.Parsing.Statements;
 public class Stat_If(List<(Expression Condition, List<Statement> Block)> clauses, List<Statement>? elseBlock, 
     ushort line, ushort col) : Statement(line, col)
 {
-    
+    protected override void AddToDebugString(StringBuilder str, int depth)
+    {
+        base.AddToDebugString(str, depth);
+        for (var i = 0; i < clauses.Count; i++)
+        {
+            var keyword = i == 0 ? "if" : "elseif";
+            str.AppendRep(".   ", depth + 1, keyword);
+            str.AppendRep(".   ", depth + 2, "Condition:");
+            clauses[i].Condition.AddToDebugString(str, depth + 3);
+            str.AppendRep(".   ", depth + 2, "Block:");
+            GetBlockDebugStringInternal(str, clauses[i].Block, depth + 3);
+        }
+
+        if (elseBlock is null) return;
+
+        str.AppendRep(".   ", depth + 1, "else");
+        str.AppendRep(".   ", depth + 2, "Block:");
+        GetBlockDebugStringInternal(str, elseBlock, depth + 3);
+    }
 }

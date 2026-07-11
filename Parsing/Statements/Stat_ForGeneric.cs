@@ -1,5 +1,7 @@
+using System.Text;
 using Ectoplasm.Lexing;
 using Ectoplasm.Parsing.Expressions;
+using Ectoplasm.Utils;
 
 namespace Ectoplasm.Parsing.Statements;
 
@@ -8,5 +10,21 @@ namespace Ectoplasm.Parsing.Statements;
 public class Stat_ForGeneric(List<LuaToken> namelist, List<Expression> explist, List<Statement> block, ushort line, 
     ushort col) : Statement(line, col)
 {
-    
+    protected override void AddToDebugString(StringBuilder str, int depth)
+    {
+        base.AddToDebugString(str, depth);
+        str.AppendRep(".   ", depth + 1, "Namelist:");
+        foreach (var name in namelist) str.AppendRep(".   ", depth + 2, (string)name.Data!);
+
+        str.AppendRep(".   ", depth + 1, "Expressions:");
+        for (var i = 0; i < explist.Count; i++)
+        {
+            var expr = explist[i];
+            str.AppendRep(".   ", depth + 2, $"Expression {i}:");
+            expr.AddToDebugString(str, depth + 3);
+        }
+
+        str.AppendRep(".   ", depth + 1, "Block:");
+        GetBlockDebugStringInternal(str, block, depth + 2);
+    }
 }

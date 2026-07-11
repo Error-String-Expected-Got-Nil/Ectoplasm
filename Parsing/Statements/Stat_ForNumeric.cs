@@ -1,5 +1,7 @@
+using System.Text;
 using Ectoplasm.Lexing;
 using Ectoplasm.Parsing.Expressions;
+using Ectoplasm.Utils;
 
 namespace Ectoplasm.Parsing.Statements;
 
@@ -10,5 +12,22 @@ namespace Ectoplasm.Parsing.Statements;
 public class Stat_ForNumeric(LuaToken name, Expression initial, Expression end, Expression? increment, 
     List<Statement> block, ushort line, ushort col) : Statement(line, col)
 {
-    
+    protected override void AddToDebugString(StringBuilder str, int depth)
+    {
+        base.AddToDebugString(str, depth);
+        str.AppendRep(".   ", depth + 1, $"Control Variable Name: {(string)name.Data!}");
+        str.AppendRep(".   ", depth + 1, "Initial:");
+        initial.AddToDebugString(str, depth + 2);
+        str.AppendRep(".   ", depth + 1, "End:");
+        end.AddToDebugString(str, depth + 2);
+
+        if (increment is not null)
+        {
+            str.AppendRep(".   ", depth + 1, "Increment:");
+            increment.AddToDebugString(str, depth + 2);
+        }
+
+        str.AppendRep(".   ", depth + 1, "Block:");
+        GetBlockDebugStringInternal(str, block, depth + 2);
+    }
 }

@@ -547,7 +547,7 @@ public static class Parser
         return new Expr_FunctionDef(names, isVararg, body, debugFunctionName, startToken.StartLine, startToken.StartCol);
     }
 
-    private static List<(LuaToken name, LocalAttribute Attribute)> ParseAttNamelist(IEnumerator<LuaToken> source, 
+    private static List<(LuaToken Name, LocalAttribute Attribute)> ParseAttNamelist(IEnumerator<LuaToken> source, 
         string? sourceName)
     {
         var names = new List<(LuaToken, LocalAttribute)>();
