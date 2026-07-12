@@ -24,13 +24,13 @@ public class Stat_If(List<(Expression Condition, List<Statement> Block)> clauses
             str.AppendRep(".   ", depth + 2, "Condition:");
             clauses[i].Condition.AddToDebugString(str, depth + 3);
             str.AppendRep(".   ", depth + 2, "Block:");
-            GetBlockDebugStringInternal(str, clauses[i].Block, depth + 3);
+            AddBlockDebugString(str, clauses[i].Block, depth + 3);
         }
 
         if (elseBlock is null) return;
 
         str.AppendRep(".   ", depth + 1, "else");
         str.AppendRep(".   ", depth + 2, "Block:");
-        GetBlockDebugStringInternal(str, elseBlock, depth + 3);
+        AddBlockDebugString(str, elseBlock, depth + 3);
     }
 }

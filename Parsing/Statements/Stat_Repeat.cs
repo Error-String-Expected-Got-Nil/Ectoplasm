@@ -10,7 +10,7 @@ public class Stat_Repeat(Expression condition, List<Statement> contents, ushort 
     {
         base.AddToDebugString(str, depth);
         str.AppendRep(".   ", depth + 1, "Contents:");
-        GetBlockDebugStringInternal(str, contents, depth + 2);
+        AddBlockDebugString(str, contents, depth + 2);
         str.AppendRep(".   ", depth + 1, "Condition:");
         condition.AddToDebugString(str, depth + 2);
     }

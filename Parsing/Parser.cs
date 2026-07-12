@@ -123,7 +123,7 @@ public static class Parser
             void ParseFunctionDef()
             {
                 source.MoveNext();
-
+                
                 var (location, isMethod, debugName) = ParseFuncname(source, sourceName);
                 var body = ParseFuncbody(source, isMethod, sourceName, debugName);
                 
@@ -147,8 +147,8 @@ public static class Parser
 
                     // Local function declaration is syntactic sugar for declaring a local variable with the function's
                     // name, then assigning the anonymous function body to that local variable.
-                    statements.Add(new Stat_LocalDeclaration([(name, LocalAttribute.None)], null, 
-                        token.StartLine, token.StartCol));
+                    statements.Add(new Stat_LocalDeclaration([((string)name.Data!, LocalAttribute.None)], 
+                        null, token.StartLine, token.StartCol));
                     statements.Add(new Stat_Assign(
                         [new Expr_Variable((string)name.Data!, name.StartLine, name.StartCol)], 
                         [body], token.StartLine, token.StartCol));
@@ -488,7 +488,9 @@ public static class Parser
         // We construct a pseudo-expression token sequence and use ParseExpression to produce the assignable function
         // name expression for simplicity. Manually constructing the expression object would be tedious and pointless
         // when ParseExpression can already do it well enough.
-        var nameExpr = ParseExpression(nameTokens.GetEnumerator());
+        using var name = nameTokens.GetEnumerator();
+        name.MoveNext(); // Init enumerator
+        var nameExpr = ParseExpression(name);
 
         return (nameExpr, isMethod, debugName.ToString());
     }
@@ -547,10 +549,10 @@ public static class Parser
         return new Expr_FunctionDef(names, isVararg, body, debugFunctionName, startToken.StartLine, startToken.StartCol);
     }
 
-    private static List<(LuaToken Name, LocalAttribute Attribute)> ParseAttNamelist(IEnumerator<LuaToken> source, 
+    private static List<(string Name, LocalAttribute Attribute)> ParseAttNamelist(IEnumerator<LuaToken> source, 
         string? sourceName)
     {
-        var names = new List<(LuaToken, LocalAttribute)>();
+        var names = new List<(string, LocalAttribute)>();
 
         while (true)
         {
@@ -596,7 +598,7 @@ public static class Parser
                 source.MoveNext();
             }
             
-            names.Add((name, attribute));
+            names.Add(((string)name.Data!, attribute));
 
             if (source.Current.Type is not Separator)
                 return names;
@@ -605,9 +607,9 @@ public static class Parser
         }
     }
     
-    private static List<LuaToken> ParseNamelist(IEnumerator<LuaToken> source, string? sourceName)
+    private static List<string> ParseNamelist(IEnumerator<LuaToken> source, string? sourceName)
     {
-        var names = new List<LuaToken>();
+        var names = new List<string>();
         
         while (true)
         {
@@ -617,7 +619,7 @@ public static class Parser
                 throw new LuaParsingException(token, $"expected Name in namelist, got {token.Type} instead", 
                     sourceName);
             
-            names.Add(token);
+            names.Add((string)token.Data!);
 
             source.MoveNext();
             if (source.Current.Type is not Separator)
@@ -627,7 +629,6 @@ public static class Parser
         }
     }
 
-    // Very simple function which parses a list of expressions delimited by Separator tokens.
     private static List<Expression> ParseExplist(IEnumerator<LuaToken> source, string? sourceName, 
         bool allowZeroLengthFirst = false)
     {
@@ -789,7 +790,14 @@ public static class Parser
             if (expectingValue)
             {
                 if (!Lexicon.UnaryOperators.Contains(token.Type))
+                {
+                    // Token isn't valid at this point. This is an error under most circumstances, but if we allow
+                    // zero length and haven't pushed anything to the output yet, this means this was just maybe an
+                    // expression we have now verified isn't one, so we can just quit.
+                    if (allowZeroLength && output.Count == 0) break;
+                    
                     throw new LuaParsingException(token, "expected value or unary operator token", sourceName);
+                }
 
                 // For tokens that could be either unary or binary, replace the binary token with its unary counterpart
                 if (token.Type is Sub)
@@ -1031,7 +1039,6 @@ public static class Parser
                 var expr = ParseExpression(source, sourceName, true);
                 output.Push(expr);
                 argc++;
-                source.MoveNext();
 
                 token = source.Current;
 

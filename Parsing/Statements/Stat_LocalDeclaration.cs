@@ -6,7 +6,7 @@ using Ectoplasm.Utils;
 
 namespace Ectoplasm.Parsing.Statements;
 
-public class Stat_LocalDeclaration(List<(LuaToken Name, LocalAttribute Attribute)> names, List<Expression>? expressions, 
+public class Stat_LocalDeclaration(List<(string Name, LocalAttribute Attribute)> names, List<Expression>? expressions, 
     ushort line, ushort col) : Statement(line, col)
 {
     protected override void AddToDebugString(StringBuilder str, int depth)
@@ -16,7 +16,7 @@ public class Stat_LocalDeclaration(List<(LuaToken Name, LocalAttribute Attribute
         {
             var (name, attr) = names[i];
             str.AppendRep(".   ", depth + 1,
-                $"{(string)name.Data!}{attr switch {
+                $"{name}{attr switch {
                     LocalAttribute.None => "",
                     LocalAttribute.Close => "<close>",
                     LocalAttribute.Const => "<const>",

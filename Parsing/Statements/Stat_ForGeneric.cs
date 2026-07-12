@@ -7,14 +7,14 @@ namespace Ectoplasm.Parsing.Statements;
 
 /// <param name="namelist">List of loop variables. First is control variable.</param>
 /// <param name="explist">Expressions that define loop parameters.</param>
-public class Stat_ForGeneric(List<LuaToken> namelist, List<Expression> explist, List<Statement> block, ushort line, 
+public class Stat_ForGeneric(List<string> namelist, List<Expression> explist, List<Statement> block, ushort line, 
     ushort col) : Statement(line, col)
 {
     protected override void AddToDebugString(StringBuilder str, int depth)
     {
         base.AddToDebugString(str, depth);
         str.AppendRep(".   ", depth + 1, "Namelist:");
-        foreach (var name in namelist) str.AppendRep(".   ", depth + 2, (string)name.Data!);
+        foreach (var name in namelist) str.AppendRep(".   ", depth + 2, name);
 
         str.AppendRep(".   ", depth + 1, "Expressions:");
         for (var i = 0; i < explist.Count; i++)
@@ -25,6 +25,6 @@ public class Stat_ForGeneric(List<LuaToken> namelist, List<Expression> explist, 
         }
 
         str.AppendRep(".   ", depth + 1, "Block:");
-        GetBlockDebugStringInternal(str, block, depth + 2);
+        AddBlockDebugString(str, block, depth + 2);
     }
 }

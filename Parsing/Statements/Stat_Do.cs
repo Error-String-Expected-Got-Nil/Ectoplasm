@@ -7,6 +7,6 @@ public class Stat_Do(List<Statement> contents, ushort line, ushort col) : Statem
     protected override void AddToDebugString(StringBuilder str, int depth)
     {
         base.AddToDebugString(str, depth);
-        GetBlockDebugStringInternal(str, contents, depth + 1);
+        AddBlockDebugString(str, contents, depth + 1);
     }
 }

@@ -12,6 +12,6 @@ public class Stat_While(Expression condition, List<Statement> contents, ushort l
         str.AppendRep(".   ", depth + 1, "Condition:");
         condition.AddToDebugString(str, depth + 2);
         str.AppendRep(".   ", depth + 1, "Contents:");
-        GetBlockDebugStringInternal(str, contents, depth + 2);
+        AddBlockDebugString(str, contents, depth + 2);
     }
 }

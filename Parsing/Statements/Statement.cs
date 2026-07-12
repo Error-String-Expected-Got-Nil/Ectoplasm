@@ -14,9 +14,9 @@ public abstract class Statement(ushort line, ushort col)
         => str.AppendRep(".   ", depth).Append(ToString()).AppendLine();
     
     public static string GetBlockDebugString(List<Statement> block, int baseDepth = 0)
-        => GetBlockDebugStringInternal(new StringBuilder(), block, baseDepth).ToString();
+        => AddBlockDebugString(new StringBuilder(), block, baseDepth).ToString();
 
-    protected static StringBuilder GetBlockDebugStringInternal(StringBuilder str, List<Statement> block, 
+    public static StringBuilder AddBlockDebugString(StringBuilder str, List<Statement> block, 
         int baseDepth = 0)
     {
         foreach (var stat in block) stat.AddToDebugString(str, baseDepth);

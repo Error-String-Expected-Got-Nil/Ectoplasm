@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Ectoplasm.Parsing.Statements;
 using Ectoplasm.Utils;
 
 namespace Ectoplasm.Parsing.Expressions;
@@ -52,7 +53,7 @@ public abstract class Expression(ushort line, ushort col)
         => AddToDebugString(new StringBuilder(), baseDepth).ToString();
 
     /// <summary>
-    /// Adds a debug-formatted printout of this expression tree to the end of a StringBuilder. Uses newlines.
+    /// Adds a debug-formatted printout of this expression tree to the end of a StringBuilder.
     /// </summary>
     public StringBuilder AddToDebugString(StringBuilder str, int baseDepth = 0)
     {
@@ -61,6 +62,10 @@ public abstract class Expression(ushort line, ushort col)
             str.AppendRep(".   ", depth + baseDepth) 
                 .Append(expr)
                 .AppendLine();
+
+            if (expr is not Expr_FunctionDef func) continue;
+
+            Statement.AddBlockDebugString(str, func.Body, depth + baseDepth + 1);
         }
 
         return str;
