@@ -8,6 +8,27 @@ public abstract class Statement(ushort line, ushort col)
     public ushort StartLine => line;
     public ushort StartCol => col;
 
+    /// <summary>
+    /// Indicates if this is a void statement (empty or a label).
+    /// </summary>
+    public virtual bool IsVoid => false;
+
+    /// <summary>
+    /// Adds any local variables declared by this statement to the list of locals for the given prototype.
+    /// </summary>
+    /// <returns>
+    /// List containing any local variables declared which are visible in the same scope this statement executes in. If
+    /// null, no such locals were declared.
+    /// </returns>
+    public virtual List<LocalVariable>? DeclareLocals(Prototype prototype) => null;
+
+    /// <summary>
+    /// Get an enumeration of all sub-blocks of this statement, or null if this statement has no sub-blocks. Each block
+    /// is optionally bundled with list containing any visible local variables that are implicitly declared as part of
+    /// this block, though this is currently only used by numeric for loops.
+    /// </summary>
+    public virtual IEnumerable<(List<Statement> Block, List<LocalVariable>? BlockLocals)>? GetBlocks() => null;
+    
     public override string ToString() => $"{GetType().Name} [{StartLine}, {StartCol}]";
     
     protected virtual void AddToDebugString(StringBuilder str, int depth) 

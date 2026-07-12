@@ -2,5 +2,5 @@
 
 public class Stat_Empty(ushort line, ushort col) : Statement(line, col)
 {
-    
+    public override bool IsVoid => true;
 }

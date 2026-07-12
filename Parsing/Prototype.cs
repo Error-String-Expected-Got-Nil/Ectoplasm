@@ -1,4 +1,5 @@
-﻿using Ectoplasm.Runtime.Values;
+﻿using Ectoplasm.Parsing.Statements;
+using Ectoplasm.Runtime.Values;
 
 namespace Ectoplasm.Parsing;
 
@@ -21,14 +22,25 @@ public class Prototype
     public readonly Prototype? Parent;
 
     /// <summary>
+    /// Parameter names for this prototype.
+    /// </summary>
+    public readonly List<string> Parameters = [];
+
+    /// <summary>
     /// If true, this is a variable-argument function. Once compiled, an additional local variable slot will be
     /// allocated beyond the count of <see cref="Locals"/>, which will be used to contain an array of the extra
     /// arguments provided when the function is called.
     /// </summary>
     public readonly bool IsVararg;
+
+    /// <summary>
+    /// Debug name used for this function. 
+    /// </summary>
+    public readonly string? Name;
     
     /// <summary>
-    /// List of all local variables which originate in this prototype.
+    /// List of all local variables which originate in this prototype. If the prototype has named parameters, those will
+    /// be the first locals in this list.
     /// </summary>
     public readonly List<LocalVariable> Locals = [];
 
@@ -39,12 +51,21 @@ public class Prototype
     /// </summary>
     public readonly List<LocalVariable> Externals = [];
 
+    /// <summary>
+    /// The raw code block of this prototype.
+    /// </summary>
+    public readonly List<Statement> Contents = [];
+
     private Prototype() { }
     
-    public Prototype(Prototype? parent, bool isVararg)
+    public Prototype(Prototype? parent, List<string> parameters, bool isVararg, List<Statement> contents, 
+        string? name = null)
     {
         Parent = parent;
+        Parameters = parameters;
         IsVararg = isVararg;
+        Contents = contents;
+        Name = name;
 
         var env = new LocalVariable(this, "_ENV")
         {
@@ -59,5 +80,17 @@ public class Prototype
         };
         
         Externals.Add(env);
+
+        foreach (var param in parameters) AddNewLocal(param);
+    }
+
+    /// <summary>
+    /// Creates a new local variable, adds it to this prototype's locals, sets its index, then returns it.
+    /// </summary>
+    public LocalVariable AddNewLocal(string name)
+    {
+        var local = new LocalVariable(this, name) { Index = Locals.Count };
+        Locals.Add(local);
+        return local;
     }
 }
