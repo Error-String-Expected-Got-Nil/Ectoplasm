@@ -18,7 +18,7 @@ internal class TableImpl_Multi(Dictionary<string, LuaValue> stringsDictPortion,
     /// <inheritdoc/>
     public override LuaValue Get(LuaValue index)
     {
-        if (index.Kind == LuaValueKind.String)
+        if (index._kind == LuaValueKind.String)
         {
             stringsDictPortion.TryGetValue((string)index._ref, out var sValue);
             return sValue;
@@ -37,13 +37,13 @@ internal class TableImpl_Multi(Dictionary<string, LuaValue> stringsDictPortion,
     /// <inheritdoc/>
     public override TableImpl Set(LuaValue index, LuaValue value)
     {
-        if (index.Kind == LuaValueKind.String)
+        if (index._kind == LuaValueKind.String)
             return SetString((string)index._ref, value);
 
         if (index.TryCoerceInteger(out var coercedIndex))
             return SetInteger(coercedIndex, value);
 
-        if (value.Kind == LuaValueKind.Nil) return this;
+        if (value._kind == LuaValueKind.Nil) return this;
 
         return TableImplUtil.UpgradeToCompleteImpl(index, value, stringsDictPortion, dictPortion, listPortion,
             _listNilCount);
@@ -51,7 +51,7 @@ internal class TableImpl_Multi(Dictionary<string, LuaValue> stringsDictPortion,
 
     private TableImpl_Multi SetString(string index, LuaValue value)
     {
-        if (value.Kind == LuaValueKind.Nil)
+        if (value._kind == LuaValueKind.Nil)
         {
             stringsDictPortion.Remove(index);
             return this;
@@ -69,7 +69,7 @@ internal class TableImpl_Multi(Dictionary<string, LuaValue> stringsDictPortion,
         // Index isn't ever containable in list portion, add it to the dictionary portion instead
         if (index is < 0 or >= int.MaxValue)
         {
-            if (value.Kind == LuaValueKind.Nil)
+            if (value._kind == LuaValueKind.Nil)
             {
                 dictPortion.Remove(index + 1);
                 return this;
@@ -84,7 +84,7 @@ internal class TableImpl_Multi(Dictionary<string, LuaValue> stringsDictPortion,
         if (intIndex >= listPortion.Count)
         {
             // Value is outside list and is nil, remove it from dictionary portion if and return
-            if (value.Kind == LuaValueKind.Nil)
+            if (value._kind == LuaValueKind.Nil)
             {
                 dictPortion.Remove(index + 1);
                 return this;
@@ -117,7 +117,7 @@ internal class TableImpl_Multi(Dictionary<string, LuaValue> stringsDictPortion,
             {
                 // While adding filler values, we should move anything in the dictionary we can to the list
                 dictPortion.TryGetValue(initialDictIndex + i, out var foundValue);
-                if (foundValue.Kind == LuaValueKind.Nil) _listNilCount++;
+                if (foundValue._kind == LuaValueKind.Nil) _listNilCount++;
                 else dictPortion.Remove(initialDictIndex + i);
                 listPortion.Add(foundValue);
             }
@@ -129,9 +129,9 @@ internal class TableImpl_Multi(Dictionary<string, LuaValue> stringsDictPortion,
         }
         
         // Failing any of that, the index is definitely inside the bounds of the current list.
-        if (listPortion[intIndex].Kind == LuaValueKind.Nil) _listNilCount--;
+        if (listPortion[intIndex]._kind == LuaValueKind.Nil) _listNilCount--;
         listPortion[intIndex] = value;
-        if (value.Kind != LuaValueKind.Nil) return this;
+        if (value._kind != LuaValueKind.Nil) return this;
         
         // If we are setting the value to nil, we are possibly removing an element, and need to do some more checks.
         _listNilCount++;
@@ -155,7 +155,7 @@ internal class TableImpl_Multi(Dictionary<string, LuaValue> stringsDictPortion,
         var cleanIndex = listPortion.Count - 1;
         while (cleanIndex >= 0)
         {
-            if (listPortion[cleanIndex].Kind != LuaValueKind.Nil)
+            if (listPortion[cleanIndex]._kind != LuaValueKind.Nil)
             {
                 dictPortion[cleanIndex + 1] = listPortion[cleanIndex];
                 listPortion[cleanIndex] = default;
@@ -184,7 +184,7 @@ internal class TableImpl_Multi(Dictionary<string, LuaValue> stringsDictPortion,
         {
             dictPortion.TryGetValue(checkIndex, out var value);
             // We stop if we hit a nil since that ends the contiguous sequence
-            if (value.Kind == LuaValueKind.Nil) break;
+            if (value._kind == LuaValueKind.Nil) break;
             
             // Otherwise, move the value from the dictionary portion to the list portion
             dictPortion.Remove(checkIndex);

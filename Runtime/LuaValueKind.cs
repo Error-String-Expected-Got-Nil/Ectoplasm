@@ -25,7 +25,7 @@ public enum LuaValueKind
     Float,
     
     /// <summary>
-    /// Immutable byte sequence. Underlying C# type is <see cref="string"/>.
+    /// A string of characters. Underlying C# type is <see cref="string"/>.
     /// </summary>
     String,
     

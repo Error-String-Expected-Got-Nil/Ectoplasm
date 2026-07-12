@@ -46,12 +46,12 @@ public class LuaTable
     /// constraints under normal circumstances.
     /// </para>
     /// <para>
-    /// In Ectoplasm, the largest value that can be returned by this is the <see cref="int"/>
-    /// <see cref="int.MaxValue"/>. This is because the contiguous integer key portion of tables is implemented as a
-    /// <see cref="List{T}"/> of <see cref="Values.LuaValue"/>s, and this property is retrieved by getting the
-    /// <see cref="List{T}.Count"/> property of this list. If you somehow find yourself in a situation where you should
-    /// be getting a return more than this value, you should reconsider if Lua via Ectoplasm is the correct choice of
-    /// programming language for what you're trying to do.
+    /// In Ectoplasm, the largest value that can be returned by this is <see cref="int.MaxValue"/>.
+    /// This is because the contiguous integer key portion of tables is implemented as a <see cref="List{T}"/> of
+    /// <see cref="Values.LuaValue"/>s, and this property is retrieved by getting the <see cref="List{T}.Count"/>
+    /// property of this list. If you somehow find yourself in a situation where you should be getting a return more
+    /// than this value, you should reconsider if Lua via Ectoplasm is the correct choice of programming language for
+    /// what you're trying to do.
     /// </para>
     /// </remarks>
     public long Length => throw new NotImplementedException();
@@ -71,7 +71,7 @@ public class LuaTable
     public LuaTable(params IEnumerable<LuaValue> values)
     {
         var list = values.ToList();
-        _implementation = new TableImpl_Array(list, list.Count(val => val.Kind == LuaValueKind.Nil));
+        _implementation = new TableImpl_Array(list, list.Count(val => val._kind == LuaValueKind.Nil));
     }
     
     // TODO: Constructor from IEnumerable<KeyValuePair<LuaValue, LuaValue>> and from LuaState stack
@@ -81,7 +81,7 @@ public class LuaTable
         get => _implementation.Get(index);
         set
         {
-            if (index.Kind == LuaValueKind.Nil)
+            if (index._kind == LuaValueKind.Nil)
                 throw new LuaRuntimeException("Table index is nil");
             _implementation = _implementation.Set(index, value);
         }

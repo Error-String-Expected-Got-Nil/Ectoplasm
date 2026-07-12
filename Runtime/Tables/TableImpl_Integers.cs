@@ -42,9 +42,9 @@ internal class TableImpl_Integers(Dictionary<long, LuaValue> dictPortion, List<L
         if (!index.TryCoerceInteger(out var coercedIndex))
         {
             // Nil assignment to key not contained in this table anyway; we don't have to do anything.
-            if (value.Kind == LuaValueKind.Nil) return this;
+            if (value._kind == LuaValueKind.Nil) return this;
             
-            if (index.Kind == LuaValueKind.String)
+            if (index._kind == LuaValueKind.String)
                 return new TableImpl_Multi(new Dictionary<string, LuaValue> { { (string)index._ref, value } }, 
                     dictPortion, listPortion, _listNilCount);
             
@@ -58,7 +58,7 @@ internal class TableImpl_Integers(Dictionary<long, LuaValue> dictPortion, List<L
         // Index isn't ever containable in list portion, add it to the dictionary portion instead
         if (coercedIndex is < 0 or >= int.MaxValue)
         {
-            if (value.Kind == LuaValueKind.Nil)
+            if (value._kind == LuaValueKind.Nil)
             {
                 dictPortion.Remove(coercedIndex + 1);
                 return this;
@@ -73,7 +73,7 @@ internal class TableImpl_Integers(Dictionary<long, LuaValue> dictPortion, List<L
         if (intIndex >= listPortion.Count)
         {
             // Value is outside list and is nil, remove it from dictionary portion if and return
-            if (value.Kind == LuaValueKind.Nil)
+            if (value._kind == LuaValueKind.Nil)
             {
                 dictPortion.Remove(coercedIndex + 1);
                 return this;
@@ -106,7 +106,7 @@ internal class TableImpl_Integers(Dictionary<long, LuaValue> dictPortion, List<L
             {
                 // While adding filler values, we should move anything in the dictionary we can to the list
                 dictPortion.TryGetValue(initialDictIndex + i, out var foundValue);
-                if (foundValue.Kind == LuaValueKind.Nil) _listNilCount++;
+                if (foundValue._kind == LuaValueKind.Nil) _listNilCount++;
                 else dictPortion.Remove(initialDictIndex + i);
                 listPortion.Add(foundValue);
             }
@@ -118,9 +118,9 @@ internal class TableImpl_Integers(Dictionary<long, LuaValue> dictPortion, List<L
         }
         
         // Failing any of that, the index is definitely inside the bounds of the current list.
-        if (listPortion[intIndex].Kind == LuaValueKind.Nil) _listNilCount--;
+        if (listPortion[intIndex]._kind == LuaValueKind.Nil) _listNilCount--;
         listPortion[intIndex] = value;
-        if (value.Kind != LuaValueKind.Nil) return this;
+        if (value._kind != LuaValueKind.Nil) return this;
         
         // If we are setting the value to nil, we are possibly removing an element, and need to do some more checks.
         _listNilCount++;
@@ -144,7 +144,7 @@ internal class TableImpl_Integers(Dictionary<long, LuaValue> dictPortion, List<L
         var cleanIndex = listPortion.Count - 1;
         while (cleanIndex >= 0)
         {
-            if (listPortion[cleanIndex].Kind != LuaValueKind.Nil)
+            if (listPortion[cleanIndex]._kind != LuaValueKind.Nil)
             {
                 dictPortion[cleanIndex + 1] = listPortion[cleanIndex];
                 listPortion[cleanIndex] = default;
@@ -173,7 +173,7 @@ internal class TableImpl_Integers(Dictionary<long, LuaValue> dictPortion, List<L
         {
             dictPortion.TryGetValue(checkIndex, out var value);
             // We stop if we hit a nil since that ends the contiguous sequence
-            if (value.Kind == LuaValueKind.Nil) break;
+            if (value._kind == LuaValueKind.Nil) break;
             
             // Otherwise, move the value from the dictionary portion to the list portion
             dictPortion.Remove(checkIndex);

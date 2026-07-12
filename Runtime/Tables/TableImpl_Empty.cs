@@ -19,9 +19,9 @@ internal class TableImpl_Empty : TableImpl
     // And always needs to be upgraded when an index is assigned a non-nil value.
     public override TableImpl Set(LuaValue index, LuaValue value)
     {
-        if (value.Kind == LuaValueKind.Nil) return this;
+        if (value._kind == LuaValueKind.Nil) return this;
 
-        if (index.Kind == LuaValueKind.String)
+        if (index._kind == LuaValueKind.String)
             return new TableImpl_Strings(new Dictionary<string, LuaValue> { { (string)index._ref, value } });
         
         if (index.TryCoerceInteger(out var coercedInteger))

@@ -22,7 +22,7 @@ public static class TableImplUtil
     public static void TrimExcessNils(List<LuaValue> list, ref int nilCount)
     {
         var index = list.Count - 1;
-        while (list[index].Kind != LuaValueKind.Nil) index--;
+        while (list[index]._kind != LuaValueKind.Nil) index--;
         // Index is now the highest index with a non-nil value. Increment to get the highest nil value index.
         index++;
 
@@ -39,7 +39,7 @@ public static class TableImplUtil
         Dictionary<string, LuaValue>? stringsDict = null, Dictionary<long, LuaValue>? intsDict = null,
         List<LuaValue>? list = null, int nilCount = 0)
         // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
-        => index.Kind switch
+        => index._kind switch
         {
             LuaValueKind.Boolean => index._boolean
                 ? new TableImpl_Complete(value, default, [], [], stringsDict ?? [],
@@ -56,7 +56,7 @@ public static class TableImplUtil
                 => new TableImpl_Complete(default, default, [],
                 new Dictionary<object, LuaValue> { { index._ref, value } }, stringsDict ?? [],
                 intsDict ?? [], list ?? [], nilCount),
-            _ => throw new ArgumentException($"Failed to find suitable upgrade path for index (Kind = {index.Kind})",
+            _ => throw new ArgumentException($"Failed to find suitable upgrade path for index (Kind = {index._kind})",
                 nameof(index))
         };
 

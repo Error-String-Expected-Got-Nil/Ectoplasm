@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using Ectoplasm.Lexing;
 using Ectoplasm.Runtime.Stdlib;
 using Ectoplasm.Runtime.Tables;
@@ -14,30 +15,35 @@ namespace Ectoplasm.Runtime.Values;
 /// keyword.
 /// </remarks>
 [StructLayout(LayoutKind.Explicit)]
-public readonly partial struct LuaValue
+public struct LuaValue : IEquatable<LuaValue>
 {
-    [FieldOffset(0)] internal readonly bool _boolean;
-    [FieldOffset(0)] internal readonly long _integer;
-    [FieldOffset(0)] internal readonly double _float;
+    [FieldOffset(0)] internal bool _boolean;
+    [FieldOffset(0)] internal long _integer;
+    [FieldOffset(0)] internal double _float;
 
     // Unfortunately, you aren't allowed to have a reference type overlapping a non-reference type in an explicitly
     // laid out struct, so we can't have a union of every possible type. Besides having this extra reference field, the
     // only other practical solution seemed like having a *single* object-type field, but that would necessitate boxing
     // and unboxing whenever a bool/long/double was accessed, which seemed worse than increasing the size of a LuaValue
     // from 16 to 24 bytes.
-    [FieldOffset(8)] internal readonly object _ref = null!;
+    [FieldOffset(8)] internal object _ref = null!;
     
+    /// <summary>
+    /// Internal field with the actual runtime type of this dynamically-typed Lua value.
+    /// </summary>
+    [FieldOffset(16)] internal LuaValueKind _kind;
+
     /// <summary>
     /// The actual runtime type of this dynamically-typed Lua value.
     /// </summary>
-    [FieldOffset(16)] public readonly LuaValueKind Kind;
+    public LuaValueKind Kind => _kind;
     
     /// <summary>
     /// Determines the truthiness of this LuaValue. If <see cref="Kind"/> is <see cref="LuaValueKind.Boolean"/>, returns
     /// the underlying value of this LuaValue. Otherwise, returns true if <see cref="Kind"/> is not
     /// <see cref="LuaValueKind.Nil"/>, false if it is.
     /// </summary>
-    public bool IsTruthy => Kind == LuaValueKind.Boolean ? _boolean : Kind != LuaValueKind.Nil;
+    public bool IsTruthy => _kind == LuaValueKind.Boolean ? _boolean : _kind != LuaValueKind.Nil;
 
     #region Checked Getter Properties
     
@@ -48,7 +54,7 @@ public readonly partial struct LuaValue
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.Boolean"/>.
     /// </exception>
     public bool Boolean 
-        => Kind == LuaValueKind.Boolean 
+        => _kind == LuaValueKind.Boolean 
             ? _boolean 
             : throw new InvalidCastException("LuaValue does not represent a boolean value.");
 
@@ -59,7 +65,7 @@ public readonly partial struct LuaValue
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.Integer"/>.
     /// </exception>
     public long Integer
-        => Kind == LuaValueKind.Integer
+        => _kind == LuaValueKind.Integer
             ? _integer
             : throw new InvalidCastException("LuaValue does not represent an integer value.");
     
@@ -70,7 +76,7 @@ public readonly partial struct LuaValue
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.Float"/>.
     /// </exception>
     public double Float
-        => Kind == LuaValueKind.Float
+        => _kind == LuaValueKind.Float
             ? _float
             : throw new InvalidCastException("LuaValue does not represent a float value.");
     
@@ -81,7 +87,7 @@ public readonly partial struct LuaValue
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.String"/>.
     /// </exception>
     public string String
-        => Kind == LuaValueKind.String
+        => _kind == LuaValueKind.String
             ? (string)_ref
             : throw new InvalidCastException("LuaValue does not represent a string value.");
         
@@ -92,7 +98,7 @@ public readonly partial struct LuaValue
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.Function"/>.
     /// </exception>
     public LuaFunction Function
-        => Kind == LuaValueKind.Function
+        => _kind == LuaValueKind.Function
             ? (LuaFunction)_ref
             : throw new InvalidCastException("LuaValue does not represent a function value.");
     
@@ -103,7 +109,7 @@ public readonly partial struct LuaValue
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.Userdata"/>.
     /// </exception>
     public LuaUserdata Userdata
-        => Kind == LuaValueKind.Userdata
+        => _kind == LuaValueKind.Userdata
             ? (LuaUserdata)_ref
             : throw new InvalidCastException("LuaValue does not represent a userdata value.");
 
@@ -114,7 +120,7 @@ public readonly partial struct LuaValue
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.Thread"/>.
     /// </exception>
     public LuaThread Thread
-        => Kind == LuaValueKind.Thread
+        => _kind == LuaValueKind.Thread
             ? (LuaThread)_ref
             : throw new InvalidCastException("LuaValue does not represent a Lua thread value.");
     
@@ -125,7 +131,7 @@ public readonly partial struct LuaValue
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.Table"/>.
     /// </exception>
     public LuaTable Table
-        => Kind == LuaValueKind.Table
+        => _kind == LuaValueKind.Table
             ? (LuaTable)_ref
             : throw new InvalidCastException("LuaValue does not represent a table value.");
     
@@ -140,7 +146,7 @@ public readonly partial struct LuaValue
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.Boolean"/> or <see cref="LuaValueKind.Nil"/>.
     /// </exception>
     public bool? NullableBoolean
-        => Kind == LuaValueKind.Nil
+        => _kind == LuaValueKind.Nil
             ? null
             : Boolean;
     
@@ -151,7 +157,7 @@ public readonly partial struct LuaValue
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.Integer"/> or <see cref="LuaValueKind.Nil"/>.
     /// </exception>
     public long? NullableInteger
-        => Kind == LuaValueKind.Nil
+        => _kind == LuaValueKind.Nil
             ? null
             : Integer;
     
@@ -162,7 +168,7 @@ public readonly partial struct LuaValue
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.Float"/> or <see cref="LuaValueKind.Nil"/>.
     /// </exception>
     public double? NullableFloat
-        => Kind == LuaValueKind.Nil
+        => _kind == LuaValueKind.Nil
             ? null
             : Float;
     
@@ -174,7 +180,7 @@ public readonly partial struct LuaValue
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.String"/> or <see cref="LuaValueKind.Nil"/>.
     /// </exception>
     public string? NullableString
-        => Kind == LuaValueKind.Nil
+        => _kind == LuaValueKind.Nil
             ? null
             : String;
     
@@ -185,7 +191,7 @@ public readonly partial struct LuaValue
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.Function"/> or <see cref="LuaValueKind.Nil"/>.
     /// </exception>
     public LuaFunction? NullableFunction
-        => Kind == LuaValueKind.Nil
+        => _kind == LuaValueKind.Nil
             ? null
             : Function;
     
@@ -196,7 +202,7 @@ public readonly partial struct LuaValue
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.Userdata"/> or <see cref="LuaValueKind.Nil"/>.
     /// </exception>
     public LuaUserdata? NullableUserdata
-        => Kind == LuaValueKind.Nil
+        => _kind == LuaValueKind.Nil
             ? null
             : Userdata;
     
@@ -208,7 +214,7 @@ public readonly partial struct LuaValue
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.Thread"/> or <see cref="LuaValueKind.Nil"/>.
     /// </exception>
     public LuaThread? NullableThread
-        => Kind == LuaValueKind.Nil
+        => _kind == LuaValueKind.Nil
             ? null
             : Thread;
     
@@ -219,7 +225,7 @@ public readonly partial struct LuaValue
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.Table"/> or <see cref="LuaValueKind.Nil"/>.
     /// </exception>
     public LuaTable? NullableTable
-        => Kind == LuaValueKind.Nil
+        => _kind == LuaValueKind.Nil
             ? null
             : Table;
     
@@ -231,106 +237,90 @@ public readonly partial struct LuaValue
     /// Creates a new LuaValue with boolean value.
     /// </summary>
     /// <param name="value">Boolean value of the new LuaValue.</param>
-    public LuaValue(bool value)
-    {
-        _boolean = value;
-        Kind = LuaValueKind.Boolean;
-    }
+    public static LuaValue New(bool value)
+        => new()
+        {
+            _boolean = value,
+            _kind = LuaValueKind.Boolean
+        };
 
     /// <summary>
     /// Creates a new LuaValue with integer value.
     /// </summary>
     /// <param name="value">Integer value of the new LuaValue.</param>
-    public LuaValue(long value)
-    {
-        _integer = value;
-        Kind = LuaValueKind.Integer;
-    }
+    public static LuaValue New(long value)
+        => new()
+        {
+            _integer = value,
+            _kind = LuaValueKind.Integer
+        };
 
     /// <summary>
     /// Creates a new LuaValue with float value.
     /// </summary>
     /// <param name="value">Float value of the new LuaValue.</param>
-    public LuaValue(double value)
-    {
-        _float = value;
-        Kind = LuaValueKind.Float;
-    }
+    public static LuaValue New(double value)
+        => new()
+        {
+            _float = value,
+            _kind = LuaValueKind.Float
+        };
 
     /// <summary>
     /// Creates a new LuaValue with string value. Automatically converts the given string to a UTF-8 byte sequence to
     /// be stored in the value.
     /// </summary>
     /// <param name="value">String value of the new LuaValue.</param>
-    public LuaValue(string value)
-    {
-        _ref = value;
-        Kind = LuaValueKind.String;
-    }
+    public static LuaValue New(string value)
+        => new()
+        {
+            _ref = value,
+            _kind = LuaValueKind.String
+        };
 
     /// <summary>
     /// Creates a new LuaValue with function value.
     /// </summary>
     /// <param name="value">Function value of the new LuaValue.</param>
-    public LuaValue(LuaFunction? value)
-    {
-        if (value == null)
+    public static LuaValue New(LuaFunction value)
+        => new()
         {
-            Kind = LuaValueKind.Nil;
-            return;
-        }
-        
-        _ref = value;
-        Kind = LuaValueKind.Function;
-    }
+            _ref = value,
+            _kind = LuaValueKind.Function
+        };
     
     /// <summary>
     /// Creates a new LuaValue with userdata value.
     /// </summary>
     /// <param name="value">Userdata value of the new LuaValue.</param>
-    public LuaValue(LuaUserdata? value)
-    {
-        if (value == null)
+    public static LuaValue New(LuaUserdata value)
+        => new()
         {
-            Kind = LuaValueKind.Nil;
-            return;
-        }
-        
-        _ref = value;
-        Kind = LuaValueKind.Userdata;
-    }
+            _ref = value,
+            _kind = LuaValueKind.Userdata
+        };
 
     /// <summary>
     /// Creates a new LuaValue with Lua thread value.
     /// </summary>
     /// <param name="value">Lua thread value of the new LuaValue.</param>
-    public LuaValue(LuaThread? value)
-    {
-        if (value == null)
+    public static LuaValue New(LuaThread value)
+        => new()
         {
-            Kind = LuaValueKind.Nil;
-            return;
-        }
-        
-        _ref = value;
-        Kind = LuaValueKind.Thread;
-    }
+            _ref = value,
+            _kind = LuaValueKind.Thread
+        };
 
     /// <summary>
     /// Creates a new LuaValue with Lua table value.
     /// </summary>
     /// <param name="value">Lua table value of the new LuaValue.</param>
-    public LuaValue(LuaTable? value)
-    {
-        if (value == null)
+    public static LuaValue New(LuaTable value)
+        => new()
         {
-            Kind = LuaValueKind.Nil;
-            return;
-        }
-        
-        _ref = value;
-        Kind = LuaValueKind.Table;
-    }
+            _ref = value,
+            _kind = LuaValueKind.Table
+        };
 
     /// <summary>
     /// Creates a new LuaValue from a <see cref="LuaToken"/>. 
@@ -339,24 +329,25 @@ public readonly partial struct LuaValue
     /// <exception cref="ArgumentException">
     /// Thrown if the <see cref="LuaToken"/> is not a value.
     /// </exception>
+    // This constructor remains after the switch to the New functions since efficiency doesn't matter as much for it.
     public LuaValue(LuaToken token)
     {
         // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
         switch (token.Type)
         {
             case TokenType.Nil:
-                Kind = LuaValueKind.Nil;
+                _kind = LuaValueKind.Nil;
                 return;
             case TokenType.True:
-                Kind = LuaValueKind.Boolean;
+                _kind = LuaValueKind.Boolean;
                 _boolean = true;
                 return;
             case TokenType.False:
-                Kind = LuaValueKind.Boolean;
+                _kind = LuaValueKind.Boolean;
                 _boolean = false;
                 return;
             case TokenType.String:
-                Kind = LuaValueKind.String;
+                _kind = LuaValueKind.String;
                 _ref = (string)token.Data!;
                 return;
             case TokenType.Numeral:
@@ -369,12 +360,12 @@ public readonly partial struct LuaValue
 
         if (token.Data is long value)
         {
-            Kind = LuaValueKind.Integer;
+            _kind = LuaValueKind.Integer;
             _integer = value;
             return;
         }
 
-        Kind = LuaValueKind.Float;
+        _kind = LuaValueKind.Float;
         _float = (double)token.Data!;
     }
     
@@ -394,7 +385,7 @@ public readonly partial struct LuaValue
     public bool TryCoerceInteger(out long value)
     {
         // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
-        switch (Kind)
+        switch (_kind)
         {
             case LuaValueKind.Integer:
                 value = _integer;
@@ -411,20 +402,36 @@ public readonly partial struct LuaValue
 
     public override string ToString() => GlobalFunctions.LuaToString(this);
 
+    public override bool Equals([NotNullWhen(true)] object? obj) 
+        => obj is LuaValue other && GlobalFunctions.LuaValueEquality(this, other);
+    
+    public bool Equals(LuaValue other)
+        => GlobalFunctions.LuaValueEquality(this, other);
+
+    public override int GetHashCode()
+        => _kind switch
+        {
+            LuaValueKind.Nil => 0,
+            LuaValueKind.Boolean => _boolean.GetHashCode(),
+            LuaValueKind.Integer => _integer.GetHashCode(),
+            LuaValueKind.Float => _float.GetHashCode(),
+            _ => _ref.GetHashCode()
+        };
+
     #endregion
     
     #region Implicit Conversions
 
     // Implicit conversions are assumed safe; they will never throw an exception.
     
-    public static implicit operator LuaValue(bool value) => new(value);
-    public static implicit operator LuaValue(long value) => new(value);
-    public static implicit operator LuaValue(double value) => new(value);
-    public static implicit operator LuaValue(string value) => new(value);
-    public static implicit operator LuaValue(LuaFunction value) => new(value);
-    public static implicit operator LuaValue(LuaUserdata value) => new(value);
-    public static implicit operator LuaValue(LuaThread value) => new(value);
-    public static implicit operator LuaValue(LuaTable value) => new(value);
+    public static implicit operator LuaValue(bool value) => New(value);
+    public static implicit operator LuaValue(long value) => New(value);
+    public static implicit operator LuaValue(double value) => New(value);
+    public static implicit operator LuaValue(string value) => New(value);
+    public static implicit operator LuaValue(LuaFunction value) => New(value);
+    public static implicit operator LuaValue(LuaUserdata value) => New(value);
+    public static implicit operator LuaValue(LuaThread value) => New(value);
+    public static implicit operator LuaValue(LuaTable value) => New(value);
 
     #endregion
     
@@ -451,6 +458,8 @@ public readonly partial struct LuaValue
 
     public static bool operator true(LuaValue value) => value.IsTruthy;
     public static bool operator false(LuaValue value) => !value.IsTruthy;
+    public static bool operator ==(LuaValue left, LuaValue right) => left.Equals(right);
+    public static bool operator !=(LuaValue left, LuaValue right) => !(left == right);
 
     #endregion
 }

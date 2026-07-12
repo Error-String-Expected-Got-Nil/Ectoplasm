@@ -14,7 +14,7 @@ internal class TableImpl_Strings(Dictionary<string, LuaValue> values) : TableImp
     /// <inheritdoc/>
     public override LuaValue Get(LuaValue index)
     {
-        if (index.Kind != LuaValueKind.String) return default;
+        if (index._kind != LuaValueKind.String) return default;
         values.TryGetValue((string)index._ref, out var value);
         return value;
     }
@@ -22,9 +22,9 @@ internal class TableImpl_Strings(Dictionary<string, LuaValue> values) : TableImp
     /// <inheritdoc/>
     public override TableImpl Set(LuaValue index, LuaValue value)
     {
-        if (index.Kind != LuaValueKind.String)
+        if (index._kind != LuaValueKind.String)
         {
-            if (value.Kind == LuaValueKind.Nil) return this;
+            if (value._kind == LuaValueKind.Nil) return this;
 
             if (index.TryCoerceInteger(out var coercedInteger))
                 return coercedInteger switch
@@ -38,7 +38,7 @@ internal class TableImpl_Strings(Dictionary<string, LuaValue> values) : TableImp
             return TableImplUtil.UpgradeToCompleteImpl(index, value, values);
         }
 
-        if (value.Kind == LuaValueKind.Nil)
+        if (value._kind == LuaValueKind.Nil)
         {
             values.Remove((string)index._ref);
             return this;

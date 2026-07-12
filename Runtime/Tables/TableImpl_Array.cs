@@ -30,9 +30,9 @@ internal class TableImpl_Array(List<LuaValue> values, int nilCount) : TableImpl
         if (!index.TryCoerceInteger(out var coercedIndex))
         {
             // Nil assignment to key not contained in this table anyway; we don't have to do anything.
-            if (value.Kind == LuaValueKind.Nil) return this;
+            if (value._kind == LuaValueKind.Nil) return this;
 
-            if (index.Kind == LuaValueKind.String)
+            if (index._kind == LuaValueKind.String)
                 return new TableImpl_Multi(new Dictionary<string, LuaValue> { { (string)index._ref, value } }, 
                     [], values, _nilCount);
             
@@ -45,7 +45,7 @@ internal class TableImpl_Array(List<LuaValue> values, int nilCount) : TableImpl
         // Index isn't ever containable in this table, may need upgrade
         if (coercedIndex is < 0 or >= int.MaxValue)
         {
-            if (value.Kind == LuaValueKind.Nil) return this;
+            if (value._kind == LuaValueKind.Nil) return this;
 
             // coercedIndex is incremented to undo the earlier decrement
             return new TableImpl_Integers(new Dictionary<long, LuaValue> { { coercedIndex + 1, value } }, 
@@ -57,7 +57,7 @@ internal class TableImpl_Array(List<LuaValue> values, int nilCount) : TableImpl
         // Setting index may require growing list, may also result in upgrade
         if (intIndex >= values.Count)
         {
-            if (value.Kind == LuaValueKind.Nil) return this;
+            if (value._kind == LuaValueKind.Nil) return this;
 
             // Appending directly onto the end will never increase the nil ratio
             if (intIndex == values.Count)
@@ -85,9 +85,9 @@ internal class TableImpl_Array(List<LuaValue> values, int nilCount) : TableImpl
         }
         
         // Failing any of that, the index is definitely inside the bounds of the current list.
-        if (values[intIndex].Kind == LuaValueKind.Nil) _nilCount--;
+        if (values[intIndex]._kind == LuaValueKind.Nil) _nilCount--;
         values[intIndex] = value;
-        if (value.Kind != LuaValueKind.Nil) return this;
+        if (value._kind != LuaValueKind.Nil) return this;
         
         // If we are setting the value to nil, we are possibly removing an element, and need to do some more checks.
         _nilCount++;
