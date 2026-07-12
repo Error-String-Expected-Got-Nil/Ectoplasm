@@ -1,4 +1,5 @@
-﻿using Ectoplasm.Parsing.Statements;
+﻿using Ectoplasm.Parsing.Expressions;
+using Ectoplasm.Parsing.Statements;
 using Ectoplasm.Runtime.Values;
 
 namespace Ectoplasm.Parsing;
@@ -34,6 +35,18 @@ public class Prototype
     public readonly bool IsVararg;
 
     /// <summary>
+    /// The line of the source file this prototype originates from where the prototype was originally defined, or 0 if
+    /// unspecified or not applicable.
+    /// </summary>
+    public readonly ushort Line;
+
+    /// <summary>
+    /// The column of the line of the source file this prototype originates from where the prototype was originally
+    /// defined, or 0 if unspecified or not applicable.
+    /// </summary>
+    public readonly ushort Col;
+    
+    /// <summary>
     /// Debug name used for this function. 
     /// </summary>
     public readonly string? Name;
@@ -62,14 +75,20 @@ public class Prototype
     public readonly List<Statement> Contents = [];
 
     private Prototype() { }
+
+    public Prototype(Prototype parent, Expr_FunctionDef def, string? sourceName = null)
+        : this(parent, def.Parameters, def.IsVararg, def.Body, def.StartLine, def.StartCol, def.DebugName, sourceName)
+    { }
     
     public Prototype(Prototype? parent, List<string> parameters, bool isVararg, List<Statement> contents, 
-        string? name = null, string? sourceName = null)
+        ushort line = 0, ushort col = 0, string? name = null, string? sourceName = null)
     {
         Parent = parent;
         Parameters = parameters;
         IsVararg = isVararg;
         Contents = contents;
+        Line = line;
+        Col = col;
         Name = name;
         SourceName = sourceName ?? parent?.SourceName;
 
@@ -98,5 +117,26 @@ public class Prototype
         var local = new LocalVariable(this, name) { Index = Locals.Count };
         Locals.Add(local);
         return local;
+    }
+
+    /// <summary>
+    /// Creates a new local variable that references a given external variable.
+    /// </summary>
+    public LocalVariable AddNewExternal(LocalVariable source)
+    {
+        if (source.Owner != Parent)
+            throw new ArgumentException("Attempt to add external local variable to function prototype that is not " +
+                "owned by the prototype's parent");
+        if (!source.IsUpvalue)
+            throw new ArgumentException("Attempt to add external local variable with non-upvalue source");
+        
+        var external = new LocalVariable(this, source.Name)
+        {
+            IsUpvalue = true,
+            ExternalSource = source,
+            Index = Externals.Count
+        };
+        Externals.Add(external);
+        return external;
     }
 }

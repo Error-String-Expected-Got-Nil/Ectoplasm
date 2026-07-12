@@ -27,6 +27,9 @@ public class TransparentStack<T>
 
     public T Peek() => _list[^1];
 
+    /// <summary>
+    /// Non-destructively enumerate all elements of the stack, starting from the topmost and going down.
+    /// </summary>
     public IEnumerable<T> EnumerateTopDown()
     {
         for (var i = _list.Count - 1; i >= 0; i--)

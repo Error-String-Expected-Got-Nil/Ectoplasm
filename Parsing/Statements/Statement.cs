@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Ectoplasm.Parsing.Expressions;
 using Ectoplasm.Utils;
 
 namespace Ectoplasm.Parsing.Statements;
@@ -14,6 +15,12 @@ public abstract class Statement(ushort line, ushort col)
     public virtual bool IsVoid => false;
 
     /// <summary>
+    /// Get all expressions contained with this statement. Returns null if this expression doesn't contain any
+    /// expressions.
+    /// </summary>
+    public virtual IEnumerable<Expression>? GetExpressions() => null;
+
+    /// <summary>
     /// Adds any local variables declared by this statement to the list of locals for the given prototype.
     /// </summary>
     /// <returns>
@@ -25,7 +32,8 @@ public abstract class Statement(ushort line, ushort col)
     /// <summary>
     /// Get an enumeration of all sub-blocks of this statement, or null if this statement has no sub-blocks. Each block
     /// is optionally bundled with list containing any visible local variables that are implicitly declared as part of
-    /// this block, though this is currently only used by numeric for loops.
+    /// this block, though this is currently only used by for loops. These local variables will have been declared in
+    /// <see cref="DeclareLocals"/>, but not yet returned.
     /// </summary>
     public virtual IEnumerable<(List<Statement> Block, List<LocalVariable>? BlockLocals)>? GetBlocks() => null;
     
