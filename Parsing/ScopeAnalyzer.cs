@@ -11,18 +11,21 @@ public static class ScopeAnalyzer
     /// <summary>
     /// Analyze a list of statements as a main chunk, returning the function prototype for that chunk.
     /// </summary>
-    public static Prototype AnalyzeChunk(List<Statement> chunk)
+    public static Prototype AnalyzeChunk(List<Statement> chunk, string? sourceName)
     {
-        var main = new Prototype(null, [], true, chunk, "<main chunk>");
+        var main = new Prototype(null, [], true, chunk, "<main chunk>", sourceName);
         var scopeStack = new TransparentStack<Scope>([new Scope(main)]);
 
-        RecursiveAnalyzeBlock(scopeStack, chunk);
+        RecursiveAnalyze(scopeStack);
         
         return main;
     }
 
-    private static void RecursiveAnalyzeBlock(TransparentStack<Scope> scopeStack, List<Statement> block)
+    /// <summary>
+    /// Analyzes the top scope on the scope stack.
+    /// </summary>
+    private static void RecursiveAnalyze(TransparentStack<Scope> scopeStack)
     {
-        // TODO
+        
     }
 }

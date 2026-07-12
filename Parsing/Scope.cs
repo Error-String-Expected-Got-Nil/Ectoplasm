@@ -6,19 +6,24 @@ namespace Ectoplasm.Parsing;
 /// Represents metadata about a particular lexical scope in a Lua abstract syntax tree. These objects are ephemeral, and
 /// should only exist temporarily during scope analysis of a chunk.
 /// </summary>
-public class Scope(Prototype enclosing, bool isRoot)
+public class Scope
 {
     /// <summary>
     /// The function prototype this scope belongs to. This is the first prototype encountered when walking up the
     /// abstract syntax tree starting from the location of this scope. Any local variables declared in this scope will
     /// be bound to this prototype.
     /// </summary>
-    public readonly Prototype EnclosingPrototype = enclosing;
+    public readonly Prototype EnclosingPrototype;
 
     /// <summary>
     /// If true, indicates that this is the root scope of the <see cref="EnclosingPrototype"/>.
     /// </summary>
-    public readonly bool IsPrototypeRoot = isRoot;
+    public readonly bool IsPrototypeRoot;
+
+    /// <summary>
+    /// Contents of the block this scope represents.
+    /// </summary>
+    public readonly List<Statement> Contents;
 
     /// <summary>
     /// All local variable names that have been declared within this scope so far. This is updated as statements within
@@ -46,24 +51,39 @@ public class Scope(Prototype enclosing, bool isRoot)
     /// Tracks what local variables are visible at each goto statement within this scope.
     /// </summary>
     public readonly Dictionary<Stat_Goto, HashSet<LocalVariable>> GotoVisibleLocals = new();
-
+    
+    public Scope(Prototype enclosing, List<Statement> contents)
+    {
+        EnclosingPrototype = enclosing;
+        IsPrototypeRoot = false;
+        Contents = contents;
+        
+        CheckLabels(Contents, enclosing.SourceName);
+    }
+    
     /// <summary>
     /// Initialize a new prototype root scope from a given prototype.
     /// </summary>
-    public Scope(Prototype root) : this(root, true)
+    public Scope(Prototype root) : this(root, root.Contents)
     {
+        IsPrototypeRoot = true;
+        
         foreach (var local in root.Externals) DeclaredNames[local.Name] = local;
         foreach (var local in root.Locals) DeclaredNames[local.Name] = local;
-        
-        CheckLabels(root.Contents);
     }
 
-    public void CheckLabels(List<Statement> block)
+    private void CheckLabels(List<Statement> block, string? sourceName = null)
     {
         foreach (var stat in block)
         {
             if (!stat.IsVoid) TerminalLabels.Clear();
             if (stat is not Stat_Label label) continue;
+
+            if (DeclaredLabels.TryGetValue(label.LabelName, out var conflicting))
+                throw new LuaParsingException($"Label has same name as other label in same block at line " +
+                    $"{conflicting.StartLine}, column {conflicting.StartCol}", label.StartLine, label.StartCol, 
+                    sourceName);
+
             DeclaredLabels[label.LabelName] = label;
             TerminalLabels.Add(label);
         }

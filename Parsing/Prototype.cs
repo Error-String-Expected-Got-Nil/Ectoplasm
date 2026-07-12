@@ -37,6 +37,11 @@ public class Prototype
     /// Debug name used for this function. 
     /// </summary>
     public readonly string? Name;
+
+    /// <summary>
+    /// Name of the source file this prototype originates from.
+    /// </summary>
+    public readonly string? SourceName;
     
     /// <summary>
     /// List of all local variables which originate in this prototype. If the prototype has named parameters, those will
@@ -59,13 +64,14 @@ public class Prototype
     private Prototype() { }
     
     public Prototype(Prototype? parent, List<string> parameters, bool isVararg, List<Statement> contents, 
-        string? name = null)
+        string? name = null, string? sourceName = null)
     {
         Parent = parent;
         Parameters = parameters;
         IsVararg = isVararg;
         Contents = contents;
         Name = name;
+        SourceName = sourceName ?? parent?.SourceName;
 
         var env = new LocalVariable(this, "_ENV")
         {
