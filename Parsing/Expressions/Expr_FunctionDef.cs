@@ -12,6 +12,11 @@ public class Expr_FunctionDef(List<string> parameters, bool isVararg, List<State
     public bool IsVararg => isVararg;
     public List<Statement> Body => body;
     public string? DebugName => debugFunctionName;
+
+    /// <summary>
+    /// The analyzed function prototype this function definition expression uses.
+    /// </summary>
+    public Prototype? Prototype;
     
     internal override void Initialize(Stack<Expression> stack) { }
 

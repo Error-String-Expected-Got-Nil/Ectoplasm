@@ -48,6 +48,7 @@ public static class ScopeAnalyzer
                         break;
                     case Expr_FunctionDef def:
                         var newProto = new Prototype(proto, def, proto.SourceName);
+                        def.Prototype = newProto;
                         var newScope = new Scope(newProto, newProto.Contents);
                         scopeStack.Push(newScope);
                         RecursiveAnalyze(scopeStack);
@@ -66,10 +67,26 @@ public static class ScopeAnalyzer
                 RecursiveAnalyze(scopeStack);
             }
 
-            // TODO: Handle any statement type-specific behavior like assignment checking for <const>
-            //  Goto needs to look for its target label and check if there is a declaration mismatch
-            //  Labels need to make sure they aren't shadowing a higher-scope label
-            //  Both need to have their visible locals logged
+            switch (stat)
+            {
+                case Stat_Assign assign:
+                    foreach (var expr in assign.Variables)
+                        if (!expr.IsAssignable)
+                            throw new LuaParsingException("Target expression of assignment statement was found to be " +
+                                "non-assignable during analysis; most likely, it was resolved as a local variable with " +
+                                "the <const> or <close> attribute.", expr.StartLine, expr.StartCol, proto.SourceName);
+                    break;
+                case Stat_Goto statGoto:
+                    // TODO: Store currently visible local list for goto, check if target label is known and then if
+                    //  the jump is invalid
+                    throw new NotImplementedException();
+                    break;
+                case Stat_Label label:
+                    // TODO: Store currently visible local list, check if any known gotos target this label and then
+                    //  if the jump is valid
+                    throw new NotImplementedException();
+                    break;
+            }
 
             scopeStack.Pop();
         }

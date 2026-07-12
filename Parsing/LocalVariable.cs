@@ -6,7 +6,7 @@ namespace Ectoplasm.Parsing;
 /// <summary>
 /// Represents parsing metadata for a single local variable unique to a particular Lua function prototype.
 /// </summary>
-public class LocalVariable(Prototype owner, string name)
+public class LocalVariable(Prototype owner, string name, LocalAttribute attr = LocalAttribute.None)
 {
     /// <summary>
     /// The function prototype which owns this local variable.
@@ -20,6 +20,11 @@ public class LocalVariable(Prototype owner, string name)
     /// include characters that are not normally legal in a name, in order to distinguish it.
     /// </summary>
     public readonly string Name = name;
+
+    /// <summary>
+    /// The attribute of this local variable, if any. Only valid for non-external variables.
+    /// </summary>
+    public readonly LocalAttribute Attribute = attr;
     
     /// <summary>
     /// <para>

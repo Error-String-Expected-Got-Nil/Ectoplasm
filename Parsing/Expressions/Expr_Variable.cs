@@ -4,7 +4,7 @@ public class Expr_Variable(string name, ushort line, ushort col) : Expression(li
 {
     public string Name => name;
 
-    public override bool IsAssignable => true;
+    public override bool IsAssignable => Source?.Attribute is not (LocalAttribute.Const or LocalAttribute.Close);
 
     /// <summary>
     /// If true, this expression refers to a global variable rather than a local variable.

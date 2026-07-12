@@ -7,6 +7,8 @@ namespace Ectoplasm.Parsing.Statements;
 public class Stat_Assign(List<Expression> variables, List<Expression> values, ushort line, ushort col) 
     : Statement(line, col)
 {
+    public List<Expression> Variables => variables;
+    
     protected override void AddToDebugString(StringBuilder str, int depth)
     {
         base.AddToDebugString(str, depth);

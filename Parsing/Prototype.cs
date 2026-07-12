@@ -112,9 +112,9 @@ public class Prototype
     /// <summary>
     /// Creates a new local variable, adds it to this prototype's locals, sets its index, then returns it.
     /// </summary>
-    public LocalVariable AddNewLocal(string name)
+    public LocalVariable AddNewLocal(string name, LocalAttribute attr = LocalAttribute.None)
     {
-        var local = new LocalVariable(this, name) { Index = Locals.Count };
+        var local = new LocalVariable(this, name, attr) { Index = Locals.Count };
         Locals.Add(local);
         return local;
     }
@@ -130,7 +130,7 @@ public class Prototype
         if (!source.IsUpvalue)
             throw new ArgumentException("Attempt to add external local variable with non-upvalue source");
         
-        var external = new LocalVariable(this, source.Name)
+        var external = new LocalVariable(this, source.Name, source.Attribute)
         {
             IsUpvalue = true,
             ExternalSource = source,
