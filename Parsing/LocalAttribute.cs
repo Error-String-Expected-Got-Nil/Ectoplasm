@@ -1,7 +1,7 @@
 ﻿namespace Ectoplasm.Parsing;
 
 /// <summary>
-/// 
+/// Local variable attributes.
 /// </summary>
 public enum LocalAttribute
 {

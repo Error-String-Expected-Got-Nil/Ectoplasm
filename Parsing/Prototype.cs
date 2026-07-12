@@ -1,0 +1,63 @@
+﻿using Ectoplasm.Runtime.Values;
+
+namespace Ectoplasm.Parsing;
+
+/// <summary>
+/// Represents a Lua function prototype.
+/// </summary>
+public class Prototype
+{
+    /// <summary>
+    /// Dummy prototype object used as a placeholder when a local variable must be considered external without having
+    /// it actually be bound to any real prototype. This is in particular used as the origin for the _ENV upvalue which
+    /// holds the global environment that the main chunk references (see reference manual version 5.4, section 2.2).
+    /// </summary>
+    internal static readonly Prototype ExternalDummy = new();
+    
+    /// <summary>
+    /// The parent prototype whose body this prototype is defined in. If this is null, this is a main chunk prototype,
+    /// and therefore has no parent.
+    /// </summary>
+    public readonly Prototype? Parent;
+
+    /// <summary>
+    /// If true, this is a variable-argument function. Once compiled, an additional local variable slot will be
+    /// allocated beyond the count of <see cref="Locals"/>, which will be used to contain an array of the extra
+    /// arguments provided when the function is called.
+    /// </summary>
+    public readonly bool IsVararg;
+    
+    /// <summary>
+    /// List of all local variables which originate in this prototype.
+    /// </summary>
+    public readonly List<LocalVariable> Locals = [];
+
+    /// <summary>
+    /// List of all variables referenced in this prototype but which do not originate in it, hence "external". All of
+    /// these will have <see cref="LocalVariable.ExternalSource"/> as non-null, and it will point to a local variable in
+    /// the parent prototype.
+    /// </summary>
+    public readonly List<LocalVariable> Externals = [];
+
+    private Prototype() { }
+    
+    public Prototype(Prototype? parent, bool isVararg)
+    {
+        Parent = parent;
+        IsVararg = isVararg;
+
+        var env = new LocalVariable(this, "_ENV")
+        {
+            IsUpvalue = true,
+            ExternalSource = parent is null 
+                // No parent, this is a main chunk, so we need to create a dummy variable that represents the external
+                // global environment.
+                ? new LocalVariable(ExternalDummy, "_ENV") { IsUpvalue = true } 
+                // All well-formed prototypes will have their first external variable (upvalue) as the global
+                // environment table, so this should always be fine.
+                : parent.Externals[0]
+        };
+        
+        Externals.Add(env);
+    }
+}

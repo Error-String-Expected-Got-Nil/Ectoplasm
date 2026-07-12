@@ -6,6 +6,8 @@ using Ectoplasm.Utils;
 
 namespace Ectoplasm.Parsing.Statements;
 
+// TODO: Important note about upvalues! Each time a local is declared, the corresponding local variable must be 
+//  *overwritten*, even if an upvalue. See the reference manual section 3.5 for an example.
 public class Stat_LocalDeclaration(List<(string Name, LocalAttribute Attribute)> names, List<Expression>? expressions, 
     ushort line, ushort col) : Statement(line, col)
 {

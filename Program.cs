@@ -2,9 +2,6 @@
 using Ectoplasm.Lexing;
 using Ectoplasm.Parsing;
 using Ectoplasm.Parsing.Statements;
-using Ectoplasm.Runtime;
-using Ectoplasm.SimpleExpressions;
-using Ectoplasm.Runtime.Tables;
 
 namespace Ectoplasm;
 
