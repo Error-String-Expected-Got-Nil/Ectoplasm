@@ -58,6 +58,8 @@ public class Scope
     {
         IsPrototypeRoot = true;
         
+        // Note that this assumes all external and local variables in the prototype are visible, but this will always
+        // be the case under normal circumstances for a root prototype.
         foreach (var local in root.Externals) DeclaredNames[local.Name] = local;
         foreach (var local in root.Locals) DeclaredNames[local.Name] = local;
     }

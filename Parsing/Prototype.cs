@@ -74,6 +74,11 @@ public class Prototype
     /// </summary>
     public readonly List<Statement> Contents = [];
 
+    /// <summary>
+    /// List of all child prototypes defined within this prototype.
+    /// </summary>
+    public readonly List<Prototype> Children = [];
+
     private Prototype() { }
 
     public Prototype(Prototype parent, Expr_FunctionDef def, string? sourceName = null)

@@ -48,6 +48,7 @@ public static class ScopeAnalyzer
                         break;
                     case Expr_FunctionDef def:
                         var newProto = new Prototype(proto, def, proto.SourceName);
+                        proto.Children.Add(newProto);
                         def.Prototype = newProto;
                         var newScope = new Scope(newProto, newProto.Contents);
                         scopeStack.Push(newScope);
