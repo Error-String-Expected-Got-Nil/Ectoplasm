@@ -22,7 +22,8 @@ public class LocalVariable(Prototype owner, string name, LocalAttribute attr = L
     public readonly string Name = name;
 
     /// <summary>
-    /// The attribute of this local variable, if any. Only valid for non-external variables.
+    /// The attribute of this local variable, if any. If <see cref="ExternalSource"/> is non-null, this should always be
+    /// the same as the attribute of the <see cref="ExternalSource"/>.
     /// </summary>
     public readonly LocalAttribute Attribute = attr;
     

@@ -15,7 +15,7 @@ public abstract class Statement(ushort line, ushort col)
     public virtual bool IsVoid => false;
 
     /// <summary>
-    /// Get all expressions contained with this statement. Returns null if this expression doesn't contain any
+    /// Get all expressions contained within this statement. Returns null if this expression doesn't contain any
     /// expressions.
     /// </summary>
     public virtual IEnumerable<Expression>? GetExpressions() => null;

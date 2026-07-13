@@ -42,16 +42,6 @@ public class Scope
     /// </summary>
     public readonly HashSet<Stat_Label> TerminalLabels = [];
     
-    /// <summary>
-    /// Tracks what local variables are visible at each label declared within this scope. 
-    /// </summary>
-    public readonly Dictionary<Stat_Label, HashSet<LocalVariable>> LabelVisibleLocals = new();
-
-    /// <summary>
-    /// Tracks what local variables are visible at each goto statement within this scope.
-    /// </summary>
-    public readonly Dictionary<Stat_Goto, HashSet<LocalVariable>> GotoVisibleLocals = new();
-    
     public Scope(Prototype enclosing, List<Statement> contents)
     {
         EnclosingPrototype = enclosing;
@@ -87,5 +77,7 @@ public class Scope
             DeclaredLabels[label.LabelName] = label;
             TerminalLabels.Add(label);
         }
+
+        foreach (var label in TerminalLabels) label.IsTerminal = true;
     }
 }
