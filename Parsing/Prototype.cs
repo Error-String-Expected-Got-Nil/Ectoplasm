@@ -1,6 +1,6 @@
 ﻿using Ectoplasm.Parsing.Expressions;
 using Ectoplasm.Parsing.Statements;
-using Ectoplasm.Runtime.Values;
+using Ectoplasm.Runtime.Functions;
 
 namespace Ectoplasm.Parsing;
 
@@ -75,7 +75,9 @@ public class Prototype
     public readonly List<Statement> Contents = [];
 
     /// <summary>
-    /// List of all child prototypes defined within this prototype.
+    /// List of all child prototypes defined within this prototype. Note that, in a <see cref="CompiledPrototype"/>, the
+    /// first element of its <see cref="CompiledPrototype.Prototypes"/> array will be a self-reference, so these are
+    /// effectively indexed 1-based once compiled.
     /// </summary>
     public readonly List<Prototype> Children = [];
 
