@@ -381,7 +381,7 @@ public struct LuaValue : IEquatable<LuaValue>
     /// True if the LuaValue was an integer, or a float convertable to an integer without loss of fraction. False
     /// otherwise.
     /// </returns>
-    /// TODO: Add bool argument to optionally make this permit string coercion as well
+    // TODO: Add bool argument to optionally make this permit string coercion as well
     public bool TryCoerceInteger(out long value)
     {
         // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
@@ -414,7 +414,12 @@ public struct LuaValue : IEquatable<LuaValue>
             LuaValueKind.Nil => 0,
             LuaValueKind.Boolean => _boolean.GetHashCode(),
             LuaValueKind.Integer => _integer.GetHashCode(),
-            LuaValueKind.Float => _float.GetHashCode(),
+            // Lua attempts to treat any float that is coercible to an integer without loss of precision the same as
+            // that integer, so we must do the same here.
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
+            LuaValueKind.Float => _float == (long)_float
+                ? ((long)_float).GetHashCode() 
+                : _float.GetHashCode(),
             _ => _ref.GetHashCode()
         };
 
