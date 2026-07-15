@@ -81,7 +81,7 @@ public struct LuaValue : IEquatable<LuaValue>
             : throw new InvalidCastException("LuaValue does not represent a float value.");
     
     /// <summary>
-    /// Gets this LuaValue as a read-only span. Does not return the underlying byte array, as Lua strings are immutable.
+    /// Gets this LuaValue as a string.
     /// </summary>
     /// <exception cref="InvalidCastException">
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.String"/>.
@@ -173,8 +173,7 @@ public struct LuaValue : IEquatable<LuaValue>
             : Float;
     
     /// <summary>
-    /// Gets this LuaValue as a read-only span, or null if <see cref="Kind"/> is <see cref="LuaValueKind.Nil"/>.
-    /// Does not return the underlying byte array, as Lua strings are immutable.
+    /// Gets this LuaValue as a string, or null if <see cref="Kind"/> is <see cref="LuaValueKind.Nil"/>.
     /// </summary>
     /// <exception cref="InvalidCastException">
     /// Thrown if <see cref="Kind"/> is not <see cref="LuaValueKind.String"/> or <see cref="LuaValueKind.Nil"/>.
