@@ -411,7 +411,7 @@ public struct LuaValue : IEquatable<LuaValue>
     public override int GetHashCode()
         => _kind switch
         {
-            LuaValueKind.Nil => 0,
+            LuaValueKind.Nil => -1,
             LuaValueKind.Boolean => _boolean.GetHashCode(),
             LuaValueKind.Integer => _integer.GetHashCode(),
             // Lua attempts to treat any float that is coercible to an integer without loss of precision the same as
