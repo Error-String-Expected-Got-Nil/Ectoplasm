@@ -62,7 +62,7 @@ public static class ScopeAnalyzer
 
             foreach (var (block, locals) in stat.GetBlocks() ?? [])
             {
-                var next = new Scope(proto, block);
+                var next = new Scope(proto, block, stat.IsBreakable);
                 foreach (var local in locals ?? []) next.DeclaredNames[local.Name] = local;
                 scopeStack.Push(next);
                 RecursiveAnalyze(scopeStack);
@@ -78,14 +78,15 @@ public static class ScopeAnalyzer
                                 "the <const> or <close> attribute.", expr.StartLine, expr.StartCol, proto.SourceName);
                     break;
                 case Stat_Goto statGoto:
-                    // TODO: Store currently visible local list for goto, check if target label is known and then if
-                    //  the jump is invalid
-                    throw new NotImplementedException();
+                    ValidateGoto(statGoto, scopeStack);
                     break;
                 case Stat_Label label:
-                    // TODO: Store currently visible local list, check if any known gotos target this label and then
-                    //  if the jump is valid
-                    throw new NotImplementedException();
+                    ValidateLabel(label, scopeStack);
+                    break;
+                case Stat_Break statBreak:
+                    if (!cur.IsBreakable)
+                        throw new LuaParsingException("Attempt to break from non-breakable block", statBreak.StartLine, 
+                            statBreak.StartCol, proto.SourceName);
                     break;
             }
 
@@ -155,12 +156,16 @@ public static class ScopeAnalyzer
     // Finds the label a goto refers to and, if possible at this point, verifies if it is a valid jump target.
     private static void ValidateGoto(Stat_Goto statGoto, TransparentStack<Scope> scopeStack)
     {
-        var current = scopeStack.Peek();
-        var proto = current.EnclosingPrototype;
+        var proto = scopeStack.Peek().EnclosingPrototype;
 
-        // Local variables that might matter for jump validation are all of those which have been declared before this
-        // goto statement, which is just all locals currently defined in the enclosing prototype.
-        statGoto.VisibleLocals = [..proto.Locals];
+        // Local variables that matter for jump validation are any that are currently visibly declared from the current 
+        // scope up to root prototype scope. 
+        statGoto.VisibleLocals = [];
+        foreach (var scope in scopeStack.EnumerateTopDown())
+        {
+            foreach (var (_, local) in scope.DeclaredNames) statGoto.VisibleLocals.Add(local);
+            if (scope.IsPrototypeRoot) break;
+        }
         proto.Gotos.Add(statGoto);
 
         foreach (var scope in scopeStack.EnumerateTopDown())
@@ -168,22 +173,60 @@ public static class ScopeAnalyzer
             if (scope.DeclaredLabels.TryGetValue(statGoto.TargetLabel, out var label))
             {
                 statGoto.ResolvedTarget = label;
-                if (label.IsTerminal) return;
-                if (label.VisibleLocals is not { } visibleAtTarget) return;
+                if (label.IsTerminal || label.VisibleLocals is not { } visibleAtTarget) return;
                 var skipped = new HashSet<LocalVariable>(visibleAtTarget);
                 skipped.ExceptWith(statGoto.VisibleLocals);
                 if (skipped.Count > 0)
                     throw new LuaParsingException($"Jump to label on line {label.StartLine}, column {label.StartCol} " +
                         $"is not valid, as it would bypass one or more local variable declarations: " +
-                        $"{string.Join(", ", skipped
-                            .Where(local => !local.IsImplicit)
-                            .Select(local => local.Name))}",
-                        label.StartLine, label.StartCol, proto.SourceName);
+                        $"{string.Join(", ", skipped.Select(local => local.Name))}",
+                        statGoto.StartLine, statGoto.StartCol, proto.SourceName);
             }
 
-            if (current.IsPrototypeRoot)
+            if (scope.IsPrototypeRoot)
                 throw new LuaParsingException($"No visible label had target name \"{statGoto.TargetLabel}\" for goto " +
                     $"statement", statGoto.StartLine, statGoto.StartCol, proto.SourceName);
+        }
+    }
+
+    // Sets the locals visible at a label and checks if any previously found gotos targeted it, then checks that their
+    // jumps to that label are valid. Also ensures that a label does not shadow any other visible labels.
+    private static void ValidateLabel(Stat_Label label, TransparentStack<Scope> scopeStack)
+    {
+        var proto = scopeStack.Peek().EnclosingPrototype;
+
+        label.VisibleLocals = [];
+        foreach (var scope in scopeStack.EnumerateTopDown())
+        {
+            foreach (var (_, local) in scope.DeclaredNames) label.VisibleLocals.Add(local);
+            if (scope.IsPrototypeRoot) break;
+        }
+
+        foreach (var scope in scopeStack.EnumerateTopDown())
+        {
+            // Labels are not allowed to shadow each other so we check that here, unless this is the scope this label
+            // comes from, because this was already validated for that scope when that scope was created.
+            if (scope != scopeStack.Peek() && scope.DeclaredLabels.TryGetValue(label.LabelName, out var other))
+                throw new LuaParsingException($"Label would shadow other label with same name declared on line " +
+                    $"{other.StartLine}, column {other.StartCol}", label.StartLine, label.StartCol, proto.SourceName);
+
+            // Check any gotos targeting this label to ensure their jumps are valid, if applicable.
+            if (!label.IsTerminal)
+            {
+                foreach (var statGoto in proto.Gotos.Where(statGoto => statGoto.ResolvedTarget == label))
+                {
+                    var skipped = new HashSet<LocalVariable>(label.VisibleLocals);
+                    // A goto with a non-null ResolvedTarget will always have its visible locals set.
+                    skipped.ExceptWith(statGoto.VisibleLocals!);
+                    if (skipped.Count > 0)
+                        throw new LuaParsingException($"Jump to label on line {label.StartLine}, column " +
+                            $"{label.StartCol} is not valid, as it would bypass one or more local variable " +
+                            $"declarations: {string.Join(", ", skipped.Select(local => local.Name))}",
+                            statGoto.StartLine, statGoto.StartCol, proto.SourceName);
+                }
+            }
+            
+            if (scope.IsPrototypeRoot) break;
         }
     }
 }

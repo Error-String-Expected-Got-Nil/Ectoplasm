@@ -21,6 +21,11 @@ public class Scope
     public readonly bool IsPrototypeRoot;
 
     /// <summary>
+    /// Indicates whether this scope can be exited by a break statement.
+    /// </summary>
+    public readonly bool IsBreakable;
+
+    /// <summary>
     /// Contents of the block this scope represents.
     /// </summary>
     public readonly List<Statement> Contents;
@@ -42,10 +47,11 @@ public class Scope
     /// </summary>
     public readonly HashSet<Stat_Label> TerminalLabels = [];
     
-    public Scope(Prototype enclosing, List<Statement> contents)
+    public Scope(Prototype enclosing, List<Statement> contents, bool isBreakable = false)
     {
         EnclosingPrototype = enclosing;
         IsPrototypeRoot = false;
+        IsBreakable = isBreakable;
         Contents = contents;
         
         CheckLabels(Contents, enclosing.SourceName);

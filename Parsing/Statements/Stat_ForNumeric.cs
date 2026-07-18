@@ -12,6 +12,8 @@ namespace Ectoplasm.Parsing.Statements;
 public class Stat_ForNumeric(string name, Expression initial, Expression end, Expression? increment, 
     List<Statement> block, ushort line, ushort col) : Statement(line, col)
 {
+    public override bool IsBreakable => true;
+
     protected override void AddToDebugString(StringBuilder str, int depth)
     {
         base.AddToDebugString(str, depth);

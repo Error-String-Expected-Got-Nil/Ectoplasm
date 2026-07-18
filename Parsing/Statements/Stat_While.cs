@@ -6,6 +6,8 @@ namespace Ectoplasm.Parsing.Statements;
 
 public class Stat_While(Expression condition, List<Statement> contents, ushort line, ushort col) : Statement(line, col)
 {
+    public override bool IsBreakable => true;
+
     protected override void AddToDebugString(StringBuilder str, int depth)
     {
         base.AddToDebugString(str, depth);

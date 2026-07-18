@@ -69,9 +69,4 @@ public class LocalVariable(Prototype owner, string name, LocalAttribute attr = L
     /// non-null, this is an index into the prototype's upvalue array.
     /// </summary>
     public int Index;
-
-    /// <summary>
-    /// If true, this local variable was implicitly declared (for example, a for loop's control variable).
-    /// </summary>
-    public bool IsImplicit = false;
 }

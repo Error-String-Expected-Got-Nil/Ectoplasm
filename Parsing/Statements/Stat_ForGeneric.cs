@@ -10,6 +10,8 @@ namespace Ectoplasm.Parsing.Statements;
 public class Stat_ForGeneric(List<string> namelist, List<Expression> explist, List<Statement> block, ushort line, 
     ushort col) : Statement(line, col)
 {
+    public override bool IsBreakable => true;
+    
     protected override void AddToDebugString(StringBuilder str, int depth)
     {
         base.AddToDebugString(str, depth);

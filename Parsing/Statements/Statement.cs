@@ -15,6 +15,11 @@ public abstract class Statement(ushort line, ushort col)
     public virtual bool IsVoid => false;
 
     /// <summary>
+    /// Indicates if this statement's defines a single sub-block which can be exited by a break statement. 
+    /// </summary>
+    public virtual bool IsBreakable => false;
+
+    /// <summary>
     /// Get all expressions contained within this statement. Returns null if this expression doesn't contain any
     /// expressions.
     /// </summary>
