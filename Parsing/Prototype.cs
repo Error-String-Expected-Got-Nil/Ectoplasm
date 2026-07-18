@@ -81,6 +81,11 @@ public class Prototype
     /// </summary>
     public readonly List<Prototype> Children = [];
 
+    /// <summary>
+    /// List of goto statements in this function.
+    /// </summary>
+    public readonly List<Stat_Goto> Gotos = [];
+
     private Prototype() { }
 
     public Prototype(Prototype parent, Expr_FunctionDef def, string? sourceName = null)
