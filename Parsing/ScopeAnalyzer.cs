@@ -84,9 +84,13 @@ public static class ScopeAnalyzer
                     ValidateLabel(label, scopeStack);
                     break;
                 case Stat_Break statBreak:
-                    if (!cur.IsBreakable)
-                        throw new LuaParsingException("Attempt to break from non-breakable block", statBreak.StartLine, 
-                            statBreak.StartCol, proto.SourceName);
+                    foreach (var scope in scopeStack.EnumerateTopDown())
+                    {
+                        if (scope.IsBreakable) break;
+                        if (scope.IsPrototypeRoot)
+                            throw new LuaParsingException("Attempt to break outside breakable scope", 
+                                statBreak.StartLine, statBreak.StartCol, proto.SourceName);
+                    }
                     break;
             }
 
