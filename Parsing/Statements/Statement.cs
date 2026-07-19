@@ -20,7 +20,7 @@ public abstract class Statement(ushort line, ushort col)
     public virtual bool IsBreakable => false;
 
     /// <summary>
-    /// Get all expressions contained within this statement. Returns null if this expression doesn't contain any
+    /// Get all expressions contained within this statement. Returns null if this statement doesn't contain any
     /// expressions.
     /// </summary>
     public virtual IEnumerable<Expression>? GetExpressions() => null;
@@ -32,7 +32,7 @@ public abstract class Statement(ushort line, ushort col)
     /// List containing any local variables declared which are visible in the same scope this statement executes in. If
     /// null, no such locals were declared.
     /// </returns>
-    public virtual List<LocalVariable>? DeclareLocals(Prototype prototype) => null;
+    public virtual IEnumerable<LocalVariable>? DeclareLocals(Prototype prototype) => null;
 
     /// <summary>
     /// Get an enumeration of all sub-blocks of this statement, or null if this statement has no sub-blocks. Each block

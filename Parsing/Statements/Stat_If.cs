@@ -14,6 +14,16 @@ namespace Ectoplasm.Parsing.Statements;
 public class Stat_If(List<(Expression Condition, List<Statement> Block)> clauses, List<Statement>? elseBlock, 
     ushort line, ushort col) : Statement(line, col)
 {
+    public override IEnumerable<Expression> GetExpressions()
+        => clauses.Select(clause => clause.Condition);
+
+    public override IEnumerable<(List<Statement> Block, List<LocalVariable>? BlockLocals)> GetBlocks()
+    {
+        var result = clauses.Select(clause => clause.Block);
+        if (elseBlock is not null) result = result.Append(elseBlock);
+        return result.Select(item => (item, (List<LocalVariable>?)null));
+    }
+
     protected override void AddToDebugString(StringBuilder str, int depth)
     {
         base.AddToDebugString(str, depth);

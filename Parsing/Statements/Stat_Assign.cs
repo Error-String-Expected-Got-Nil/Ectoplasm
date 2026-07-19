@@ -8,7 +8,9 @@ public class Stat_Assign(List<Expression> variables, List<Expression> values, us
     : Statement(line, col)
 {
     public List<Expression> Variables => variables;
-    
+
+    public override IEnumerable<Expression> GetExpressions() => variables.Concat(values);
+
     protected override void AddToDebugString(StringBuilder str, int depth)
     {
         base.AddToDebugString(str, depth);

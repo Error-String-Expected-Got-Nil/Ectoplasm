@@ -8,6 +8,8 @@ public class Stat_Return(List<Expression> returnValues, ushort line, ushort col)
 {
     public override bool IsBreakable => true;
 
+    public override IEnumerable<Expression> GetExpressions() => returnValues;
+
     protected override void AddToDebugString(StringBuilder str, int depth)
     {
         base.AddToDebugString(str, depth);

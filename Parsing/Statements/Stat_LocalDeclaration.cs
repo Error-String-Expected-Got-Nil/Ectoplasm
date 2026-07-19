@@ -11,6 +11,17 @@ namespace Ectoplasm.Parsing.Statements;
 public class Stat_LocalDeclaration(List<(string Name, LocalAttribute Attribute)> names, List<Expression>? expressions, 
     ushort line, ushort col) : Statement(line, col)
 {
+    private readonly List<LocalVariable> DeclaredLocals = [];
+    
+    public override IEnumerable<Expression>? GetExpressions() => expressions;
+
+    public override IEnumerable<LocalVariable> DeclareLocals(Prototype prototype)
+    {
+        foreach (var (name, attr) in names) 
+            DeclaredLocals.Add(prototype.AddNewLocal(name, attr));
+        return DeclaredLocals;
+    }
+
     protected override void AddToDebugString(StringBuilder str, int depth)
     {
         base.AddToDebugString(str, depth);
