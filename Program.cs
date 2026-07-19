@@ -36,6 +36,7 @@ internal static class Program
             .GetEnumerator();
         source.MoveNext();
         var block = Parser.ParseBlock(source, "fizzbuzz.lua");
+        var proto = ScopeAnalyzer.AnalyzeChunk(block, "fizzbuzz.lua");
         
         var end = Stopwatch.GetTimestamp();
 

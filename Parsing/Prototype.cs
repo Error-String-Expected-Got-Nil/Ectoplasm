@@ -151,4 +151,7 @@ public class Prototype
         Externals.Add(external);
         return external;
     }
+
+    public override string ToString() 
+        => $"{Name}({string.Join(", ", Parameters.Concat(IsVararg ? ["..."] : []))})";
 }

@@ -93,9 +93,9 @@ public static class ScopeAnalyzer
                     }
                     break;
             }
-
-            scopeStack.Pop();
         }
+        
+        scopeStack.Pop();
     }
 
     /// <summary>
