@@ -4,6 +4,7 @@ using Ectoplasm.Lexing;
 using Ectoplasm.Runtime.Stdlib;
 using Ectoplasm.Runtime.Tables;
 using Ectoplasm.Runtime.Functions;
+using System.Runtime.CompilerServices;
 
 namespace Ectoplasm.Runtime.Values;
 
@@ -227,7 +228,7 @@ public struct LuaValue : IEquatable<LuaValue>
         => _kind == LuaValueKind.Nil
             ? null
             : Table;
-    
+
     #endregion
 
     #region Basic Constructors
@@ -236,6 +237,7 @@ public struct LuaValue : IEquatable<LuaValue>
     /// Creates a new LuaValue with boolean value.
     /// </summary>
     /// <param name="value">Boolean value of the new LuaValue.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]    
     public static LuaValue New(bool value)
         => new()
         {
@@ -247,6 +249,7 @@ public struct LuaValue : IEquatable<LuaValue>
     /// Creates a new LuaValue with integer value.
     /// </summary>
     /// <param name="value">Integer value of the new LuaValue.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static LuaValue New(long value)
         => new()
         {
@@ -258,6 +261,7 @@ public struct LuaValue : IEquatable<LuaValue>
     /// Creates a new LuaValue with float value.
     /// </summary>
     /// <param name="value">Float value of the new LuaValue.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static LuaValue New(double value)
         => new()
         {
@@ -270,6 +274,7 @@ public struct LuaValue : IEquatable<LuaValue>
     /// be stored in the value.
     /// </summary>
     /// <param name="value">String value of the new LuaValue.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static LuaValue New(string value)
         => new()
         {
@@ -281,17 +286,19 @@ public struct LuaValue : IEquatable<LuaValue>
     /// Creates a new LuaValue with function value.
     /// </summary>
     /// <param name="value">Function value of the new LuaValue.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static LuaValue New(LuaFunction value)
         => new()
         {
             _ref = value,
             _kind = LuaValueKind.Function
         };
-    
+
     /// <summary>
     /// Creates a new LuaValue with userdata value.
     /// </summary>
     /// <param name="value">Userdata value of the new LuaValue.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static LuaValue New(LuaUserdata value)
         => new()
         {
@@ -303,6 +310,7 @@ public struct LuaValue : IEquatable<LuaValue>
     /// Creates a new LuaValue with Lua thread value.
     /// </summary>
     /// <param name="value">Lua thread value of the new LuaValue.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static LuaValue New(LuaThread value)
         => new()
         {
@@ -314,6 +322,7 @@ public struct LuaValue : IEquatable<LuaValue>
     /// Creates a new LuaValue with Lua table value.
     /// </summary>
     /// <param name="value">Lua table value of the new LuaValue.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static LuaValue New(LuaTable value)
         => new()
         {

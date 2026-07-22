@@ -3,5 +3,12 @@
 /// <summary>
 /// Represents exceptions caused by Lua-specific errors.
 /// </summary>
-/// <param name="message">Message describing reason for exception.</param>
-public class LuaRuntimeException(string message) : Exception(message);
+public class LuaRuntimeException : Exception
+{
+    public LuaRuntimeException(string message) : base(message) { }
+
+    public LuaRuntimeException(LuaState state, string message) : this(message)
+    {
+        // TODO: Use state to generate extra debug info
+    }
+}

@@ -28,6 +28,12 @@ public class LuaTable
     private TableImpl _implementation = new TableImpl_Empty();
 
     /// <summary>
+    /// The metatable attached to this table object, if any. See the Lua reference manual (version 5.4, section 2.4)
+    /// if unfamiliar.
+    /// </summary>
+    public LuaTable? Metatable;
+
+    /// <summary>
     /// The default length operation for this table, indicated by a unary <c>#</c> operator in Lua.
     /// </summary>
     /// <remarks>
@@ -87,5 +93,5 @@ public class LuaTable
         }
     } 
     
-    // TODO: Metatable
+    // TODO: HasIndex function
 }
