@@ -101,7 +101,7 @@ public static class Operations
         return OperationUtils.CallBinaryMetamethod(state, a, b, "__le");
     }
 
-    public static LuaValue Index(LuaState state, LuaValue value, LuaValue key)
+    public static LuaValue GetIndex(LuaState state, LuaValue value, LuaValue key)
     {
         if (value._kind is Table)
         {
@@ -128,10 +128,48 @@ public static class Operations
                 state.StackTop = prevTop;
                 return state.Pop();
             default:
-                return Index(state, alt, key);
+                return GetIndex(state, alt, key);
 
         }
     }
 
-    // TODO: Index set operation
+    public static void SetIndex(LuaState state, LuaValue table, LuaValue key, LuaValue value)
+    {
+        if (table._kind is Table)
+        {
+            var castTable = (LuaTable)table._ref;
+            // A table is considered not to contain a value for a key only when indexing the key returns nil.
+            if (castTable[key]._kind != Nil)
+            {
+                castTable[key] = value;
+                return;
+            }
+        }
+
+        var alt = OperationUtils.GetMetavalue(state, table, "__newindex");
+        switch (alt._kind)
+        {
+            case Nil:
+                if (table._kind is not Table) 
+                    throw new LuaRuntimeException(state, $"Attempt to assign to a value of type {table._kind} that " +
+                        $"did not have a __newindex metamethod");
+                ((LuaTable)table._ref)[key] = value;
+                return;
+            case Function:
+                // Saving StackTop might not be necessary since this can't be part of an expression, but it can't hurt.
+                var prevTop = state.StackTop;
+                var func = OperationUtils.ResolveCallable(state, alt);
+                state.Push(table);
+                state.Push(key);
+                state.Push(value);
+                state.StackTop += 3;
+                func(state);
+                state.Adjust(0);
+                state.StackTop = prevTop;
+                return;
+            default:
+                SetIndex(state, alt, key, value);
+                return;
+        }
+    }
 }
