@@ -123,6 +123,7 @@ public static class Operations
                 state.Push(value);
                 state.Push(key);
                 state.StackTop += 2;
+                func(state);
                 state.Adjust(1);
                 state.StackTop = prevTop;
                 return state.Pop();
