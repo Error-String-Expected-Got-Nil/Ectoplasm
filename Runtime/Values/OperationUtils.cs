@@ -67,7 +67,7 @@ public static class OperationUtils
 
     /// <summary>
     /// Attempts to index a metavalue from the given string key in either operand a or b, then executes it using a and
-    /// b, returning the result. Throws an exception if it is unable to resolve a function. 
+    /// b, returning the result adjusted to one value. Throws an exception if it is unable to resolve a function. 
     /// </summary>
     public static LuaValue CallBinaryMetamethod(LuaState state, LuaValue a, LuaValue b, string methodName)
     {
