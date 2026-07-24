@@ -25,6 +25,11 @@ public class TransparentStack<T>
         return item;
     }
 
+    /// <summary>
+    /// Pops and discards multiple elements at once.
+    /// </summary>
+    public void PopMany(int count) => _list.RemoveRange(_list.Count - count, count);
+
     public T Peek() => _list[^1];
 
     /// <summary>

@@ -49,7 +49,7 @@ public static class OperationUtils
         {
             if (value._kind is LuaValueKind.Function)
             {
-                state.StackTop = depth == 0 ? 0 : 1;
+                state.StackTop = depth == 0 ? 0u : 1u;
                 if (depth != 0) state.Push(value);
                 return (LuaFunction)value._ref;
             }
@@ -63,5 +63,28 @@ public static class OperationUtils
         }
 
         throw new LuaRuntimeException(state, "__call metamethod chain may not be longer than 15 objects");
+    }
+
+    /// <summary>
+    /// Attempts to index a metavalue from the given string key in either operand a or b, then executes it using a and
+    /// b, returning the result. Throws an exception if it is unable to resolve a function. 
+    /// </summary>
+    public static LuaValue CallBinaryMetamethod(LuaState state, LuaValue a, LuaValue b, string methodName)
+    {
+        var method = GetMetavalue(state, a, methodName);
+        if (method._kind is LuaValueKind.Nil) method = GetMetavalue(state, b, methodName);
+        if (method._kind is LuaValueKind.Nil)
+            throw new LuaRuntimeException(state, $"Operation between types {a._kind} and {b._kind} was invalid, and " +
+                $"neither had a valid {methodName} metamethod to use instead");
+
+        state.PushStackTop();
+        var func = ResolveCallable(state, method);
+        state.Push(a);
+        state.Push(b);
+        state.StackTop += 2;
+        func(state);
+        state.Adjust(1);
+        state.PopStackTop();
+        return state.Pop(); 
     }
 }

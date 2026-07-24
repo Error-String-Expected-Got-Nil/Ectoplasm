@@ -1,4 +1,5 @@
-﻿using static Ectoplasm.Runtime.LuaValueKind;
+﻿using System.Diagnostics;
+using static Ectoplasm.Runtime.LuaValueKind;
 
 namespace Ectoplasm.Runtime.Values;
 
@@ -21,15 +22,24 @@ public static class Arithmetic
         if (a._kind is Float && b._kind is Float) return Float;
 
         // Operand types are different but are either integer or float.
-        // First is integer, so second is float, have to cast first.
+        // First is integer, so second is a float, have to cast first.
         if (a._kind is Integer)
         {
             a = new LuaValue() { _kind = Float, _float = (double)a._integer };
             return Float;
         }
 
-        // First must be float and the second integer, cast second.
+        // First must be a float and the second an integer, cast second.
         b = new LuaValue() { _kind = Float, _float = (double)b._integer };
         return Float;
     }
+
+    public static LuaValue Add(LuaState state, LuaValue a, LuaValue b)
+        => MatchOperandTypes(ref a, ref b) switch
+        {
+            Integer => a._integer + b._integer,
+            Float => a._float + b._float,
+            Nil => OperationUtils.CallBinaryMetamethod(state, a, b, "__add"),
+            _ => throw new UnreachableException()
+        };
 }

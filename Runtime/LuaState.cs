@@ -15,7 +15,7 @@ public class LuaState
     /// Temporary storage for StackTop values. Used primarily for function calls which have function calls as 
     /// arguments.
     /// </summary>
-    private readonly Stack<int> _nestedStackTops = [];
+    private readonly Stack<uint> _nestedStackTops = [];
 
     /// <summary>
     /// For types other than <see cref="LuaValueKind.Table"/> and <see cref="LuaValueKind.Userdata"/>, which have 
@@ -32,10 +32,26 @@ public class LuaState
     /// This must be set manually and directly before this LuaState is used to call a function unless otherwise stated.
     /// </para>
     /// </summary>
-    public int StackTop;
+    public uint StackTop;
 
+    /// <summary>
+    /// <para>
+    /// Push a value on top of the state's value stack. 
+    /// </para>
+    /// <para>
+    /// Does not interact with <see cref="StackTop"/>, you must modify it manually as necessary after using this.
+    /// </para>
+    /// </summary>
     public void Push(LuaValue value) => _stack.Push(value);
 
+    /// <summary>
+    /// <para>
+    /// Pop a value from the top of the state's value stack.
+    /// </para>
+    /// <para>
+    /// Does not interact with <see cref="StackTop"/>, you must modify it manually as necessary after using this.
+    /// </para>
+    /// </summary>
     public LuaValue Pop() => _stack.Pop();
 
     /// <summary>
@@ -51,4 +67,24 @@ public class LuaState
     /// Overwrite the current <see cref="StackTop"/> with the last pushed value.
     /// </summary>
     public void PopStackTop() => StackTop = _nestedStackTops.Pop();
+
+    /// <summary>
+    /// Increases or decreases the number of elements on top of the stack (based on <see cref="StackTop"/>) to make it
+    /// equal to the given count. When increasing, adds nil values to reach the count. When decreasing, truncates.
+    /// This also modifies StackTop to match the new value afterward.
+    /// </summary>
+    public void Adjust(uint toCount)
+    {
+        if (toCount == StackTop) return;
+        
+        if (toCount < StackTop)
+        {
+            _stack.PopMany((int)(StackTop - toCount));
+            StackTop = toCount;
+            return;
+        }
+        
+        for (var i = 0; i < toCount - StackTop; i++) _stack.Push(default);
+        StackTop = toCount;
+    }
 }
