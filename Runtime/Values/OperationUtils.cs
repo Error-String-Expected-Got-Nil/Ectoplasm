@@ -132,7 +132,9 @@ public static class OperationUtils
     }
 
     /// <summary>
-    /// Like the binary version of this, except it applies to unary metamethods instead, with one operand.
+    /// Like the binary version of this, except it applies to unary metamethods instead, with one operand. Note that
+    /// this is a slight deviation from the specification (Lua reference manual version 5.4, section 2.4); Ectoplasm
+    /// only passes the unary operand once.
     /// </summary>
     public static LuaValue CallUnaryMetamethod(LuaState state, LuaValue value, string methodName)
     {
