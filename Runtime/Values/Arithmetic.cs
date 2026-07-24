@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using static Ectoplasm.Runtime.LuaValueKind;
+// ReSharper disable SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
 
 namespace Ectoplasm.Runtime.Values;
 
