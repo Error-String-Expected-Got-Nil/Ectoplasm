@@ -10,8 +10,9 @@ namespace Ectoplasm.Runtime.Values;
 public static class Arithmetic
 {
     /// <summary>
-    /// Takes two Lua values and attempts to match their types for standard arithmetic operations like addition. Returns the type both were
-    /// coerced to, or <see cref="Nil"/> if a coercion could not be made (and metatables must be checked).
+    /// Takes two Lua values and attempts to match their types for standard arithmetic operations like addition. Returns
+    /// the type both were coerced to, or <see cref="Nil"/> if a coercion could not be made (and metatables must be
+    /// checked).
     /// </summary>
     private static LuaValueKind MatchOperandTypes(ref LuaValue a, ref LuaValue b)
     {
@@ -26,12 +27,12 @@ public static class Arithmetic
         // First is integer, so second is a float, have to cast first.
         if (a._kind is Integer)
         {
-            a = new LuaValue() { _kind = Float, _float = (double)a._integer };
+            a = new LuaValue { _kind = Float, _float = a._integer };
             return Float;
         }
 
         // First must be a float and the second an integer, cast second.
-        b = new LuaValue() { _kind = Float, _float = (double)b._integer };
+        b = new LuaValue { _kind = Float, _float = b._integer };
         return Float;
     }
 
