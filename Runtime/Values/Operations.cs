@@ -101,5 +101,36 @@ public static class Operations
         return OperationUtils.CallBinaryMetamethod(state, a, b, "__le");
     }
 
-    // TODO: Index get/set operations
+    public static LuaValue Index(LuaState state, LuaValue value, LuaValue key)
+    {
+        if (value._kind is Table)
+        {
+            var res = ((LuaTable)value._ref)[key];
+            if (res._kind is not Nil) return res;
+        }
+
+        var alt = OperationUtils.GetMetavalue(state, value, "__index");
+        switch (alt._kind)
+        {
+            case Nil:
+                if (value._kind is not Table)
+                    throw new LuaRuntimeException(state, $"Attempt to index a value of type {value._kind} that did not " +
+                        $"have an __index metamethod");
+                return default;
+            case Function:
+                var prevTop = state.StackTop;
+                var func = OperationUtils.ResolveCallable(state, alt);
+                state.Push(value);
+                state.Push(key);
+                state.StackTop += 2;
+                state.Adjust(1);
+                state.StackTop = prevTop;
+                return state.Pop();
+            default:
+                return Index(state, alt, key);
+
+        }
+    }
+
+    // TODO: Index set operation
 }
