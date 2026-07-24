@@ -60,7 +60,7 @@ public class LuaTable
     /// what you're trying to do.
     /// </para>
     /// </remarks>
-    public long Length => throw new NotImplementedException();
+    public long Length => _implementation.Length;
     
     /// <summary>
     /// Creates a new, empty Lua table.

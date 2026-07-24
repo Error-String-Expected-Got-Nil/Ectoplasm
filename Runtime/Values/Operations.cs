@@ -1,0 +1,105 @@
+﻿using Ectoplasm.Runtime.Tables;
+using System.Diagnostics;
+using static Ectoplasm.Runtime.LuaValueKind;
+
+namespace Ectoplasm.Runtime.Values;
+
+/// <summary>
+/// Static class holding implementations for non-arithmetic operations, including relational operators, logical 
+/// operators, length, and concatenation.
+/// </summary>
+public static class Operations
+{
+    public static LuaValue Concat(LuaState state, LuaValue a, LuaValue b)
+    {
+        if (!(a._kind is LuaValueKind.String or Integer or Float)
+            && (b._kind is LuaValueKind.String or Integer or Float))
+            return OperationUtils.CallBinaryMetamethod(state, a, b, "__concat");
+
+        var left = GetString(a);
+        var right = GetString(b);
+
+        return left + right;
+
+        static string GetString(LuaValue value)
+            => value._kind switch
+            {
+                Integer => value._integer.ToString(),
+                Float => value._float.ToString(),
+                LuaValueKind.String => (string)value._ref,
+                _ => throw new UnreachableException()
+            };
+    }
+
+    /// <summary>
+    /// The length operation, accounting for metamethods. Note that there is a slight deviation from the specification
+    /// here: While the reference manual (version 5.4, section 3.4.7) states it should return the number of bytes in a
+    /// string, this returns the number of characters, which will be half that due to the use of UTF-16 strings. This
+    /// is to preserve the expected behavior.
+    /// </summary>
+    public static LuaValue Length(LuaState state, LuaValue value)
+    {
+        if (value._kind is LuaValueKind.String) return ((string)value._ref).Length;
+        
+        var metamethod = OperationUtils.GetMetavalue(state, value, "__len");
+        if (metamethod._kind is Nil)
+        {
+            if (value._kind is Table) return ((LuaTable)value._ref).Length;
+            throw new LuaRuntimeException(state, $"Attempt to get length of value with type {value._kind} that had " +
+                $"no __len metamethod");
+        }
+
+        var prevTop = state.StackTop;
+        var func = OperationUtils.ResolveCallable(state, metamethod);
+        state.Push(value);
+        state.StackTop++;
+        func(state);
+        state.Adjust(1);
+        state.StackTop = prevTop;
+        return state.Pop();
+    }
+
+    public static LuaValue EqualTo(LuaState state, LuaValue a, LuaValue b, bool invert)
+    {
+        OperationUtils.MatchOperandTypes(ref a, ref b);
+        if (a._kind != b._kind) return invert;
+        return a._kind switch
+        {
+            Nil => !invert,
+            LuaValueKind.Boolean => (a._boolean == b._boolean) ^ invert,
+            Integer => (a._integer == b._integer) ^ invert,
+            Float => (a._float == b._float) ^ invert,
+            LuaValueKind.String => ((string)a._ref == (string)b._ref) ^ invert,
+            Table or Userdata => a._ref == b._ref
+                ? !invert
+                : OperationUtils.CallBinaryMetamethod(state, a, b, "__eq").IsTruthy ^ invert,
+            _ => (a._ref == b._ref) ^ invert
+        };
+    }
+
+    public static LuaValue LessThan(LuaState state, LuaValue a, LuaValue b)
+    {
+        var type = OperationUtils.MatchOperandTypes(ref a, ref b);
+
+        if (type is Integer) return a._integer < b._integer;
+        if (type is Float) return a._float < b._float;
+        if (a._kind is LuaValueKind.String && b._kind is LuaValueKind.String)
+            return string.Compare((string)a._ref, (string)b._ref) < 0;
+
+        return OperationUtils.CallBinaryMetamethod(state, a, b, "__lt");
+    }
+
+    public static LuaValue LessThanOrEqualTo(LuaState state, LuaValue a, LuaValue b)
+    {
+        var type = OperationUtils.MatchOperandTypes(ref a, ref b);
+
+        if (type is Integer) return a._integer <= b._integer;
+        if (type is Float) return a._float <= b._float;
+        if (a._kind is LuaValueKind.String && b._kind is LuaValueKind.String)
+            return string.Compare((string)a._ref, (string)b._ref) <= 0;
+
+        return OperationUtils.CallBinaryMetamethod(state, a, b, "__le");
+    }
+
+    // TODO: Index get/set operations
+}

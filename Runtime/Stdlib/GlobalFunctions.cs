@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Globalization;
 using System.Runtime.CompilerServices;
 using Ectoplasm.Runtime.Values;
 using Ectoplasm.Utils;
@@ -14,7 +13,7 @@ public static class GlobalFunctions
             LuaValueKind.Nil => "nil",
             LuaValueKind.Boolean => value._boolean.ToString(),
             LuaValueKind.Integer => value._integer.ToString(),
-            LuaValueKind.Float => value._float.ToString(CultureInfo.InvariantCulture),
+            LuaValueKind.Float => value._float.ToString(),
             LuaValueKind.String => escapeStrings ? value.String.GetEscapedString() : value.String,
             LuaValueKind.Function => $"function: {value._ref.GetHashCode():x8}",
             LuaValueKind.Userdata => $"userdata: {value._ref.GetHashCode():x8}",
