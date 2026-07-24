@@ -105,6 +105,14 @@ public static class Arithmetic
             Nil => OperationUtils.CallBinaryMetamethod(state, a, b, "__pow"),
             _ => throw new UnreachableException()
         };
+
+    public static LuaValue Neg(LuaState state, LuaValue value)
+        => value._kind switch
+        {
+            Integer => -value._integer,
+            Float => -value._float,
+            _ => OperationUtils.CallUnaryMetamethod(state, value, "__unm")
+        };
     
     public static LuaValue FloorDiv(LuaState state, LuaValue a, LuaValue b)
         => MatchOperandTypes(ref a, ref b) switch
@@ -138,8 +146,32 @@ public static class Arithmetic
             Nil => OperationUtils.CallBinaryMetamethod(state, a, b, "__bxor"),
             _ => throw new UnreachableException()
         };
-    
-    // TODO: Bitshift operators
 
-    // TODO: Unary operators, non-arithmetic operations
+    public static LuaValue BitwiseNot(LuaState state, LuaValue value)
+        => value._kind switch
+        {
+            Integer => ~value._integer,
+            Float => value.TryCoerceInteger(out var intVal) 
+                        ? ~intVal 
+                        : OperationUtils.CallUnaryMetamethod(state, value, "__bnot"),
+            _ => OperationUtils.CallUnaryMetamethod(state, value, "__bnot")
+        };
+
+    public static LuaValue BitshiftRight(LuaState state, LuaValue a, LuaValue b)
+        => MatchOperandTypesInt(ref a, ref b) switch
+        {
+            Integer => OperationUtils.LuaBitshift(a._integer, b._integer),
+            Nil => OperationUtils.CallBinaryMetamethod(state, a, b, "__shr"),
+            _ => throw new UnreachableException()
+        };
+
+    public static LuaValue BitshiftLeft(LuaState state, LuaValue a, LuaValue b)
+        => MatchOperandTypesInt(ref a, ref b) switch
+        {
+            Integer => OperationUtils.LuaBitshift(a._integer, -b._integer),
+            Nil => OperationUtils.CallBinaryMetamethod(state, a, b, "__shl"),
+            _ => throw new UnreachableException()
+        };
+
+    // TODO: Length operator, non-arithmetic operations
 }

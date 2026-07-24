@@ -74,8 +74,8 @@ public static class OperationUtils
         var method = GetMetavalue(state, a, methodName);
         if (method._kind is LuaValueKind.Nil) method = GetMetavalue(state, b, methodName);
         if (method._kind is LuaValueKind.Nil)
-            throw new LuaRuntimeException(state, $"Operation between types {a._kind} and {b._kind} was invalid, and " +
-                $"neither had a valid {methodName} metamethod to use instead");
+            throw new LuaRuntimeException(state, $"Operation between values of type {a._kind} and {b._kind} was " +
+                $"invalid, and neither had a valid {methodName} metamethod to use instead");
 
         state.PushStackTop();
         var func = ResolveCallable(state, method);
@@ -86,5 +86,37 @@ public static class OperationUtils
         state.Adjust(1);
         state.PopStackTop();
         return state.Pop(); 
+    }
+
+    /// <summary>
+    /// Like the binary version of this, except it applies to unary metamethods instead, with one operand.
+    /// </summary>
+    public static LuaValue CallUnaryMetamethod(LuaState state, LuaValue value, string methodName)
+    {
+        var method = GetMetavalue(state, value, methodName);
+        if (method._kind is LuaValueKind.Nil)
+            throw new LuaRuntimeException(state, $"Unary operation on value of type {value._kind} was invalid, and " +
+                $"it did not have a valid {methodName} metamethod to use instead");
+
+        state.PushStackTop();
+        var func = ResolveCallable(state, method);
+        state.Push(value);
+        state.StackTop++;
+        func(state);
+        state.Adjust(1);
+        state.PopStackTop();
+        return state.Pop();
+    }
+
+    /// <summary>
+    /// Performs a bitshift according to Lua's rules for the operation (see the Lua reference manual version 5.4, 
+    /// section 3.4.2). Positive shift is to the right, negative is to the left.
+    /// </summary>
+    public static long LuaBitshift(long value, long shift)
+    {
+        if (shift == 0) return value;
+        if (shift > 63 || shift < -63) return 0;
+        if (shift > 0) return value >>> (int)shift;
+        return value << (int)-shift;
     }
 }
