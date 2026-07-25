@@ -5,8 +5,8 @@ using Ectoplasm.Utils;
 namespace Ectoplasm.Parsing.Expressions;
 
 // An expression unit which produces an anonymous function object.
-public class Expr_FunctionDef(List<string> parameters, bool isVararg, List<Statement> body, string? debugFunctionName, 
-    ushort line, ushort col) : Expression(line, col)
+public class Expr_FunctionDef(List<string> parameters, bool isVararg, List<Statement> body, 
+    string? debugFunctionName, ushort line, ushort col) : Expression(line, col)
 {
     public List<string> Parameters => parameters;
     public bool IsVararg => isVararg;

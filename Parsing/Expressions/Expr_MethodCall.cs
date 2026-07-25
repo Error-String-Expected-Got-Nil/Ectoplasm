@@ -8,6 +8,7 @@ public class Expr_MethodCall(int argc, ushort line, ushort col) : Expression(lin
     private Expression? _functionName;
 
     public override bool IsCall => true;
+    public override bool IsVariadic => true;
 
     internal override void Initialize(Stack<Expression> stack)
     {

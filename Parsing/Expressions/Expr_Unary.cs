@@ -1,8 +1,10 @@
 ﻿namespace Ectoplasm.Parsing.Expressions;
 
-public class Expr_Unary(ushort line, ushort col) : Expression(line, col)
+public abstract class Expr_Unary(ushort line, ushort col) : Expression(line, col)
 {
-    internal Expression? Op;
+    #nullable disable
+    internal Expression Op;
+    #nullable enable
     
     internal override void Initialize(Stack<Expression> stack)
     {
@@ -12,5 +14,5 @@ public class Expr_Unary(ushort line, ushort col) : Expression(line, col)
 
     public override IEnumerable<(Expression Expr, int Depth)> DepthFirstEnumerate(int depth = 0)
         => base.DepthFirstEnumerate(depth)
-            .Concat(Op!.DepthFirstEnumerate(depth + 1));
+            .Concat(Op.DepthFirstEnumerate(depth + 1));
 }

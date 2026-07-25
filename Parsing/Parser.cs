@@ -1068,7 +1068,7 @@ public static class Parser
                 Mul => new Expr_Mul(token.StartLine, token.StartCol),
                 Div => new Expr_Div(token.StartLine, token.StartCol),
                 IntDiv => new Expr_IntDiv(token.StartLine, token.StartCol),
-                Exp => new Expr_Exp(token.StartLine, token.StartCol),
+                Exp => new Expr_Pow(token.StartLine, token.StartCol),
                 Mod => new Expr_Mod(token.StartLine, token.StartCol),
                 BitwiseAnd => new Expr_BitwiseAnd(token.StartLine, token.StartCol),
                 BitwiseXor => new Expr_BitwiseXor(token.StartLine, token.StartCol),

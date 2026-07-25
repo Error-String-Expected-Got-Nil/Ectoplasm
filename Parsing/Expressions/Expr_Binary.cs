@@ -2,9 +2,11 @@
 
 public abstract class Expr_Binary(ushort line, ushort col) : Expression(line, col)
 {
-    internal Expression? OpA;
-    internal Expression? OpB;
-
+    #nullable disable
+    internal Expression OpA;
+    internal Expression OpB;
+    #nullable enable
+    
     internal override void Initialize(Stack<Expression> stack)
     {
         OpB = stack.Pop();
@@ -16,6 +18,6 @@ public abstract class Expr_Binary(ushort line, ushort col) : Expression(line, co
 
     public override IEnumerable<(Expression Expr, int Depth)> DepthFirstEnumerate(int depth = 0)
         => base.DepthFirstEnumerate(depth)
-            .Concat(OpA!.DepthFirstEnumerate(depth + 1))
-            .Concat(OpB!.DepthFirstEnumerate(depth + 1));
+            .Concat(OpA.DepthFirstEnumerate(depth + 1))
+            .Concat(OpB.DepthFirstEnumerate(depth + 1));
 }

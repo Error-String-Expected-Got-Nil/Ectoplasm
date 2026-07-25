@@ -1,5 +1,9 @@
-﻿using System.Text;
+﻿using System.Reflection.Emit;
+using System.Text;
 using Ectoplasm.Parsing.Statements;
+using Ectoplasm.Runtime;
+using Ectoplasm.Runtime.Functions;
+using Ectoplasm.Runtime.Values;
 using Ectoplasm.Utils;
 
 namespace Ectoplasm.Parsing.Expressions;
@@ -28,6 +32,54 @@ public abstract class Expression(ushort line, ushort col)
     /// </summary>
     public virtual bool IsCall => false;
 
+    /// <summary>
+    /// Indicates whether this expression may return more than one value. If true, it is permissible to call
+    /// <see cref="CompileVariadic"/>.
+    /// </summary>
+    public virtual bool IsVariadic => false;
+
+    /// <summary>
+    /// <para>
+    /// Accepts an ILGenerator and emits IL code which evaluates this expression. This always has a stack transition
+    /// behavior of pushing one <see cref="LuaValue"/>.
+    /// </para>
+    /// <para>
+    /// It is assumed to always be the case that the provided <see cref="ILGenerator"/> is being used to generate a
+    /// <see cref="LuaFunction"/> instance delegate, and therefore the first argument is a <see cref="Closure"/>, and
+    /// the second argument is a <see cref="LuaState"/>.
+    /// </para>
+    /// </summary>
+    /// <param name="il">The <see cref="ILGenerator"/> to emit code in.</param>
+    /// <param name="proto">The function prototype this expression is inside.</param>
+    public abstract void Compile(ILGenerator il, Prototype proto);
+
+    /// <summary>
+    /// <para>
+    /// Similar to <see cref="Compile"/>, except instead of pushing a single value to the IL stack, this pushes all
+    /// results of this expression to the <see cref="LuaState"/> stack and increments <see cref="LuaState.StackTop"/>
+    /// accordingly.
+    /// </para>
+    /// <para>
+    /// It is only permissible to call this if <see cref="IsVariadic"/> is true, otherwise this will throw an exception.
+    /// </para>
+    /// </summary>
+    public virtual void CompileVariadic(ILGenerator il, Prototype proto) => throw new InvalidOperationException();
+    
+    /// <summary>
+    /// <para>
+    /// Similar to <see cref="Compile"/>, except this method has neutral stack transition behavior, and accepts an
+    /// <see cref="Action"/>, which should push one <see cref="LuaValue"/> to the IL stack which will be assigned to
+    /// the variable/location referenced by this expression. In the <see cref="Action"/>, use the same
+    /// <see cref="ILGenerator"/> passed to this function.
+    /// </para>
+    /// <para>
+    /// It is only permissible to call this if <see cref="IsAssignable"/> is true, otherwise this will throw an
+    /// exception.
+    /// </para>
+    /// </summary>
+    public virtual void CompileAssign(ILGenerator il, Prototype proto, Action valueProducer) 
+        => throw new InvalidOperationException();
+    
     /// <summary>
     /// Initialize this expression by popping operands from a given stack and initializing them.
     /// </summary>

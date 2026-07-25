@@ -68,6 +68,7 @@ public static class Operations
             Nil => !invert,
             LuaValueKind.Boolean => (a._boolean == b._boolean) ^ invert,
             Integer => (a._integer == b._integer) ^ invert,
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             Float => (a._float == b._float) ^ invert,
             LuaValueKind.String => ((string)a._ref == (string)b._ref) ^ invert,
             Table or Userdata => a._ref == b._ref
@@ -84,6 +85,8 @@ public static class Operations
         if (type is Integer) return a._integer < b._integer;
         if (type is Float) return a._float < b._float;
         if (a._kind is LuaValueKind.String && b._kind is LuaValueKind.String)
+            // The Lua spec explicitly says that string comparison should be culture-specific, so this is fine.
+            // ReSharper disable once StringCompareIsCultureSpecific.1
             return string.Compare((string)a._ref, (string)b._ref) < 0;
 
         return OperationUtils.CallBinaryMetamethod(state, a, b, "__lt");
@@ -96,6 +99,7 @@ public static class Operations
         if (type is Integer) return a._integer <= b._integer;
         if (type is Float) return a._float <= b._float;
         if (a._kind is LuaValueKind.String && b._kind is LuaValueKind.String)
+            // ReSharper disable once StringCompareIsCultureSpecific.1
             return string.Compare((string)a._ref, (string)b._ref) <= 0;
 
         return OperationUtils.CallBinaryMetamethod(state, a, b, "__le");

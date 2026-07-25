@@ -7,7 +7,8 @@ public class Expr_Call(int argc, ushort line, ushort col) : Expression(line, col
     private Expression? _function;
 
     public override bool IsCall => true;
-    
+    public override bool IsVariadic => true;
+
     internal override void Initialize(Stack<Expression> stack)
     {
         // Function call arguments don't need to be initialized since they are parsed recursively.
