@@ -234,6 +234,19 @@ public struct LuaValue : IEquatable<LuaValue>
     #region Basic Constructors
 
     /// <summary>
+    /// <para>
+    /// Returns a new <see cref="LuaValueKind.Nil"/> value. This is equivalent to creating a LuaValue using the
+    /// 'default' keyword.
+    /// </para>
+    /// <para>
+    /// This primarily exists to make code generation easier, and you should generally always use the 'default' keyword
+    /// instead if you wish to generate a <see cref="LuaValueKind.Nil"/> value.
+    /// </para>
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static LuaValue Default() => default;
+    
+    /// <summary>
     /// Creates a new LuaValue with boolean value.
     /// </summary>
     /// <param name="value">Boolean value of the new LuaValue.</param>

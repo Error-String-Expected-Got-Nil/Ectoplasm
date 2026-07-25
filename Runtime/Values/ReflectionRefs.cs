@@ -1,4 +1,6 @@
 ﻿using System.Reflection;
+using Ectoplasm.Runtime.Functions;
+
 // ReSharper disable InconsistentNaming
 
 namespace Ectoplasm.Runtime.Values;
@@ -11,9 +13,17 @@ public static class ReflectionRefs
 {
     public static readonly PropertyInfo LuaValue_IsTruthy = typeof(LuaValue).GetProperty(nameof(LuaValue.IsTruthy))!;
 
+    public static readonly MethodInfo LuaValue_Default = typeof(LuaValue).GetMethod(nameof(LuaValue.Default))!;
+    
     public static readonly MethodInfo LuaValue_NewBoolean =
         typeof(LuaValue).GetMethod(nameof(LuaValue.New), [typeof(bool)])!;
 
+    public static readonly MethodInfo LuaValue_NewInteger =
+        typeof(LuaValue).GetMethod(nameof(LuaValue.New), [typeof(long)])!;
+    
+    public static readonly MethodInfo LuaValue_NewFloat =
+        typeof(LuaValue).GetMethod(nameof(LuaValue.New), [typeof(double)])!;
+    
     public static readonly MethodInfo LuaValue_NewString =
         typeof(LuaValue).GetMethod(nameof(LuaValue.New), [typeof(string)])!;
     
@@ -39,4 +49,9 @@ public static class ReflectionRefs
     public static readonly MethodInfo Op_LessOrEq = typeof(Operations).GetMethod(nameof(Operations.LessThanOrEqualTo))!;
     public static readonly MethodInfo Op_GetIndex = typeof(Operations).GetMethod(nameof(Operations.GetIndex))!;
     public static readonly MethodInfo Op_SetIndex = typeof(Operations).GetMethod(nameof(Operations.SetIndex))!;
+
+    public static readonly FieldInfo Closure_Upvalues = typeof(Closure).GetField(nameof(Closure.Upvalues))!;
+    public static readonly FieldInfo Closure_Prototypes = typeof(Closure).GetField(nameof(Closure.Prototypes))!;
+
+    public static readonly FieldInfo Upvalue_Value = typeof(Upvalue).GetField(nameof(Upvalue.Value))!;
 }
