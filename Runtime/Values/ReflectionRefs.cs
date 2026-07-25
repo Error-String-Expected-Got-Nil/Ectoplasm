@@ -11,6 +11,11 @@ namespace Ectoplasm.Runtime.Values;
 /// </summary>
 public static class ReflectionRefs
 {
+    public static readonly MethodInfo Type_GetTypeFromHandle = typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle))!;
+
+    public static readonly MethodInfo MethodInfo_CreateDelegate =
+        typeof(MethodInfo).GetMethod(nameof(MethodInfo.CreateDelegate), [typeof(Type), typeof(object)])!;
+    
     public static readonly PropertyInfo LuaValue_IsTruthy = typeof(LuaValue).GetProperty(nameof(LuaValue.IsTruthy))!;
 
     public static readonly MethodInfo LuaValue_Default = typeof(LuaValue).GetMethod(nameof(LuaValue.Default))!;
@@ -26,6 +31,9 @@ public static class ReflectionRefs
     
     public static readonly MethodInfo LuaValue_NewString =
         typeof(LuaValue).GetMethod(nameof(LuaValue.New), [typeof(string)])!;
+
+    public static readonly MethodInfo LuaValue_NewFunction =
+        typeof(LuaValue).GetMethod(nameof(LuaValue.New), [typeof(LuaFunction)])!;
     
     public static readonly MethodInfo Op_Add = typeof(Arithmetic).GetMethod(nameof(Arithmetic.Add))!;
     public static readonly MethodInfo Op_Sub = typeof(Arithmetic).GetMethod(nameof(Arithmetic.Sub))!;
@@ -53,5 +61,14 @@ public static class ReflectionRefs
     public static readonly FieldInfo Closure_Upvalues = typeof(Closure).GetField(nameof(Closure.Upvalues))!;
     public static readonly FieldInfo Closure_Prototypes = typeof(Closure).GetField(nameof(Closure.Prototypes))!;
 
+    public static readonly ConstructorInfo Closure_Ctor =
+        typeof(Closure).GetConstructor([typeof(Upvalue[]), typeof(CompiledPrototype[])])!;
+
     public static readonly FieldInfo Upvalue_Value = typeof(Upvalue).GetField(nameof(Upvalue.Value))!;
+
+    public static readonly FieldInfo CompiledPrototype_Function =
+        typeof(CompiledPrototype).GetField(nameof(CompiledPrototype.Function))!;
+    
+    public static readonly FieldInfo CompiledPrototype_Prototypes =
+        typeof(CompiledPrototype).GetField(nameof(CompiledPrototype.Prototypes))!;
 }
