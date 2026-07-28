@@ -71,4 +71,6 @@ public static class ReflectionRefs
     
     public static readonly FieldInfo CompiledPrototype_Prototypes =
         typeof(CompiledPrototype).GetField(nameof(CompiledPrototype.Prototypes))!;
+
+    public static readonly MethodInfo LuaState_AppendArray = typeof(LuaState).GetMethod(nameof(LuaState.AppendArray))!;
 }

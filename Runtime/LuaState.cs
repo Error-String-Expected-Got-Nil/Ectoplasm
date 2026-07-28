@@ -87,4 +87,24 @@ public class LuaState
         for (var i = 0; i < toCount - StackTop; i++) _stack.Push(default);
         StackTop = toCount;
     }
+
+    /// <summary>
+    /// Saves the current <see cref="StackTop"/>, pops it, then adds it back. This effectively appends the current 
+    /// stack top to the previous stack top.
+    /// </summary>
+    public void AppendTop()
+    {
+        var top = StackTop;
+        PopStackTop();
+        StackTop += top;
+    }
+
+    /// <summary>
+    /// Appends all elements in the given array to the stack and increments <see cref="StackTop"/> accordingly.
+    /// </summary>
+    public void AppendArray(LuaValue[] arr)
+    {
+        _stack.PushMany(arr);
+        StackTop += (uint)arr.Length;
+    }
 }

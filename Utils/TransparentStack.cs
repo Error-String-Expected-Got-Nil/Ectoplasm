@@ -18,6 +18,8 @@ public class TransparentStack<T>
 
     public void Push(T item) => _list.Add(item);
 
+    public void PushMany(IEnumerable<T> items) => _list.AddRange(items);
+
     public T Pop()
     {
         var item = _list[^1];
