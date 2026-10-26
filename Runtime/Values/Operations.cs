@@ -13,7 +13,7 @@ public static class Operations
     public static LuaValue Concat(LuaState state, LuaValue a, LuaValue b)
     {
         if (!(a._kind is LuaValueKind.String or Integer or Float)
-            && (b._kind is LuaValueKind.String or Integer or Float))
+            && !(b._kind is LuaValueKind.String or Integer or Float))
             return OperationUtils.CallBinaryMetamethod(state, a, b, "__concat");
 
         var left = GetString(a);
